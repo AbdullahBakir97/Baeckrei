@@ -7,7 +7,7 @@ class CategoryService(BaseService[Category]):
     """Service class for Category-related operations."""
     
     def __init__(self):
-        super().__init__(Categorysrc)
+        super().__init__(Category)
     
     def get_queryset(self) -> QuerySet[Category]:
         """Get the base queryset with product count annotation."""
