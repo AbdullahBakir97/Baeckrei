@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #3B82F6;
+    --color-primary-dark: #2563EB;
+    --color-primary-light: #60A5FA;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+
+  h1 {
+    @apply text-4xl font-bold md:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl font-bold md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl font-bold md:text-3xl;
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+  }
+
+  .input {
+    @apply px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden;
+  }
+
+  /* Product Card Styles */
+  .product-card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300;
+  }
+
+  .product-image-wrapper {
+    @apply relative w-full pb-[100%] overflow-hidden;
+  }
+
+  .product-image {
+    @apply absolute inset-0 w-full h-full;
+  }
+
+  .product-image img {
+    @apply w-full h-full object-cover;
+  }
+
+  .stock-badge {
+    @apply absolute top-2 right-2 px-2 py-1 rounded text-sm font-medium;
+  }
+
+  .stock-badge.low-stock {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .stock-badge.out-of-stock {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .product-info {
+    @apply p-4 space-y-2;
+  }
+
+  .product-name {
+    @apply text-lg font-semibold text-gray-800 line-clamp-2;
+  }
+
+  .product-price {
+    @apply text-xl font-bold text-blue-600;
+  }
+
+  .cart-controls {
+    @apply mt-4 flex items-center justify-between gap-2;
+  }
+
+  .add-to-cart-btn {
+    @apply w-full py-2 px-4 bg-blue-600 text-white rounded-md 
+           flex items-center justify-center gap-2
+           hover:bg-blue-700 transition-colors duration-200
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .quantity-controls {
+    @apply flex items-center gap-2 bg-gray-100 rounded-md p-1;
+  }
+
+  .quantity-btn {
+    @apply w-8 h-8 flex items-center justify-center rounded-md
+           bg-white text-gray-600 hover:bg-gray-200
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors duration-200;
+  }
+
+  .quantity {
+    @apply w-8 text-center font-medium;
+  }
+
+  .remove-btn {
+    @apply w-8 h-8 flex items-center justify-center rounded-md
+           bg-red-100 text-red-600 hover:bg-red-200
+           disabled:opacity-50 disabled:cursor-not-allowed
+           transition-colors duration-200;
+  }
+
+  .out-of-stock-message {
+    @apply mt-4 text-center text-red-600 font-medium;
+  }
+
+  /* Navbar Styles */
+  .navbar {
+    @apply bg-white shadow-md sticky top-0 z-50;
+  }
+
+  .logo {
+    @apply text-2xl font-bold text-blue-600 hover:text-blue-700
+           transition-colors duration-200;
+  }
+
+  .nav-link {
+    @apply text-gray-600 hover:text-blue-600 transition-colors duration-200;
+  }
+
+  .cart-button {
+    @apply relative flex items-center px-3 py-2 text-gray-600 
+           hover:text-blue-600 transition-colors duration-200;
+  }
+
+  .cart-badge {
+    @apply absolute -top-2 -right-2 bg-blue-600 text-white
+           rounded-full w-5 h-5 flex items-center justify-center
+           text-xs font-bold;
+  }
+
+  .cart-preview {
+    @apply absolute right-0 top-full mt-2 w-80 bg-white
+           rounded-lg shadow-lg overflow-hidden
+           border border-gray-200;
+  }
+
+  .auth-btn {
+    @apply px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200;
+  }
+
+  .auth-btn.login {
+    @apply text-blue-600 hover:text-blue-700;
+  }
+
+  .auth-btn.register {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+}
