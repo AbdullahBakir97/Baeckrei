@@ -55,7 +55,9 @@ urlpatterns = [
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     
     # API URLs
-    path('api/', include('products.urls')),
+    path('api/accounts/', include('accounts.urls')),
+    path('api/products/', include('products.urls')),
+    path('api/shopping-cart/', include('cart.urls')),
     
     # API Schema & Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
@@ -65,6 +67,8 @@ urlpatterns = [
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
 ]
 
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

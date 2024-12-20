@@ -19,11 +19,22 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'allergens', 'is_active']
 
 class CategorySerializer(serializers.ModelSerializer):
-    product_count = serializers.IntegerField(read_only=True)
-
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'image', 'is_active', 'product_count']
+        fields = ['id', 'name', 'description']
+
+class ProductSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
+    class Meta:
+        model = Product
+        fields = (
+            'id', 'name', 'description', 'price', 'stock',
+            'category', 'category_name', 'image', 'status',
+            'is_vegan', 'is_vegetarian', 'is_gluten_free',
+            'available', 'created_at', 'modified_at'
+        )
+        read_only_fields = ('id', 'created_at', 'modified_at')
 
 class ProductListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
@@ -40,12 +51,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     ingredients = IngredientSerializer(many=True, read_only=True)
     nutrition_info = NutritionInfoSerializer(read_only=True)
-    
+
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'category',
             'price', 'ingredients', 'nutrition_info', 'image',
             'is_vegan', 'is_vegetarian', 'is_gluten_free',
-            'available', 'stock', 'status'
+            'available', 'status', 'stock', 'created_at',
+            'modified_at'
         ]

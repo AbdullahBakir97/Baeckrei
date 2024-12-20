@@ -196,6 +196,10 @@ class Product(TimeStampedModel):
     def clean(self):
         """Validate the model fields."""
         super().clean()
+        if self.price < 0:
+            raise ValidationError(_('Price cannot be negative.'))
+        if self.stock < 0:
+            raise ValidationError(_('Stock cannot be negative.'))
 
     @property
     def is_in_stock(self):

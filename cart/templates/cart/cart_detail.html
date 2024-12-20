@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="bg-white shadow-lg rounded-lg">
+    <!-- Cart Header -->
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-2xl font-semibold text-gray-800">Shopping Cart</h2>
+    </div>
+
+    {% if cart.items.all %}
+      <!-- Cart Items -->
+      <div class="divide-y divide-gray-200">
+        {% for item in cart.items.all %}
+          <div class="p-6 flex items-center space-x-4">
+            <!-- Product Image -->
+            <div class="flex-shrink-0 w-24 h-24">
+              {% if item.product.image %}
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover rounded-md">
+              {% else %}
+                <div class="w-full h-full bg-gray-200 rounded-md flex items-center justify-center">
+                  <span class="text-gray-400">No image</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Product Details -->
+            <div class="flex-1">
+              <h3 class="text-lg font-medium text-gray-900">
+                <a href="{% url 'products:detail' item.product.id %}" class="hover:text-indigo-600">
+                  {{ item.product.name }}
+                </a>
+              </h3>
+              <p class="mt-1 text-sm text-gray-500">
+                Price: ${{ item.unit_price }}
+              </p>
+            </div>
+
+            <!-- Quantity Controls -->
+            <div class="flex items-center space-x-2">
+              <button 
+                class="text-gray-500 hover:text-indigo-600"
+                hx-post="{% url 'cart:update_quantity' item.product.id %}"
+                hx-vals='{"quantity": {{ item.quantity|add:"-1" }}}'
+                hx-target="#cart-container"
+                hx-swap="innerHTML"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                </svg>
+              </button>
+
+              <span class="text-gray-700 w-8 text-center">{{ item.quantity }}</span>
+
+              <button 
+                class="text-gray-500 hover:text-indigo-600"
+                hx-post="{% url 'cart:update_quantity' item.product.id %}"
+                hx-vals='{"quantity": {{ item.quantity|add:"1" }}}'
+                hx-target="#cart-container"
+                hx-swap="innerHTML"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Item Total -->
+            <div class="text-right">
+              <p class="text-lg font-medium text-gray-900">${{ item.total_price }}</p>
+            </div>
+
+            <!-- Remove Button -->
+            <button 
+              class="text-gray-400 hover:text-red-500"
+              hx-delete="{% url 'cart:remove_item' item.product.id %}"
+              hx-target="#cart-container"
+              hx-swap="innerHTML"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Cart Summary -->
+      <div class="px-6 py-4 bg-gray-50 rounded-b-lg">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-sm text-gray-600">Subtotal: ${{ cart.subtotal }}</p>
+            <p class="text-sm text-gray-600">Tax (10%): ${{ cart.tax }}</p>
+            <p class="text-lg font-semibold text-gray-900 mt-2">Total: ${{ cart.total }}</p>
+          </div>
+          <div class="space-x-4">
+            <button 
+              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              hx-post="{% url 'cart:clear' %}"
+              hx-target="#cart-container"
+              hx-swap="innerHTML"
+            >
+              Clear Cart
+            </button>
+            <a 
+              href="{% url 'checkout:index' %}"
+              class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 inline-block"
+            >
+              Checkout
+            </a>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <!-- Empty Cart -->
+      <div class="p-6 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900">Your cart is empty</h3>
+        <p class="mt-1 text-sm text-gray-500">Start shopping to add items to your cart.</p>
+        <div class="mt-6">
+          <a href="{% url 'products:list' %}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+            Continue Shopping
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
