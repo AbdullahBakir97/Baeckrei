@@ -2,29 +2,29 @@
   <div class="container py-8">
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Our Products</h1>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-200">Our Products</h1>
       <div class="flex flex-wrap items-center gap-4">
         <!-- View Toggle -->
-        <div class="flex items-center bg-white rounded-lg border border-gray-200 p-1">
+        <div class="flex items-center glass-panel rounded-lg p-1">
           <button
             @click="viewMode = 'grid'"
-            class="p-2 rounded-md transition-colors"
-            :class="viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'"
+            class="p-2 rounded-md transition-all duration-300"
+            :class="viewMode === 'grid' ? 'active-view' : 'hover:bg-opacity-20 hover:bg-red-500'"
           >
-            <i class="fas fa-grid-2 text-lg"></i>
+            <font-awesome-icon icon="fa-solid fa-th-large" class="text-lg" />
           </button>
           <button
             @click="viewMode = 'list'"
-            class="p-2 rounded-md transition-colors"
-            :class="viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'"
+            class="p-2 rounded-md transition-all duration-300"
+            :class="viewMode === 'list' ? 'active-view' : 'hover:bg-opacity-20 hover:bg-red-500'"
           >
-            <i class="fas fa-list text-lg"></i>
+            <font-awesome-icon icon="fa-solid fa-list" class="text-lg" />
           </button>
         </div>
         <!-- Sort Dropdown -->
         <select
           v-model="sortBy"
-          class="input min-w-[160px]"
+          class="search-input min-w-[160px] rounded-lg"
           @change="handleSort"
         >
           <option value="name">Name</option>
@@ -40,83 +40,88 @@
       <!-- Filters Sidebar -->
       <aside class="w-full lg:w-64 flex-shrink-0">
         <div class="sticky top-4">
-          <div class="card p-6 space-y-6">
+          <div class="glass-panel p-6 space-y-6 rounded-lg">
             <!-- Category Filter -->
             <div>
-              <h3 class="font-semibold mb-3">Categories</h3>
+              <h3 class="text-gray-200 font-semibold mb-3">Categories</h3>
               <div class="space-y-2">
                 <label
                   v-for="category in categories"
                   :key="category.id"
-                  class="flex items-center gap-2 cursor-pointer"
+                  class="flex items-center gap-2 cursor-pointer filter-item"
                 >
                   <input
                     type="checkbox"
                     :value="category.id"
                     v-model="selectedCategories"
-                    class="checkbox"
-                  />
-                  <span class="text-gray-700">{{ category.name }}</span>
+                    class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+                  >
+                  <span class="text-gray-300">{{ category.name }}</span>
                 </label>
               </div>
             </div>
 
             <!-- Price Range Filter -->
             <div>
-              <h3 class="font-semibold mb-3">Price Range</h3>
+              <h3 class="text-gray-200 font-semibold mb-3">Price Range</h3>
               <div class="space-y-4">
-                <div class="relative pt-1">
-                  <input
-                    type="range"
-                    v-model="priceRange[1]"
-                    min="0"
-                    max="1000"
-                    step="10"
-                    class="w-full appearance-none h-2 bg-gray-200 rounded-full outline-none cursor-pointer"
-                  />
-                </div>
-                <div class="flex justify-between text-sm text-gray-600">
-                  <span>${{ priceRange[0] }}</span>
-                  <span>${{ priceRange[1] }}</span>
+                <div class="flex gap-4">
+                  <div class="flex-1">
+                    <input
+                      type="number"
+                      v-model="priceRange[0]"
+                      placeholder="Min"
+                      class="search-input w-full rounded-lg"
+                    >
+                  </div>
+                  <div class="flex-1">
+                    <input
+                      type="number"
+                      v-model="priceRange[1]"
+                      placeholder="Max"
+                      class="search-input w-full rounded-lg"
+                    >
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Dietary Preferences -->
             <div>
-              <h3 class="font-semibold mb-3">Dietary Preferences</h3>
+              <h3 class="text-gray-200 font-semibold mb-3">Dietary Preferences</h3>
               <div class="space-y-2">
-                <label class="flex items-center gap-2 cursor-pointer">
+                <label class="flex items-center gap-2 cursor-pointer filter-item">
                   <input
                     type="checkbox"
                     v-model="filters.dietary.isVegan"
-                    class="checkbox"
-                  />
-                  <span class="text-gray-700">Vegan</span>
+                    class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+                  >
+                  <span class="text-gray-300">Vegan</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer">
+                <label class="flex items-center gap-2 cursor-pointer filter-item">
                   <input
                     type="checkbox"
                     v-model="filters.dietary.isVegetarian"
-                    class="checkbox"
-                  />
-                  <span class="text-gray-700">Vegetarian</span>
+                    class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+                  >
+                  <span class="text-gray-300">Vegetarian</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer">
+                <label class="flex items-center gap-2 cursor-pointer filter-item">
                   <input
                     type="checkbox"
                     v-model="filters.dietary.isGlutenFree"
-                    class="checkbox"
-                  />
-                  <span class="text-gray-700">Gluten Free</span>
+                    class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+                  >
+                  <span class="text-gray-300">Gluten Free</span>
                 </label>
               </div>
             </div>
 
-            <!-- Clear Filters -->
+            <!-- Clear Filters Button -->
             <button
               @click="clearFilters"
-              class="btn btn-secondary w-full"
+              class="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 
+                     transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               Clear Filters
             </button>
@@ -126,33 +131,51 @@
 
       <!-- Products Grid -->
       <div class="flex-grow">
+        <!-- Loading State -->
         <div v-if="productStore.loading" class="grid place-items-center h-96">
-          <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+          <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500"></div>
         </div>
-        <div 
-          v-if="!productStore.loading && !productStore.error && productStore.products && productStore.products.length > 0" 
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+
+        <!-- Products Grid/List View -->
+        <div v-else-if="!productStore.error && productStore.products && productStore.products.length > 0" 
+          :class="[
+            viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'
+          ]"
         >
-          <ProductCard
-            v-for="product in productStore.products"
-            :key="product.id"
-            :product="product"
-            @add-to-cart="addToCart"
-          />
+          <template v-if="viewMode === 'grid'">
+            <ProductCard 
+              v-for="product in productStore.products"
+              :key="product.id"
+              :product="product"
+              cardColor="#313131"
+              stripColor="#35AFFB"
+              buttonColor="#35AFFB"
+              textColor="#ffffff"
+              @add-to-cart="addToCart"
+            />
+          </template>
+          <template v-else>
+            <ProductListItem 
+              v-for="product in productStore.products"
+              :key="product.id"
+              :product="product"
+              @add-to-cart="addToCart"
+            />
+          </template>
         </div>
 
         <!-- Empty State -->
         <div 
-          v-if="!productStore.loading && !productStore.error && (!productStore.products || productStore.products.length === 0)" 
+          v-else-if="!productStore.loading && !productStore.error && (!productStore.products || productStore.products.length === 0)" 
           class="card p-8 text-center"
         >
-          <i class="fas fa-box-open text-4xl text-gray-400 mb-4"></i>
+          <font-awesome-icon icon="fa-solid fa-box-open" class="text-4xl text-gray-400 mb-4" />
           <h3 class="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
           <p class="text-gray-600">Try adjusting your filters or search criteria</p>
         </div>
 
         <!-- Error State -->
-        <div v-if="productStore.error" class="card p-8 text-center text-red-600">
+        <div v-else-if="productStore.error" class="card p-8 text-center text-red-600">
           <p>{{ productStore.error }}</p>
         </div>
 
@@ -183,16 +206,19 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useProductStore } from '@/stores/productStore'
 import { useRoute } from 'vue-router'
 import ProductCard from './ProductCard.vue'
+import ProductListItem from './ProductListItem.vue'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { 
+  faThLarge,
+  faList,
+  faBoxOpen
+} from '@fortawesome/free-solid-svg-icons'
+
+library.add(faThLarge, faList, faBoxOpen)
 
 const productStore = useProductStore()
 const route = useRoute()
-
-const props = defineProps({
-  category: {
-    type: String,
-    default: ''
-  }
-})
 
 // State
 const viewMode = ref('grid')
@@ -210,10 +236,10 @@ const filters = ref({
 
 // Mock categories (replace with API data)
 const categories = ref([
-  { id: 1, name: 'Breads' },
-  { id: 2, name: 'Pastries' },
-  { id: 3, name: 'Cakes' },
-  { id: 4, name: 'Cookies' }
+  { id: 'breads', name: 'Breads' },
+  { id: 'pastries', name: 'Pastries' },
+  { id: 'cakes', name: 'Cakes' },
+  { id: 'cookies', name: 'Cookies' }
 ])
 
 // Computed
@@ -258,9 +284,13 @@ const clearFilters = () => {
   loadProducts()
 }
 
-const addToCart = (product) => {
-  // TODO: Implement cart functionality
-  console.log('Add to cart:', product)
+const addToCart = async (product) => {
+  try {
+    // TODO: Implement cart functionality
+    console.log('Add to cart:', product)
+  } catch (error) {
+    console.error('Error adding to cart:', error)
+  }
 }
 
 const previousPage = () => {
@@ -283,19 +313,12 @@ watch([selectedCategories, priceRange, filters], () => {
   loadProducts()
 }, { deep: true })
 
-watch(() => props.category, (newCategory) => {
-  if (newCategory) {
-    filters.value.category = newCategory;
-    loadProducts();
-  }
-});
-
 watch(() => route.params.category, (newCategory) => {
   if (newCategory) {
-    filters.value.category = newCategory;
-    loadProducts();
+    filters.value.category = newCategory
+    loadProducts()
   }
-});
+})
 
 // Lifecycle
 onMounted(() => {
@@ -304,17 +327,63 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Custom range input styling */
-input[type="range"] {
-  @apply appearance-none bg-gray-200 h-2 rounded-full;
+.glass-panel {
+  background: linear-gradient(
+    to bottom,
+    rgba(17, 17, 17, 0.95) 0%,
+    rgba(17, 17, 17, 0.85) 100%
+  );
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 107, 107, 0.1);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    0 0 20px rgba(255, 107, 107, 0.1);
 }
 
-input[type="range"]::-webkit-slider-thumb {
-  @apply appearance-none w-4 h-4 rounded-full bg-blue-600 cursor-pointer;
+.search-input {
+  @apply relative px-4 py-2 text-gray-100 
+         transition-all duration-300;
+  background: rgba(23, 23, 23, 0.7);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  backdrop-filter: blur(4px);
 }
 
-input[type="range"]::-moz-range-thumb {
-  @apply w-4 h-4 rounded-full bg-blue-600 cursor-pointer border-none;
+.search-input:focus {
+  @apply outline-none;
+  background: rgba(23, 23, 23, 0.9);
+  border-color: rgba(255, 107, 107, 0.4);
+  box-shadow: 
+    0 0 0 2px rgba(255, 107, 107, 0.1),
+    0 0 20px rgba(255, 107, 107, 0.2);
+}
+
+.active-view {
+  @apply bg-red-500 bg-opacity-20 text-red-400;
+  box-shadow: 0 0 10px rgba(255, 107, 107, 0.2);
+}
+
+.filter-item {
+  @apply transition-all duration-300;
+}
+
+.filter-item:hover span {
+  @apply text-gray-100;
+}
+
+/* Custom checkbox styles */
+.form-checkbox {
+  @apply rounded transition-all duration-300;
+  border: 1px solid rgba(255, 107, 107, 0.2);
+}
+
+.form-checkbox:checked {
+  background-color: rgba(255, 107, 107, 0.8);
+  border-color: rgba(255, 107, 107, 0.4);
+}
+
+.form-checkbox:focus {
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
 }
 
 .animate-spin {

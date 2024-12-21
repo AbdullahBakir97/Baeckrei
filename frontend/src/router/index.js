@@ -40,7 +40,7 @@ const routes = [
     path: '/cart',
     name: 'cart',
     component: Cart,
-    meta: { title: 'Shopping Cart' }
+    meta: { requiresAuth: true, title: 'Shopping Cart' }
   },
   {
     path: '/about',
@@ -55,79 +55,49 @@ const routes = [
     meta: { title: 'Contact Us' }
   },
   {
-    path: '/blog',
-    name: 'blog',
-    component: () => import('../components/pages/Blog.vue'),
-    meta: { title: 'Blog' }
-  },
-  {
-    path: '/privacy',
-    name: 'privacy',
-    component: () => import('../components/pages/Privacy.vue'),
-    meta: { title: 'Privacy Policy' }
-  },
-  {
-    path: '/terms',
-    name: 'terms',
-    component: () => import('../components/pages/Terms.vue'),
-    meta: { title: 'Terms of Service' }
-  },
-  {
-    path: '/cookies',
-    name: 'cookies',
-    component: () => import('../components/pages/Cookies.vue'),
-    meta: { title: 'Cookie Policy' }
-  },
-  {
     path: '/profile',
     name: 'profile',
     component: Profile,
-    meta: { title: 'My Profile', requiresAuth: true }
+    meta: { requiresAuth: true, title: 'Profile' }
   },
   {
     path: '/orders',
     name: 'orders',
     component: Orders,
-    meta: { title: 'My Orders', requiresAuth: true }
+    meta: { requiresAuth: true, title: 'Orders' }
   },
   {
     path: '/settings',
     name: 'settings',
     component: Settings,
-    meta: { title: 'Account Settings', requiresAuth: true }
+    meta: { requiresAuth: true, title: 'Settings' }
   },
   {
     path: '/admin',
-    name: 'admin',
     component: AdminLayout,
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
       {
         path: '',
-        name: 'admin-home',
-        redirect: { name: 'admin-dashboard' }
-      },
-      {
-        path: 'dashboard',
         name: 'admin-dashboard',
         component: AdminDashboard,
         meta: { title: 'Admin Dashboard' }
       },
       {
         path: 'products',
-        name: 'admin-products',
+        name: 'product-management',
         component: ProductManagement,
         meta: { title: 'Product Management' }
       },
       {
-        path: 'categories',
-        name: 'admin-categories',
-        component: () => import('@/components/admin/categories/CategoryManagement.vue'),
-        meta: { title: 'Category Management' }
+        path: 'products/:id',
+        name: 'admin-product-detail',
+        component: () => import('@/components/admin/products/ProductDetail.vue'),
+        meta: { requiresAuth: true, requiresAdmin: true }
       },
       {
         path: 'orders',
-        name: 'admin-orders',
+        name: 'order-management',
         component: () => import('@/components/admin/orders/OrderManagement.vue'),
         meta: { title: 'Order Management' }
       }
@@ -154,6 +124,11 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  
+  // Initialize auth state if not already done
+  if (!authStore.initialized) {
+    await authStore.initializeAuth()
+  }
   
   // If logged in as admin and accessing login page, redirect to admin dashboard
   if (authStore.isAuthenticated && authStore.isAdmin && to.name === 'login') {

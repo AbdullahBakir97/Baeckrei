@@ -4,25 +4,92 @@
 
 @layer base {
   :root {
-    --color-primary: #3B82F6;
-    --color-primary-dark: #2563EB;
-    --color-primary-light: #60A5FA;
+    --color-primary: #FF6B6B;
+    --color-primary-dark: #FF5252;
+    --color-primary-light: #FF8585;
+    /* Dark theme colors */
+    --color-bg-primary: #0A0A0A;
+    --color-bg-secondary: #141414;
+    --color-bg-tertiary: #1F1F1F;
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #e0e0e0;
+    --color-text-tertiary: #a0a0a0;
+    --color-border: #2A2A2A;
+    --color-accent: #FF6B6B;
+    --color-accent-hover: #FF5252;
+    --color-error: #FF4444;
+    --color-success: #4CAF50;
+    --color-warning: #FFA726;
   }
 
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
   }
 
   h1 {
     @apply text-4xl font-bold md:text-5xl;
+    color: var(--color-text-primary);
   }
 
   h2 {
     @apply text-3xl font-bold md:text-4xl;
+    color: var(--color-text-primary);
   }
 
   h3 {
     @apply text-2xl font-bold md:text-3xl;
+    color: var(--color-text-primary);
+  }
+
+  p {
+    @apply text-gray-300;
+    color: var(--color-text-secondary);
+  }
+
+  a {
+    @apply hover:text-red-300;
+    color: var(--color-accent);
+  }
+
+  input, select, textarea {
+    @apply bg-gray-800 border-gray-700 text-gray-100;
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  button {
+    @apply hover:bg-red-500 text-white;
+    background-color: var(--color-accent);
+  }
+
+  /* Card styles */
+  .card {
+    @apply rounded-lg shadow-lg overflow-hidden;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  /* Form styles */
+  .form-input {
+    @apply bg-gray-800 border-gray-700 text-gray-100;
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
+
+  /* Table styles */
+  table {
+    @apply bg-gray-800 border-gray-700;
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
+
+  th, td {
+    @apply border-gray-700 text-gray-100;
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
   }
 }
 
@@ -36,7 +103,12 @@
   }
 
   .btn-primary {
-    @apply bg-blue-600 text-white hover:bg-blue-700;
+    @apply text-white;
+    background-color: var(--color-accent);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-accent-hover);
   }
 
   .btn-secondary {
@@ -131,33 +203,98 @@
 
   /* Navbar Styles */
   .navbar {
-    @apply bg-white shadow-md sticky top-0 z-50;
+    @apply shadow-md sticky top-0 z-50;
+    background-color: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .logo {
-    @apply text-2xl font-bold text-blue-600 hover:text-blue-700
-           transition-colors duration-200;
+    @apply text-2xl font-bold transition-colors duration-200;
+    color: var(--color-accent);
+  }
+
+  .logo:hover {
+    color: var(--color-accent-hover);
   }
 
   .nav-link {
-    @apply text-gray-600 hover:text-blue-600 transition-colors duration-200;
+    @apply transition-colors duration-200;
+    color: var(--color-text-secondary);
+  }
+
+  .nav-link:hover {
+    color: var(--color-accent);
   }
 
   .cart-button {
-    @apply relative flex items-center px-3 py-2 text-gray-600 
-           hover:text-blue-600 transition-colors duration-200;
+    @apply relative flex items-center px-3 py-2 transition-colors duration-200;
+    color: var(--color-text-secondary);
+  }
+
+  .cart-button:hover {
+    color: var(--color-accent);
   }
 
   .cart-badge {
-    @apply absolute -top-2 -right-2 bg-blue-600 text-white
-           rounded-full w-5 h-5 flex items-center justify-center
-           text-xs font-bold;
+    @apply absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center text-xs font-bold rounded-full text-white;
+    background-color: var(--color-accent);
   }
 
   .cart-preview {
-    @apply absolute right-0 top-full mt-2 w-80 bg-white
-           rounded-lg shadow-lg overflow-hidden
-           border border-gray-200;
+    @apply absolute right-0 top-full mt-2 w-80 rounded-lg shadow-lg overflow-hidden;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  /* Footer Styles */
+  .footer {
+    @apply mt-auto py-8;
+    background-color: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .footer-link {
+    @apply transition-colors duration-200;
+    color: var(--color-text-secondary);
+  }
+
+  .footer-link:hover {
+    color: var(--color-accent);
+  }
+
+  /* Card Styles */
+  .card {
+    @apply rounded-lg shadow-lg overflow-hidden;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .card-header {
+    @apply p-4 border-b;
+    background-color: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+  }
+
+  .card-body {
+    @apply p-4;
+  }
+
+  .card-footer {
+    @apply p-4 border-t;
+    background-color: var(--color-bg-tertiary);
+    border-color: var(--color-border);
+  }
+
+  /* Product Card Styles */
+  .product-card {
+    @apply rounded-lg shadow-lg overflow-hidden transition-transform duration-300;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   }
 
   .auth-btn {
@@ -165,10 +302,39 @@
   }
 
   .auth-btn.login {
-    @apply text-blue-600 hover:text-blue-700;
+    color: var(--color-accent);
+  }
+
+  .auth-btn.login:hover {
+    color: var(--color-accent-hover);
   }
 
   .auth-btn.register {
-    @apply bg-blue-600 text-white hover:bg-blue-700;
+    color: var(--color-text-primary);
+    background-color: var(--color-accent);
   }
+
+  .auth-btn.register:hover {
+    background-color: var(--color-accent-hover);
+  }
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+  background-color: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded-full;
+  background-color: var(--color-bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
 }

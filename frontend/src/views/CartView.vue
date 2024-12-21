@@ -1,177 +1,179 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white shadow-lg rounded-lg">
-      <!-- Cart Header -->
-      <div class="px-6 py-4 border-b border-gray-200">
-        <h2 class="text-2xl font-semibold text-gray-800">Shopping Cart</h2>
+  <div class="min-h-screen bg-[#0B1120] py-12 px-4">
+    <div class="max-w-7xl mx-auto relative">
+      <!-- Header -->
+      <div class="mb-16 text-center space-y-4">
+        <h1 class="text-5xl font-bold text-red-500">
+          Shopping Cart
+        </h1>
+        <p class="text-gray-400">Your items are listed below</p>
       </div>
 
-      <div v-if="cartStore.isLoading" class="p-6 text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-4 text-gray-600">Loading cart...</p>
+      <!-- Loading State -->
+      <div v-if="cartStore.isLoading" 
+           class="flex flex-col items-center justify-center py-32 gap-6">
+        <div class="relative w-20 h-20">
+          <div class="absolute inset-0 rounded-full border-t-2 border-red-500/30 animate-spin"></div>
+          <div class="absolute inset-[4px] rounded-full border-t-2 border-red-500/50 animate-spin-slow"></div>
+          <div class="absolute inset-[8px] rounded-full border-t-2 border-red-500/70 animate-spin-slower"></div>
+        </div>
+        <p class="text-gray-400 animate-pulse font-medium">Loading your cart...</p>
       </div>
 
       <template v-else>
-        <!-- Cart Items -->
-        <template v-if="!cartStore.cartIsEmpty">
-          <div class="divide-y divide-gray-200">
-            <div
-              v-for="item in cartStore.items"
-              :key="item.id"
-              class="p-6 flex items-center space-x-4"
-            >
-              <!-- Product Image -->
-              <div class="flex-shrink-0 w-24 h-24">
-                <img
-                  v-if="item.product.image"
-                  :src="item.product.image"
-                  :alt="item.product.name"
-                  class="w-full h-full object-cover rounded-md"
-                />
-                <div
-                  v-else
-                  class="w-full h-full bg-gray-200 rounded-md flex items-center justify-center"
-                >
-                  <span class="text-gray-400">No image</span>
+        <!-- Cart Content -->
+        <div v-if="!cartStore.cartIsEmpty" class="grid lg:grid-cols-12 gap-8">
+          <!-- Cart Items -->
+          <div class="lg:col-span-8 space-y-4">
+            <div v-for="item in cartStore.items" 
+                 :key="item.id"
+                 class="group">
+              <div class="bg-[#131B2F] rounded-xl p-6 transition duration-300">
+                <div class="flex items-start gap-6">
+                  <!-- Product Image -->
+                  <div class="w-32 h-32 rounded-lg overflow-hidden bg-[#0B1120]">
+                    <img v-if="item.product.image"
+                         :src="item.product.image"
+                         :alt="item.product.name"
+                         class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500" />
+                    <div v-else class="w-full h-full flex items-center justify-center">
+                      <i class="fas fa-image text-4xl text-gray-700"></i>
+                    </div>
+                  </div>
+
+                  <!-- Product Details -->
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-xl font-medium">
+                      <router-link :to="{ name: 'product-detail', params: { id: item.product.id }}"
+                                 class="text-white hover:text-red-500 transition-colors">
+                        {{ item.product.name }}
+                      </router-link>
+                    </h3>
+                    <div v-if="item.product.stock > 0" class="mt-1 text-sm text-yellow-500">
+                      Only {{ item.product.stock }} left in stock!
+                    </div>
+                    <p class="mt-2 text-gray-400 text-sm line-clamp-2">{{ item.product.description }}</p>
+
+                    <div class="mt-4 flex items-center justify-between">
+                      <div class="flex items-center gap-4">
+                        <!-- Quantity Controls -->
+                        <div class="flex items-center bg-[#0B1120] rounded-lg">
+                          <button @click="updateQuantity(item.product.id, item.quantity - 1)"
+                                  class="p-2 text-gray-400 hover:text-red-500 disabled:opacity-50 transition-colors"
+                                  :disabled="cartStore.isLoading || item.quantity <= 1">
+                            <i class="fas fa-minus"></i>
+                          </button>
+                          <span class="w-12 text-center py-2 text-white">
+                            {{ item.quantity }}
+                          </span>
+                          <button @click="updateQuantity(item.product.id, item.quantity + 1)"
+                                  class="p-2 text-gray-400 hover:text-red-500 disabled:opacity-50 transition-colors"
+                                  :disabled="cartStore.isLoading">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                        </div>
+
+                        <!-- Remove Button -->
+                        <button @click="removeItem(item.product.id)"
+                                class="flex items-center gap-2 px-3 py-2 text-sm
+                                       text-red-500 hover:text-red-400 transition-colors"
+                                :disabled="cartStore.isLoading">
+                          <i class="fas fa-trash"></i>
+                          <span>Remove</span>
+                        </button>
+                      </div>
+
+                      <!-- Price -->
+                      <div class="text-right">
+                        <p class="text-2xl font-bold text-red-500">
+                          ${{ formatPrice(item.quantity * item.unit_price) }}
+                        </p>
+                        <p class="text-sm text-gray-400">
+                          ${{ formatPrice(item.unit_price) }} each
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <!-- Product Details -->
-              <div class="flex-1">
-                <h3 class="text-lg font-medium text-gray-900">
-                  <router-link
-                    :to="{ name: 'product-detail', params: { id: item.product.id }}"
-                    class="hover:text-indigo-600"
-                  >
-                    {{ item.product.name }}
-                  </router-link>
-                </h3>
-                <p class="mt-1 text-sm text-gray-500">
-                  Price: ${{ item.unit_price }}
-                </p>
-              </div>
-
-              <!-- Quantity Controls -->
-              <div class="flex items-center space-x-2">
-                <button
-                  class="text-gray-500 hover:text-indigo-600 disabled:opacity-50"
-                  :disabled="cartStore.isLoading"
-                  @click="updateQuantity(item.product.id, item.quantity - 1)"
-                >
-                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                  </svg>
-                </button>
-
-                <span class="text-gray-700 w-8 text-center">{{ item.quantity }}</span>
-
-                <button
-                  class="text-gray-500 hover:text-indigo-600 disabled:opacity-50"
-                  :disabled="cartStore.isLoading"
-                  @click="updateQuantity(item.product.id, item.quantity + 1)"
-                >
-                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Item Total -->
-              <div class="text-right">
-                <p class="text-lg font-medium text-gray-900">
-                  ${{ (item.quantity * item.unit_price).toFixed(2) }}
-                </p>
-              </div>
-
-              <!-- Remove Button -->
-              <button
-                class="text-gray-400 hover:text-red-500 disabled:opacity-50"
-                :disabled="cartStore.isLoading"
-                @click="removeItem(item.product.id)"
-              >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
             </div>
           </div>
 
-          <!-- Cart Summary -->
-          <div class="px-6 py-4 bg-gray-50 rounded-b-lg">
-            <div class="flex justify-between items-center">
-              <div>
-                <p class="text-sm text-gray-600">Subtotal: ${{ cartStore.subtotal.toFixed(2) }}</p>
-                <p class="text-sm text-gray-600">Tax (10%): ${{ cartStore.tax.toFixed(2) }}</p>
-                <p class="text-lg font-semibold text-gray-900 mt-2">
-                  Total: ${{ cartStore.total.toFixed(2) }}
-                </p>
-              </div>
-              <div class="space-x-4">
-                <button
-                  class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                  :disabled="cartStore.isLoading"
-                  @click="clearCart"
-                >
-                  Clear Cart
-                </button>
-                <router-link
-                  to="/checkout"
-                  class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 inline-block"
-                >
-                  Checkout
-                </router-link>
+          <!-- Order Summary -->
+          <div class="lg:col-span-4">
+            <div class="sticky top-4">
+              <div class="bg-[#131B2F] rounded-xl overflow-hidden">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-gray-700">
+                  <h2 class="text-xl font-bold text-white">
+                    Order Summary
+                  </h2>
+                </div>
+                
+                <!-- Content -->
+                <div class="p-6 space-y-4">
+                  <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-400">Subtotal</span>
+                      <span class="text-white">${{ formatPrice(cartStore.subtotal) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                      <span class="text-gray-400">Tax (10%)</span>
+                      <span class="text-white">${{ formatPrice(cartStore.tax) }}</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Total -->
+                  <div class="border-t border-gray-700 pt-4">
+                    <div class="flex justify-between items-baseline">
+                      <span class="text-lg text-white">Total</span>
+                      <span class="text-2xl font-bold text-red-500">
+                        ${{ formatPrice(cartStore.total) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Buttons -->
+                  <div class="space-y-3 pt-6">
+                    <router-link to="/checkout"
+                                class="block w-full px-6 py-3 text-center text-white font-medium
+                                       bg-red-500 hover:bg-red-600 rounded-lg transition-colors">
+                      Proceed to Checkout
+                    </router-link>
+                    
+                    <button @click="clearCart"
+                            class="w-full px-6 py-3 text-gray-400 font-medium
+                                   bg-[#0B1120] hover:bg-[#1A2642] rounded-lg
+                                   transition-colors"
+                            :disabled="cartStore.isLoading">
+                      Clear Cart
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </template>
+        </div>
 
         <!-- Empty Cart -->
-        <div v-else class="p-6 text-center">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
-          <h3 class="mt-2 text-lg font-medium text-gray-900">Your cart is empty</h3>
-          <p class="mt-1 text-sm text-gray-500">Start shopping to add items to your cart.</p>
-          <div class="mt-6">
-            <router-link
-              to="/products"
-              class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-            >
+        <div v-else
+             class="max-w-2xl mx-auto">
+          <div class="bg-[#131B2F] rounded-xl p-16 text-center">
+            <div class="relative mb-8">
+              <div class="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-600/20 blur-3xl opacity-20"></div>
+              <i class="fas fa-shopping-cart text-7xl text-gray-700 relative"></i>
+            </div>
+            <h3 class="text-3xl font-bold text-white mb-4">Your cart is empty</h3>
+            <p class="text-gray-400 text-lg mb-12">Start adding some items to your cart!</p>
+            
+            <router-link to="/products"
+                         class="inline-block px-8 py-3 text-white font-medium
+                                bg-red-500 hover:bg-red-600 rounded-lg transition-colors">
               Continue Shopping
             </router-link>
           </div>
         </div>
       </template>
-    </div>
-
-    <!-- Error Toast -->
-    <div
-      v-if="cartStore.error"
-      class="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
-      role="alert"
-    >
-      <span class="block sm:inline">{{ cartStore.error }}</span>
-      <button
-        @click="cartStore.resetError"
-        class="absolute top-0 bottom-0 right-0 px-4 py-3"
-      >
-        <svg
-          class="fill-current h-6 w-6 text-red-500"
-          role="button"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-        >
-          <title>Close</title>
-          <path
-            d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"
-          />
-        </svg>
-      </button>
     </div>
   </div>
 </template>
@@ -182,7 +184,12 @@ import { useCartStore } from '@/stores/cartStore'
 
 const cartStore = useCartStore()
 
+const formatPrice = (price) => {
+  return Number(price || 0).toFixed(2)
+}
+
 const updateQuantity = async (productId, quantity) => {
+  if (quantity < 1) return
   try {
     await cartStore.updateQuantity(productId, quantity)
   } catch (error) {
@@ -214,3 +221,20 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.animate-spin-slow {
+  animation: spin 2s linear infinite;
+}
+.animate-spin-slower {
+  animation: spin 3s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

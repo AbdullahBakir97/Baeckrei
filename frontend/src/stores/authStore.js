@@ -5,7 +5,8 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     loading: false,
-    error: null
+    error: null,
+    initialized: false
   }),
 
   getters: {
@@ -14,6 +15,27 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    async initializeAuth() {
+      if (this.initialized) return
+      
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          await this.fetchCurrentUser()
+        } catch (error) {
+          // If token is invalid, clear it
+          this.clearAuth()
+        }
+      }
+      this.initialized = true
+    },
+
+    clearAuth() {
+      this.user = null
+      localStorage.removeItem('token')
+      delete axios.defaults.headers.common['Authorization']
+    },
+
     async login(credentials) {
       try {
         this.loading = true
@@ -45,9 +67,7 @@ export const useAuthStore = defineStore('auth', {
         this.loading = true
         this.error = null
         await axios.post('/api/accounts/users/logout/')
-        this.user = null
-        localStorage.removeItem('token')
-        delete axios.defaults.headers.common['Authorization']
+        this.clearAuth()
       } catch (error) {
         this.error = error.response?.data?.detail || 'Failed to logout'
       } finally {

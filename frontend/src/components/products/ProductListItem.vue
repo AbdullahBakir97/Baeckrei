@@ -85,9 +85,10 @@
 
         <div class="flex items-center gap-2">
           <button
-            @click="openQuickView"
+            @click="showQuickView = true"
             class="btn btn-secondary"
           >
+            <i class="fas fa-eye mr-2"></i>
             Quick View
           </button>
           <button
@@ -102,15 +103,15 @@
         </div>
       </div>
     </div>
-
-    <!-- Quick View Modal -->
-    <QuickViewModal
-      v-if="showQuickView"
-      :product="product"
-      @close="showQuickView = false"
-      @add-to-cart="$emit('add-to-cart', product)"
-    />
   </div>
+
+  <!-- Quick View Modal -->
+  <QuickViewModal
+    v-if="showQuickView"
+    :product="product"
+    @close="showQuickView = false"
+    @add-to-cart="$emit('add-to-cart', product)"
+  />
 </template>
 
 <script setup>
@@ -132,10 +133,6 @@ const showQuickView = ref(false)
 // Methods
 const formatPrice = (price) => {
   return price.toFixed(2)
-}
-
-const openQuickView = () => {
-  showQuickView.value = true
 }
 </script>
 

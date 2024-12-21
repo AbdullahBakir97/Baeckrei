@@ -1,108 +1,138 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import axios from 'axios'
+import axios from '@/plugins/axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export const useCartStore = defineStore('cart', () => {
   // State
-  const items = ref([])
-  const loading = ref(false)
-  const error = ref(null)
+  const state = ref({
+    items: [],
+    loading: false,
+    error: null,
+    subtotal: '0.00',
+    tax: '0.00',
+    total: '0.00',
+    total_items: 0
+  })
 
   // Computed
-  const cartTotal = computed(() => {
-    if (!items.value?.length) return 0
-    return items.value.reduce((total, item) => {
-      return total + Number(item.total_price)
-    }, 0)
-  })
-
-  const itemCount = computed(() => {
-    if (!items.value?.length) return 0
-    return items.value.reduce((total, item) => total + item.quantity, 0)
-  })
+  const isLoading = computed(() => state.value.loading)
+  const cartIsEmpty = computed(() => !state.value.items?.length)
+  const items = computed(() => state.value.items || [])
+  const subtotal = computed(() => Number(state.value.subtotal || 0))
+  const tax = computed(() => Number(state.value.tax || 0))
+  const total = computed(() => Number(state.value.total || 0))
+  const itemCount = computed(() => state.value.total_items || 0)
+  const error = computed(() => state.value.error)
 
   // Actions
+  const resetError = () => {
+    state.value.error = null
+  }
+
   async function fetchCart() {
-    loading.value = true
-    error.value = null
+    state.value.loading = true
+    state.value.error = null
     try {
-      const response = await axios.get(`${API_URL}/api/shopping-cart/current/`)
-      items.value = response.data.items || []
-    } catch (err) {
-      error.value = err.response?.data?.error || 'Failed to fetch cart'
-      items.value = []
+      const response = await axios.get(`${API_URL}/api/shopping-cart/current/`, {
+        withCredentials: true
+      })
+      
+      state.value = {
+        ...state.value,
+        items: response.data.items || [],
+        subtotal: response.data.subtotal || '0.00',
+        tax: response.data.tax || '0.00',
+        total: response.data.total || '0.00',
+        total_items: response.data.total_items || 0,
+        loading: false,
+        error: null
+      }
+      return response.data
+    } catch (error) {
+      console.error('Error fetching cart:', error)
+      state.value.error = error.response?.data?.message || 'Failed to load cart'
+      throw error
     } finally {
-      loading.value = false
+      state.value.loading = false
     }
   }
 
   async function addItem(productId, quantity = 1) {
-    loading.value = true
-    error.value = null
+    state.value.loading = true
+    state.value.error = null
     try {
-      const response = await axios.post(`${API_URL}/api/shopping-cart/add_item/`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/shopping-cart/add_item/`, {
         product_id: productId,
-        quantity: quantity
+        quantity
+      }, {
+        withCredentials: true
       })
-      items.value = response.data.items || []
-      return response.data
-    } catch (err) {
-      error.value = err.response?.data?.error || 'Failed to add item to cart'
-      throw error.value
+      state.value.items = response.data.items || []
+    } catch (error) {
+      console.error('Error adding item to cart:', error)
+      state.value.error = error.response?.data?.message || 'Error adding item to cart'
+      throw error
     } finally {
-      loading.value = false
+      state.value.loading = false
     }
   }
 
   async function removeItem(productId) {
-    loading.value = true
-    error.value = null
+    state.value.loading = true
+    state.value.error = null
     try {
-      const response = await axios.post(`${API_URL}/api/shopping-cart/remove_item/`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/shopping-cart/remove_item/`, {
         product_id: productId
+      }, {
+        withCredentials: true
       })
-      items.value = response.data.items || []
-      return response.data
-    } catch (err) {
-      error.value = err.response?.data?.error || 'Failed to remove item from cart'
-      throw error.value
+      state.value.items = response.data.items || []
+    } catch (error) {
+      console.error('Error removing item from cart:', error)
+      state.value.error = error.response?.data?.message || 'Error removing item from cart'
+      throw error
     } finally {
-      loading.value = false
+      state.value.loading = false
     }
   }
 
-  async function updateItemQuantity(productId, quantity) {
-    loading.value = true
-    error.value = null
+  async function updateQuantity(productId, quantity) {
+    state.value.loading = true
+    state.value.error = null
     try {
-      const response = await axios.post(`${API_URL}/api/shopping-cart/update_item/`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/shopping-cart/update_item/`, {
         product_id: productId,
-        quantity: quantity
+        quantity
+      }, {
+        withCredentials: true
       })
-      items.value = response.data.items || []
-      return response.data
-    } catch (err) {
-      error.value = err.response?.data?.error || 'Failed to update cart'
-      throw error.value
+      state.value.items = response.data.items || []
+    } catch (error) {
+      console.error('Error updating item quantity:', error)
+      state.value.error = error.response?.data?.message || 'Error updating item quantity'
+      throw error
     } finally {
-      loading.value = false
+      state.value.loading = false
     }
   }
 
   async function clearCart() {
-    loading.value = true
-    error.value = null
+    state.value.loading = true
+    state.value.error = null
     try {
-      const response = await axios.post(`${API_URL}/api/shopping-cart/clear/`)
-      items.value = []
-      return response.data
-    } catch (err) {
-      error.value = err.response?.data?.error || 'Failed to clear cart'
-      throw error.value
+      const response = await axios.post(`${API_URL}/api/shopping-cart/clear/`, {}, {
+        withCredentials: true
+      })
+      state.value.items = []
+      return true
+    } catch (error) {
+      console.error('Error clearing cart:', error)
+      state.value.error = error.response?.data?.message || 'Error clearing cart'
+      return false
     } finally {
-      loading.value = false
+      state.value.loading = false
     }
   }
 
@@ -111,17 +141,22 @@ export const useCartStore = defineStore('cart', () => {
 
   return {
     // State
-    items,
-    loading,
-    error,
+    state,
     // Computed
-    cartTotal,
+    isLoading,
+    cartIsEmpty,
+    items,
+    subtotal,
+    tax,
+    total,
     itemCount,
+    error,
     // Actions
     fetchCart,
     addItem,
     removeItem,
-    updateItemQuantity,
-    clearCart
+    updateQuantity,
+    clearCart,
+    resetError
   }
 })

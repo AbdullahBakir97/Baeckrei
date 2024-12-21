@@ -8,10 +8,26 @@ Customer = Customer
 
 class Cart(TimeStampedModel):
     """Model representing a shopping cart."""
-    customer = models.ForeignKey(
+    customer = models.OneToOneField(
         Customer,
         on_delete=models.CASCADE,
-        related_name='carts'
+        related_name='cart',
+        null=True,
+        blank=True
+    )
+    session = models.CharField(max_length=40, null=True, blank=True)
+    _total_items = models.IntegerField(default=0, db_column='total_items')
+    _subtotal = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        db_column='subtotal'
+    )
+    _tax = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        db_column='tax'
     )
     completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
@@ -26,56 +42,63 @@ class Cart(TimeStampedModel):
 
     @property
     def total_items(self):
-        return sum(item.quantity for item in self.items.all())
+        return self._total_items
 
     @property
     def subtotal(self):
-        return sum(item.total_price for item in self.items.all())
+        return self._subtotal
 
     @property
     def tax(self):
-        return Decimal('0.10') * self.subtotal  # 10% tax
+        return self._tax
 
     @property
     def total(self):
         return self.subtotal + self.tax
 
-    def add_item(self, product, quantity=1):
-        """Add a product to cart or update its quantity if it already exists."""
+    def add_item(self, product: Product, quantity: int = 1) -> 'CartItem':
+        """Add a product to cart or update if exists."""
         cart_item, created = self.items.get_or_create(
             product=product,
-            defaults={'quantity': quantity}
+            defaults={
+                'quantity': quantity,
+                'unit_price': product.price
+            }
         )
+        
         if not created:
             cart_item.quantity += quantity
             cart_item.save()
+            
+        self.update_totals()
         return cart_item
 
-    def update_item(self, product, quantity):
-        """Update the quantity of a product in cart."""
-        try:
-            cart_item = self.items.get(product=product)
-            if quantity > 0:
-                cart_item.quantity = quantity
-                cart_item.save()
-            else:
-                cart_item.delete()
-            return cart_item
-        except CartItem.DoesNotExist:
-            return None
-
-    def remove_item(self, product):
+    def remove_item(self, product: Product) -> None:
         """Remove a product from cart."""
-        try:
-            cart_item = self.items.get(product=product)
-            cart_item.delete()
-            return True
-        except CartItem.DoesNotExist:
-            return False
+        self.items.filter(product=product).delete()
+        self.update_totals()
 
-    def clear(self):
+    def update_item(self, product: Product, quantity: int) -> 'CartItem':
+        """Update quantity of an item in cart."""
+        cart_item = self.items.filter(product=product).first()
+        if cart_item:
+            cart_item.quantity = quantity
+            cart_item.save()
+            self.update_totals()
+            return cart_item
+        raise CartNotFoundError(f"Product {product.id} not found in cart")
+
+    def clear(self) -> None:
         """Remove all items from cart."""
         self.items.all().delete()
+        self.update_totals()
+
+    def update_totals(self) -> None:
+        """Update cart totals."""
+        self._total_items = sum(item.quantity for item in self.items.all())
+        self._subtotal = sum(item.total_price for item in self.items.all())
+        self._tax = Decimal('0.10') * self._subtotal  # 10% tax
+        self.save()
 
 class CartItem(TimeStampedModel):
     """Model representing an item in a shopping cart."""
@@ -93,6 +116,11 @@ class CartItem(TimeStampedModel):
         default=1,
         validators=[MinValueValidator(1)]
     )
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
 
     class Meta:
         verbose_name = 'Cart Item'
@@ -104,10 +132,6 @@ class CartItem(TimeStampedModel):
         return f"{self.quantity}x {self.product.name} in Cart {self.cart.id}"
 
     @property
-    def unit_price(self):
-        return self.product.price
-
-    @property
     def total_price(self):
         return self.quantity * self.unit_price
 
@@ -116,3 +140,6 @@ class CartItem(TimeStampedModel):
             self.delete()
         else:
             super().save(*args, **kwargs)
+
+class CartNotFoundError(Exception):
+    pass

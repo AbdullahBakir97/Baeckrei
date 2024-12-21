@@ -1,187 +1,135 @@
 <template>
-  <div
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    @click.self="$emit('close')"
-  >
-    <div class="bg-white rounded-lg max-w-3xl w-full mx-4 overflow-hidden">
-      <!-- Close Button -->
-      <button
-        @click="$emit('close')"
-        class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-      >
-        <i class="fas fa-times text-xl"></i>
-      </button>
+  <Transition name="modal">
+    <div v-if="show" 
+         class="fixed inset-0 flex items-center justify-center z-50"
+         @mouseenter="keepOpen"
+         @mouseleave="startCloseTimer">
+      <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+      
+      <div class="relative bg-gray-900/90 rounded-xl overflow-hidden w-[90%] max-w-2xl
+                  border border-white/10 shadow-2xl backdrop-blur-md
+                  transform transition-all duration-300">
+        <!-- Close Button -->
+        <button @click="$emit('close')" 
+                class="absolute top-4 right-4 text-gray-400 hover:text-white
+                       transition-colors duration-200">
+          <i class="fas fa-times text-xl"></i>
+        </button>
 
-      <div class="flex flex-col md:flex-row">
-        <!-- Product Image -->
-        <div class="md:w-1/2">
-          <div class="relative pb-[100%]">
-            <img
-              :src="product.image"
-              :alt="product.name"
-              class="absolute inset-0 w-full h-full object-cover"
-            >
-          </div>
-        </div>
-
-        <!-- Product Details -->
-        <div class="p-6 md:w-1/2">
-          <div class="mb-6">
-            <h2 class="text-2xl font-bold mb-2">{{ product.name }}</h2>
-            <p class="text-gray-600">{{ product.description }}</p>
+        <div class="flex flex-col md:flex-row">
+          <!-- Product Image -->
+          <div class="relative w-full md:w-1/2 aspect-square">
+            <img :src="product.image" 
+                 :alt="product.name"
+                 class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent"></div>
           </div>
 
-          <!-- Price -->
-          <div class="flex items-center gap-2 mb-4">
-            <span class="text-2xl font-bold text-gray-900">
-              ${{ formatPrice(product.price) }}
-            </span>
-            <span
-              v-if="product.oldPrice"
-              class="text-lg text-gray-500 line-through"
-            >
-              ${{ formatPrice(product.oldPrice) }}
-            </span>
-          </div>
+          <!-- Product Details -->
+          <div class="w-full md:w-1/2 p-6 flex flex-col">
+            <h2 class="text-2xl font-bold mb-2 bg-gradient-to-r from-red-400 to-red-600 
+                       bg-clip-text text-transparent">
+              {{ product.name }}
+            </h2>
 
-          <!-- Stock Status -->
-          <div class="mb-4">
-            <span
-              :class="{
-                'text-green-600': product.available,
-                'text-red-600': !product.available
-              }"
-            >
-              {{ product.available ? 'In Stock' : 'Out of Stock' }}
-            </span>
-          </div>
-
-          <!-- Dietary Information -->
-          <div class="mb-6">
-            <h3 class="font-semibold mb-2">Dietary Information</h3>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-if="product.isVegan"
-                class="badge badge-green"
-              >
-                <i class="fas fa-leaf mr-1"></i>
-                Vegan
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-2xl font-bold text-red-500">
+                ${{ formatPrice(product.price) }}
               </span>
-              <span
-                v-if="product.isVegetarian"
-                class="badge badge-green"
-              >
-                <i class="fas fa-seedling mr-1"></i>
-                Vegetarian
-              </span>
-              <span
-                v-if="product.isGlutenFree"
-                class="badge badge-yellow"
-              >
-                <i class="fas fa-wheat-alt mr-1"></i>
-                Gluten Free
+              <span :class="[
+                'px-2 py-1 rounded-full text-sm font-medium',
+                product.stock > 5 ? 'bg-green-500/20 text-green-300' :
+                product.stock > 0 ? 'bg-yellow-500/20 text-yellow-300' :
+                'bg-red-500/20 text-red-300'
+              ]">
+                {{ product.stock > 5 ? 'In Stock' :
+                   product.stock > 0 ? `Only ${product.stock} left` :
+                   'Out of Stock' }}
               </span>
             </div>
-          </div>
 
-          <!-- Ingredients -->
-          <div class="mb-6">
-            <h3 class="font-semibold mb-2">Ingredients</h3>
-            <ul class="list-disc list-inside text-gray-600">
-              <li v-for="ingredient in product.ingredients" :key="ingredient.id">
-                {{ ingredient.name }}
-              </li>
-            </ul>
-          </div>
+            <p class="text-gray-300 mb-4">{{ product.description }}</p>
 
-          <!-- Allergens -->
-          <div class="mb-6">
-            <h3 class="font-semibold mb-2">Allergens</h3>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="allergen in product.allergens"
-                :key="allergen.id"
-                class="badge badge-red"
-              >
-                {{ allergen.name }}
-              </span>
+            <!-- Product Features -->
+            <div class="space-y-2 mb-6">
+              <div v-if="product.isVegan" 
+                   class="flex items-center gap-2 text-green-300">
+                <i class="fas fa-leaf"></i>
+                <span>Vegan Friendly</span>
+              </div>
+              <div v-if="product.isGlutenFree" 
+                   class="flex items-center gap-2 text-yellow-300">
+                <i class="fas fa-wheat-alt"></i>
+                <span>Gluten Free</span>
+              </div>
             </div>
-          </div>
 
-          <!-- Add to Cart -->
-          <div class="flex items-center gap-4">
-            <div class="flex items-center border rounded-lg">
-              <button
-                @click="decrementQuantity"
-                class="px-3 py-2 hover:bg-gray-100"
-                :disabled="quantity <= 1"
-              >
-                <i class="fas fa-minus"></i>
-              </button>
-              <input
-                type="number"
-                v-model.number="quantity"
-                min="1"
-                class="w-16 text-center border-x py-2"
-              >
-              <button
-                @click="incrementQuantity"
-                class="px-3 py-2 hover:bg-gray-100"
-              >
-                <i class="fas fa-plus"></i>
-              </button>
+            <!-- Add to Cart Section -->
+            <div class="mt-auto">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="flex items-center gap-2">
+                  <button @click="decrementQuantity"
+                          :disabled="quantity <= 1"
+                          class="p-2 rounded-lg bg-white/10 hover:bg-white/20 
+                                 transition-colors duration-200
+                                 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                  <span class="w-8 text-center">{{ quantity }}</span>
+                  <button @click="incrementQuantity"
+                          :disabled="quantity >= product.stock"
+                          class="p-2 rounded-lg bg-white/10 hover:bg-white/20 
+                                 transition-colors duration-200
+                                 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+                <button @click="addToCart"
+                        :disabled="!product.available"
+                        class="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r 
+                               from-red-500 to-red-600 text-white font-medium
+                               hover:from-red-600 hover:to-red-700
+                               disabled:opacity-50 disabled:cursor-not-allowed
+                               transition-all duration-200">
+                  Add to Cart
+                </button>
+              </div>
             </div>
-            <button
-              @click="addToCart"
-              :disabled="!product.available || loading"
-              class="btn btn-primary flex-grow"
-              :class="{ 'opacity-50 cursor-not-allowed': !product.available || loading }"
-            >
-              <i class="fas fa-shopping-cart mr-2"></i>
-              {{ loading ? 'Adding...' : 'Add to Cart' }}
-            </button>
-          </div>
-
-          <!-- View Full Details Link -->
-          <div class="mt-4 text-center">
-            <router-link
-              :to="{ name: 'product-detail', params: { id: product.id }}"
-              class="text-primary-600 hover:text-primary-700"
-            >
-              View Full Details
-              <i class="fas fa-arrow-right ml-1"></i>
-            </router-link>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useCartStore } from '@/stores/cartStore'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   product: {
     type: Object,
     required: true
+  },
+  show: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'add-to-cart'])
 
-const cartStore = useCartStore()
 const quantity = ref(1)
-const loading = ref(false)
+let closeTimer = null
 
-// Methods
 const formatPrice = (price) => {
   return price.toFixed(2)
 }
 
 const incrementQuantity = () => {
-  quantity.value++
+  if (quantity.value < props.product.stock) {
+    quantity.value++
+  }
 }
 
 const decrementQuantity = () => {
@@ -190,48 +138,61 @@ const decrementQuantity = () => {
   }
 }
 
-const addToCart = async () => {
-  if (!props.product.available) return
+const addToCart = () => {
+  emit('add-to-cart', {
+    product: props.product,
+    quantity: quantity.value
+  })
+  emit('close')
+}
 
-  try {
-    loading.value = true
-    await cartStore.addToCart(props.product, quantity.value)
-    // You could add a toast notification here
-    emit('close')
-  } catch (error) {
-    console.error('Failed to add to cart:', error)
-    // Handle error (show error toast, etc.)
-  } finally {
-    loading.value = false
+const keepOpen = () => {
+  if (closeTimer) {
+    clearTimeout(closeTimer)
+    closeTimer = null
   }
 }
+
+const startCloseTimer = () => {
+  closeTimer = setTimeout(() => {
+    emit('close')
+  }, 300)
+}
+
+onUnmounted(() => {
+  if (closeTimer) {
+    clearTimeout(closeTimer)
+  }
+})
 </script>
 
 <style scoped>
-.badge {
-  @apply px-2 py-1 rounded-full text-sm font-medium;
-}
-
-.badge-green {
-  @apply bg-green-100 text-green-800;
-}
-
-.badge-yellow {
-  @apply bg-yellow-100 text-yellow-800;
-}
-
-.badge-red {
-  @apply bg-red-100 text-red-800;
-}
-
-/* Add transition for modal */
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease-out;
 }
 
-.modal-enter-from,
+.modal-enter-from {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
 .modal-leave-to {
   opacity: 0;
+  transform: scale(0.95);
+}
+
+/* Gradient Border Animation */
+@keyframes borderGlow {
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+}
+
+.modal-content {
+  animation: borderGlow 2s infinite;
 }
 </style>

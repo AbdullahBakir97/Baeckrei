@@ -22,12 +22,13 @@ export const useProductStore = defineStore('products', {
       
       try {
         console.log('Fetching products with filters:', filters)
-        const response = await axios.get('/api/products/products/', {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/products/products/`, {
           params: {
             page: this.currentPage,
             page_size: this.pageSize,
             ...filters
-          }
+          },
+          withCredentials: true
         })
         
         console.log('API Response:', response.data)

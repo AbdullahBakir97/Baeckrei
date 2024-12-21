@@ -24,10 +24,16 @@ class AddItemOperation:
         if quantity <= 0:
             raise InvalidQuantityError(quantity=quantity)
         
-        if product.stock < quantity:
+        # Check if adding this quantity would exceed available stock
+        existing_item = cart.items.filter(product=product).first()
+        total_quantity = quantity
+        if existing_item:
+            total_quantity += existing_item.quantity
+            
+        if product.stock < total_quantity:
             raise InsufficientStockError(
                 item=product.name,
-                required_quantity=quantity,
+                required_quantity=total_quantity,
                 available_stock=product.stock
             )
         
@@ -35,19 +41,8 @@ class AddItemOperation:
             cart_item = cart.add_item(product, quantity)
             product.stock -= quantity
             product.save()
-            logger.info(f"Added {quantity} x {product.name} to cart {cart.id}")
+            logger.info(f"Added/Updated {quantity} x {product.name} to cart {cart.id}")
             return cart_item
-
-class RemoveItemOperation:
-    """Strategy for removing items from cart."""
-    def execute(self, cart: Cart, product: Product, quantity: None = None) -> None:
-        cart_item = cart.items.filter(product=product).first()
-        if cart_item:
-            with transaction.atomic():
-                product.stock += cart_item.quantity
-                product.save()
-                cart.remove_item(product)
-                logger.info(f"Removed {cart_item.quantity} x {product.name} from cart {cart.id}")
 
 class UpdateQuantityOperation:
     """Strategy for updating item quantities."""
@@ -60,19 +55,37 @@ class UpdateQuantityOperation:
             raise CartNotFoundError(f"Product {product.id} not found in cart")
         
         quantity_diff = quantity - current_item.quantity
-        if quantity_diff > 0 and product.stock < quantity_diff:
-            raise InsufficientStockError(
-                item=product.name,
-                required_quantity=quantity_diff,
-                available_stock=product.stock
-            )
         
         with transaction.atomic():
-            product.stock -= quantity_diff
+            if quantity_diff > 0:
+                # Check if we have enough stock for the increase
+                if product.stock < quantity_diff:
+                    raise InsufficientStockError(
+                        item=product.name,
+                        required_quantity=quantity_diff,
+                        available_stock=product.stock
+                    )
+                product.stock -= quantity_diff
+            else:
+                # Return stock for decreased quantity
+                product.stock += abs(quantity_diff)
+            
             product.save()
             cart_item = cart.update_item(product, quantity)
             logger.info(f"Updated quantity to {quantity} for {product.name} in cart {cart.id}")
             return cart_item
+
+class RemoveItemOperation:
+    """Strategy for removing items from cart."""
+    def execute(self, cart: Cart, product: Product, quantity: None = None) -> None:
+        cart_item = cart.items.filter(product=product).first()
+        if cart_item:
+            with transaction.atomic():
+                # Return the stock
+                product.stock += cart_item.quantity
+                product.save()
+                cart.remove_item(product)
+                logger.info(f"Removed {cart_item.quantity} x {product.name} from cart {cart.id}")
 
 class ClearCartOperation:
     """Strategy for clearing the cart."""
