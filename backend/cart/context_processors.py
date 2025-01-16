@@ -1,7 +1,16 @@
 from django.db import connection
+import logging
+
+logger = logging.getLogger(__name__)
 
 def cart_context(request):
-    """Add cart information to the template context."""
+    """Add cart information to the template context.
+    
+    Returns minimal cart data for template rendering.
+    Checks for table/column existence to handle migrations gracefully.
+    """
+    default_response = {'cart_total': 0, 'cart_items_count': 0}
+    
     try:
         # Check if the cart_cartitem table exists and has the unit_price column
         with connection.cursor() as cursor:
@@ -11,26 +20,32 @@ def cart_context(request):
                 WHERE type='table' AND name='cart_cartitem'
             """)
             table_exists = cursor.fetchone()[0] > 0
+            
+            if not table_exists:
+                logger.debug("Cart table does not exist yet")
+                return default_response
 
-            if table_exists:
-                cursor.execute("""
-                    SELECT COUNT(*) 
-                    FROM pragma_table_info('cart_cartitem') 
-                    WHERE name='unit_price'
-                """)
-                column_exists = cursor.fetchone()[0] > 0
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM pragma_table_info('cart_cartitem') 
+                WHERE name='unit_price'
+            """)
+            column_exists = cursor.fetchone()[0] > 0
 
-                if not column_exists:
-                    return {'cart_total': 0, 'cart_items_count': 0}
+            if not column_exists:
+                logger.debug("Unit price column does not exist yet")
+                return default_response
 
-        if hasattr(request, 'cart'):
+        if hasattr(request, 'cart') and request.cart:
             cart = request.cart
-            return {
-                'cart_total': cart.total if cart else 0,
-                'cart_items_count': cart.total_items if cart else 0,
+            context = {
+                'cart_total': str(cart.total),  # Convert Decimal to string for JSON
+                'cart_items_count': cart.total_items
             }
-    except Exception:
-        # During migrations or if there are any DB issues, return empty context
-        pass
+            logger.debug(f"Cart context for cart {cart.id}: {context}")
+            return context
+            
+    except Exception as e:
+        logger.error(f"Error in cart context processor: {str(e)}")
     
-    return {'cart_total': 0, 'cart_items_count': 0}
+    return default_response

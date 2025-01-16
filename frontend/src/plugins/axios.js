@@ -18,12 +18,35 @@ function getCookie(name) {
 
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:8000/',
-    timeout: 5000,
+    timeout: 15000, // Increased timeout
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     },
-    withCredentials: true
+    withCredentials: true,
+    // Add retry configuration
+    retry: 3,
+    retryDelay: 1000
+});
+
+// Add retry interceptor
+axiosInstance.interceptors.response.use(null, async (error) => {
+    const { config } = error;
+    if (!config || !config.retry) {
+        return Promise.reject(error);
+    }
+
+    config.retryCount = config.retryCount || 0;
+
+    if (config.retryCount >= config.retry) {
+        return Promise.reject(error);
+    }
+
+    config.retryCount += 1;
+    const delayRetry = new Promise(resolve => setTimeout(resolve, config.retryDelay));
+    await delayRetry;
+    
+    return axiosInstance(config);
 });
 
 // Request interceptor
@@ -43,26 +66,6 @@ axiosInstance.interceptors.request.use(
         return config;
     },
     (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// Response interceptor
-axiosInstance.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        if (error.response?.status === 403 && error.response?.data?.detail?.includes('CSRF')) {
-            // Retry the request once if CSRF token is invalid
-            const originalRequest = error.config;
-            if (!originalRequest._retry) {
-                originalRequest._retry = true;
-                const csrftoken = getCookie('csrftoken');
-                if (csrftoken) {
-                    originalRequest.headers['X-CSRFToken'] = csrftoken;
-                }
-                return axiosInstance(originalRequest);
-            }
-        }
         return Promise.reject(error);
     }
 );

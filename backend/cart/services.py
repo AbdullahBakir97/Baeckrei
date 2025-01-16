@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Protocol, Dict, Any, Optional
+from typing import Protocol, Dict, Any, Optional, Callable
 from django.db import transaction
 from .models import Cart, CartItem
 from products.models import Product
@@ -15,12 +15,13 @@ logger = logging.getLogger(__name__)
 
 class CartOperation(Protocol):
     """Protocol defining cart operations interface."""
-    def execute(self, cart: Cart, product: Optional[Product] = None, quantity: Optional[int] = None) -> Any:
+    def execute(self, cart: Cart, product: Optional[Product] = None, quantity: Optional[int] = None) -> None:
+        """Execute cart operation."""
         pass
 
 class AddItemOperation:
     """Strategy for adding items to cart."""
-    def execute(self, cart: Cart, product: Product, quantity: int) -> CartItem:
+    def execute(self, cart: Cart, product: Product, quantity: int) -> None:
         if quantity <= 0:
             raise InvalidQuantityError(quantity=quantity)
         
@@ -42,11 +43,10 @@ class AddItemOperation:
             product.stock -= quantity
             product.save()
             logger.info(f"Added/Updated {quantity} x {product.name} to cart {cart.id}")
-            return cart_item
 
 class UpdateQuantityOperation:
     """Strategy for updating item quantities."""
-    def execute(self, cart: Cart, product: Product, quantity: int) -> CartItem:
+    def execute(self, cart: Cart, product: Product, quantity: int) -> None:
         if quantity <= 0:
             raise InvalidQuantityError(quantity=quantity)
         
@@ -73,7 +73,6 @@ class UpdateQuantityOperation:
             product.save()
             cart_item = cart.update_item(product, quantity)
             logger.info(f"Updated quantity to {quantity} for {product.name} in cart {cart.id}")
-            return cart_item
 
 class RemoveItemOperation:
     """Strategy for removing items from cart."""
@@ -109,20 +108,20 @@ class CartService:
             if self.cart.completed:
                 raise CartAlreadyCheckedOutError(f"Cart {cart_id} is no longer active.")
             
-            # Initialize operations mapping
+            # Initialize operations mapping with direct operation instances
+            # No lambdas needed here as operations handle their own logic
             self._operations: Dict[str, CartOperation] = {
-                'add': AddItemOperation(),
-                'remove': RemoveItemOperation(),
-                'update': UpdateQuantityOperation(),
-                'clear': ClearCartOperation()
+                'add': AddItemOperation(),  # Complex business logic, needs full operation
+                'remove': RemoveItemOperation(),  # Handles stock return logic
+                'update': UpdateQuantityOperation(),  # Complex quantity validation
+                'clear': ClearCartOperation()  # Handles multiple item removal
             }
             logger.info(f"CartService initialized for cart {cart_id}")
         except Cart.DoesNotExist:
             raise CartNotFoundError(cart_id=cart_id)
 
-    @transaction.atomic
     def execute_operation(self, operation: str, product_id: Optional[int] = None, 
-                        quantity: Optional[int] = None) -> Any:
+                        quantity: Optional[int] = None) -> Dict[str, Any]:
         """Execute a cart operation using the strategy pattern."""
         try:
             operation_handler = self._operations.get(operation)
@@ -130,37 +129,85 @@ class CartService:
                 logger.error(f"Invalid cart operation attempted: {operation}")
                 raise ValueError(f"Invalid operation: {operation}")
 
+            logger.info(f"Executing cart operation: {operation} for cart {self.cart.id}")
+            
+            # Get product if needed
             product = None
             if product_id:
                 try:
                     product = Product.objects.get(id=product_id)
                     logger.info(f"Found product: {product.name} (ID: {product.id})")
                 except Product.DoesNotExist:
-                    logger.error(f"Product not found during cart operation: {product_id}")
+                    logger.error(f"Product not found: {product_id}")
                     raise ValueError(f"Product with ID {product_id} not found")
 
-            logger.info(f"Executing cart operation: {operation} for cart {self.cart.id}")
-            result = operation_handler.execute(self.cart, product, quantity)
-            logger.info(f"Successfully completed cart operation: {operation}")
-            return result
+            # Execute operation and return formatted data
+            operation_handler.execute(self.cart, product, quantity)
+            return self._format_cart_data(True)
+
         except Exception as e:
             logger.exception(f"Error during cart operation {operation}: {str(e)}")
             raise
 
-    # Convenience methods that use the strategy pattern internally
-    def add_item(self, product_id: int, quantity: int) -> CartItem:
+    def _format_cart_data(self, include_details: bool = True) -> Dict[str, Any]:
+        """Format cart data for frontend consumption with configurable detail level."""
+        items = self.cart.items.all()
+        logger.info(f"Formatting cart data for cart {self.cart.id} with {items.count()} items")
+        
+        # Basic cart data always included
+        response_data = {
+            'id': self.cart.id,
+            'total': str(self.cart.total),
+            'total_items': self.cart.total_items,
+        }
+        
+        # Add detailed information if requested
+        if include_details:
+            formatted_items = []
+            for item in items:
+                formatted_item = {
+                    'id': item.id,
+                    'product': {
+                        'id': item.product.id,
+                        'name': item.product.name,
+                        'price': str(item.product.price),
+                        'stock': item.product.stock
+                    },
+                    'quantity': item.quantity,
+                    'unit_price': str(item.unit_price),
+                    'total_price': str(item.total_price)
+                }
+                
+                # Add image only if it exists
+                if item.product.image:
+                    formatted_item['product']['image'] = item.product.image.url
+                
+                formatted_items.append(formatted_item)
+                logger.debug(f"Formatted cart item: {formatted_item}")
+            
+            # Add detailed fields
+            response_data.update({
+                'items': formatted_items,
+                'subtotal': str(self.cart.subtotal),
+                'tax': str(self.cart.tax)
+            })
+        
+        logger.info(f"Cart data formatted: {response_data}")
+        return response_data
+
+    def add_item(self, product_id: int, quantity: int) -> Dict[str, Any]:
         """Add a product to the cart."""
         return self.execute_operation('add', product_id, quantity)
 
-    def remove_item(self, product_id: int) -> None:
+    def remove_item(self, product_id: int) -> Dict[str, Any]:
         """Remove an item from the cart."""
         return self.execute_operation('remove', product_id)
 
-    def update_quantity(self, product_id: int, quantity: int) -> CartItem:
+    def update_quantity(self, product_id: int, quantity: int) -> Dict[str, Any]:
         """Update the quantity of a specific item."""
         return self.execute_operation('update', product_id, quantity)
 
-    def clear_cart(self) -> None:
+    def clear_cart(self) -> Dict[str, Any]:
         """Clear all items from the cart."""
         return self.execute_operation('clear')
 
@@ -173,3 +220,7 @@ class CartService:
     def item_count(self) -> int:
         """Get the total quantity of items in the cart."""
         return self.cart.total_items
+
+    def get_cart_data(self, include_details: bool = True) -> Dict[str, Any]:
+        """Get formatted cart data."""
+        return self._format_cart_data(include_details)

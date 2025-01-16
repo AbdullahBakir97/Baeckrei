@@ -7,11 +7,76 @@ from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer
 from products.models import Product
 from .controllers import CartController
+from .exceptions import (
+    CartNotFoundError,
+    InvalidQuantityError,
+    InsufficientStockError,
+    CartAlreadyCheckedOutError,
+    EmptyCartError
+)
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 import logging
 import json
+from functools import wraps
 
 logger = logging.getLogger(__name__)
+
+def handle_cart_action(action_name: str):
+    """Decorator for handling cart actions with consistent error handling and logging."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(viewset, request, *args, **kwargs):
+            try:
+                logger.info(f"Executing cart action: {action_name}")
+                logger.info(f"Request data: {request.data}")
+                
+                result = func(viewset, request, *args, **kwargs)
+                
+                if isinstance(result, tuple):
+                    response_data, extra_logs = result
+                    for log in extra_logs:
+                        logger.info(log)
+                else:
+                    response_data = result
+                
+                if isinstance(response_data, (Response,)):
+                    return response_data
+                    
+                logger.info(f"Cart action {action_name} completed successfully")
+                return Response(response_data)
+                
+            except (InvalidQuantityError, InsufficientStockError) as e:
+                logger.warning(f"Validation error in {action_name}: {str(e)}")
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            except CartNotFoundError as e:
+                logger.error(f"Cart not found in {action_name}: {str(e)}")
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except CartAlreadyCheckedOutError as e:
+                logger.error(f"Cart already checked out in {action_name}: {str(e)}")
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            except ValueError as e:
+                logger.warning(f"Invalid value in {action_name}: {str(e)}")
+                return Response(
+                    {'error': 'Invalid value provided'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            except Exception as e:
+                logger.exception(f"Unexpected error in {action_name}: {str(e)}")
+                return Response(
+                    {'error': 'An unexpected error occurred'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        return wrapper
+    return decorator
 
 class CartViewSet(viewsets.ModelViewSet):
     """ViewSet for managing shopping carts."""
@@ -31,22 +96,12 @@ class CartViewSet(viewsets.ModelViewSet):
         responses={200: CartSerializer}
     )
     @action(detail=False, methods=['get'])
+    @handle_cart_action("view_cart")
     def current(self, request):
         """Get the current cart."""
-        try:
-            logger.info(f"Getting current cart for customer: {request.customer.id}")
-            controller = self.get_controller()
-            response = controller.view_cart()
-            logger.info(f"Current cart response: {response.content}")
-            data = json.loads(response.content)
-            logger.info(f"Parsed cart data: {data}")
-            return Response(data)
-        except Exception as e:
-            logger.error(f"Error getting current cart: {str(e)}")
-            return Response(
-                {'error': 'Error retrieving cart'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        controller = self.get_controller()
+        response = controller.view_cart()
+        return json.loads(response.content)
 
     @extend_schema(
         description="Add an item to the cart",
@@ -61,41 +116,18 @@ class CartViewSet(viewsets.ModelViewSet):
         responses={200: CartSerializer}
     )
     @action(detail=False, methods=['post'])
+    @handle_cart_action("add_item")
     def add_item(self, request):
         """Add an item to the cart."""
-        try:
-            logger.info(f"Adding item to cart. Request data: {request.data}")
-            controller = self.get_controller()
-            product_id = request.data.get('product_id')
-            quantity = int(request.data.get('quantity', 1))
+        product_id = request.data.get('product_id')
+        quantity = int(request.data.get('quantity', 1))
+        
+        if quantity <= 0:
+            raise InvalidQuantityError(quantity)
             
-            if quantity <= 0:
-                return Response(
-                    {'error': 'Quantity must be greater than 0'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            logger.info(f"Adding product {product_id} with quantity {quantity}")
-            response = controller.add_item(product_id, quantity)
-            logger.info(f"Add item response: {response.content}")
-            data = json.loads(response.content)
-            return Response(data)
-        except ValueError as e:
-            return Response(
-                {'error': 'Invalid quantity value'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except InsufficientStockError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except Exception as e:
-            logger.error(f"Error adding item to cart: {str(e)}")
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        controller = self.get_controller()
+        response = controller.add_item(product_id, quantity)
+        return json.loads(response.content)
 
     @extend_schema(
         description="Update cart item quantity",
@@ -110,54 +142,22 @@ class CartViewSet(viewsets.ModelViewSet):
         responses={200: CartSerializer}
     )
     @action(detail=False, methods=['post'])
+    @handle_cart_action("update_item")
     def update_item(self, request):
         """Update the quantity of an item in the cart."""
-        try:
-            logger.info(f"Updating item in cart. Request data: {request.data}")
-            controller = self.get_controller()
-            product_id = request.data.get('product_id')
-            quantity = request.data.get('quantity')
+        product_id = request.data.get('product_id')
+        quantity = request.data.get('quantity')
+        
+        if not product_id or not quantity:
+            raise ValueError('Both product_id and quantity are required')
+        
+        quantity = int(quantity)
+        if quantity <= 0:
+            raise InvalidQuantityError(quantity)
             
-            if not product_id or not quantity:
-                return Response(
-                    {'error': 'Both product_id and quantity are required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            try:
-                quantity = int(quantity)
-                if quantity <= 0:
-                    return Response(
-                        {'error': 'Quantity must be greater than 0'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            except ValueError:
-                return Response(
-                    {'error': 'Invalid quantity value'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            logger.info(f"Updating product {product_id} with quantity {quantity}")
-            response = controller.update_quantity(product_id, quantity)
-            logger.info(f"Update item response: {response.content}")
-            data = json.loads(response.content)
-            return Response(data)
-        except InsufficientStockError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except CartNotFoundError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            logger.error(f"Error updating cart item: {str(e)}")
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        controller = self.get_controller()
+        response = controller.update_quantity(product_id, quantity)
+        return json.loads(response.content)
 
     @extend_schema(
         description="Remove an item from the cart",
@@ -171,54 +171,25 @@ class CartViewSet(viewsets.ModelViewSet):
         responses={200: CartSerializer}
     )
     @action(detail=False, methods=['post'])
+    @handle_cart_action("remove_item")
     def remove_item(self, request):
         """Remove an item from the cart."""
-        try:
-            logger.info(f"Removing item from cart. Request data: {request.data}")
-            controller = self.get_controller()
-            product_id = request.data.get('product_id')
+        product_id = request.data.get('product_id')
+        if not product_id:
+            raise ValueError('product_id is required')
             
-            if not product_id:
-                return Response(
-                    {'error': 'product_id is required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            logger.info(f"Removing product {product_id}")
-            response = controller.remove_item(product_id)
-            logger.info(f"Remove item response: {response.content}")
-            data = json.loads(response.content)
-            return Response(data)
-        except CartNotFoundError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            logger.error(f"Error removing item from cart: {str(e)}")
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        controller = self.get_controller()
+        response = controller.remove_item(product_id)
+        return json.loads(response.content)
 
     @extend_schema(
         description="Clear the cart",
         responses={200: CartSerializer}
     )
     @action(detail=False, methods=['post'])
+    @handle_cart_action("clear_cart")
     def clear(self, request):
         """Clear all items from the cart."""
-        try:
-            logger.info(f"Clearing cart for customer: {request.customer.id}")
-            controller = self.get_controller()
-            response = controller.clear_cart()
-            logger.info(f"Clear cart response: {response.content}")
-            data = json.loads(response.content)
-            logger.info(f"Parsed response data: {data}")
-            return Response(data)
-        except Exception as e:
-            logger.error(f"Error clearing cart: {str(e)}")
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        controller = self.get_controller()
+        response = controller.clear_cart()
+        return json.loads(response.content)

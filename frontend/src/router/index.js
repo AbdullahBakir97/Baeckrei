@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ProductList from '../components/products/ProductList.vue'
 import ProductDetail from '../components/products/ProductDetail.vue'
-import Cart from '../components/cart/Cart.vue'
+import Cart from '../views/CartView.vue'
 import About from '../components/pages/About.vue'
 import Contact from '../components/pages/Contact.vue'
 import Profile from '../components/account/Profile.vue'
@@ -37,6 +37,34 @@ const routes = [
     meta: { title: 'Category Products' }
   },
   {
+    path: '/breads',
+    name: 'breads',
+    component: ProductList,
+    props: { category: 'breads' },
+    meta: { title: 'Breads' }
+  },
+  {
+    path: '/pastries',
+    name: 'pastries',
+    component: ProductList,
+    props: { category: 'pastries' },
+    meta: { title: 'Pastries' }
+  },
+  {
+    path: '/cakes',
+    name: 'cakes',
+    component: ProductList,
+    props: { category: 'cakes' },
+    meta: { title: 'Cakes' }
+  },
+  {
+    path: '/seasonal',
+    name: 'seasonal',
+    component: ProductList,
+    props: { category: 'seasonal' },
+    meta: { title: 'Seasonal Items' }
+  },
+  {
     path: '/cart',
     name: 'cart',
     component: Cart,
@@ -53,6 +81,30 @@ const routes = [
     name: 'contact',
     component: Contact,
     meta: { title: 'Contact Us' }
+  },
+  {
+    path: '/blog',
+    name: 'blog',
+    component: () => import('../components/pages/Blog.vue'),
+    meta: { title: 'Blog' }
+  },
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('../components/pages/Privacy.vue'),
+    meta: { title: 'Privacy Policy' }
+  },
+  {
+    path: '/terms',
+    name: 'terms',
+    component: () => import('../components/pages/Terms.vue'),
+    meta: { title: 'Terms of Service' }
+  },
+  {
+    path: '/cookies',
+    name: 'cookies',
+    component: () => import('../components/pages/Cookies.vue'),
+    meta: { title: 'Cookie Policy' }
   },
   {
     path: '/profile',
