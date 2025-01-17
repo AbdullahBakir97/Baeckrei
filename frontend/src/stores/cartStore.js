@@ -69,7 +69,19 @@ export const useCartStore = defineStore('cart', () => {
       }, {
         withCredentials: true
       })
-      state.value.items = response.data.items || []
+      
+      // Update entire cart state
+      state.value = {
+        ...state.value,
+        items: response.data.items || [],
+        subtotal: response.data.subtotal || '0.00',
+        tax: response.data.tax || '0.00',
+        total: response.data.total || '0.00',
+        total_items: response.data.total_items || 0,
+        loading: false,
+        error: null
+      }
+      return response.data
     } catch (error) {
       console.error('Error adding item to cart:', error)
       state.value.error = error.response?.data?.message || 'Error adding item to cart'
@@ -88,7 +100,19 @@ export const useCartStore = defineStore('cart', () => {
       }, {
         withCredentials: true
       })
-      state.value.items = response.data.items || []
+      
+      // Update entire cart state
+      state.value = {
+        ...state.value,
+        items: response.data.items || [],
+        subtotal: response.data.subtotal || '0.00',
+        tax: response.data.tax || '0.00',
+        total: response.data.total || '0.00',
+        total_items: response.data.total_items || 0,
+        loading: false,
+        error: null
+      }
+      return response.data
     } catch (error) {
       console.error('Error removing item from cart:', error)
       state.value.error = error.response?.data?.message || 'Error removing item from cart'

@@ -23,7 +23,9 @@
         @mouseenter="showQuickPreview = true"
         @mouseleave="showQuickPreview = false"
         class="quick-view-btn absolute top-2 left-2 p-2 rounded-full 
-               backdrop-blur-md bg-black/30 text-white hover:bg-black/50 
+               bg-[rgba(255,255,255,0.02)] backdrop-blur-[8px] text-white
+               hover:bg-[rgba(255,255,255,0.05)] border border-white/5
+               hover:border-white/20 hover:shadow-amber-500/10
                transition-all duration-200 z-10 opacity-0 group-hover:opacity-100"
       >
         <font-awesome-icon icon="fa-solid fa-eye" />
@@ -32,19 +34,21 @@
       <!-- Quick Preview Popup -->
       <Transition name="preview">
         <div v-if="showQuickPreview"
-             @mouseenter="showQuickPreview = true"
-             @mouseleave="showQuickPreview = false"
-             class="absolute inset-0 bg-gray-900/95 rounded-lg 
-                    shadow-xl border border-white/10 z-50">
-          <div class="p-4 h-full flex flex-col">
+            @mouseenter="showQuickPreview = true"
+            @mouseleave="showQuickPreview = false"
+            class="absolute top-0 left-0 right-0 bottom-0 w-full h-full 
+                   bg-[rgba(255,255,255,0.02)] backdrop-blur-[8px] rounded-lg 
+                   border border-white/5 hover:border-white/20 hover:shadow-amber-500/10 
+                   transition-all duration-300 z-50">
+          <div class="relative w-full h-full p-4 flex flex-col bg-black/60">
             <div class="flex-1">
-              <h3 class="text-lg font-bold mb-2 bg-gradient-to-r from-red-400 
-                         to-red-600 bg-clip-text text-transparent">
+              <h3 class="text-lg font-bold mb-2 bg-gradient-to-r from-amber-400 
+                        to-yellow-600 bg-clip-text text-transparent">
                 {{ product.name }}
               </h3>
               <div class="flex justify-between items-center mb-3">
-                <span class="text-xl font-bold text-red-500">
-                  ${{ formatPrice(product.price) }}
+                <span class="product-price">
+                  {{ formatPrice(product.price) }} €
                 </span>
                 <span :class="[
                   'text-sm px-2 py-1 rounded-full',
@@ -82,11 +86,11 @@
               </button>
               <button @click="addToCart"
                       :disabled="!product.available"
-                      class="flex-1 py-1.5 px-3 rounded-lg bg-gradient-to-r 
-                             from-red-500 to-red-600 text-white text-sm
-                             hover:from-red-600 hover:to-red-700
+                      class="flex-1 py-1.5 px-3 rounded-lg text-sm
+                             bg-transparent border border-amber-500/30
+                             hover:border-amber-500/80 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]
                              disabled:opacity-50 disabled:cursor-not-allowed">
-                Add to Cart
+                <span class="text-amber-400">Add to Cart</span>
               </button>
             </div>
           </div>
@@ -109,8 +113,13 @@
     </div>
     
     <div class="product-info" :style="{ color: textColor }">
-      <h3 class="product-name">{{ product.name }}</h3>
-      <p class="product-price">${{ formatPrice(product.price) }}</p>
+      <router-link 
+        :to="{ name: 'product-detail', params: { id: product.id }}" 
+        class="product-name hover:text-amber-400 transition-colors duration-200"
+      >
+        {{ product.name }}
+      </router-link>
+      <p class="product-price">{{ formatPrice(product.price) }} €</p>
       
       <!-- Cart Controls -->
       <div v-if="product.stock > 0">
@@ -219,6 +228,8 @@ const props = defineProps({
     default: '#ffffff'
   }
 })
+
+defineEmits(['addToCart'])
 
 const cartStore = useCartStore()
 const { state } = storeToRefs(cartStore)
@@ -350,48 +361,67 @@ onUnmounted(() => {
 
 <style scoped>
 .product-card {
-  @apply relative rounded-lg overflow-hidden transition-all duration-500;
+  @apply relative rounded-lg overflow-hidden;
   min-height: 400px;
   perspective: 2000px;
   transform-style: preserve-3d;
-  background: linear-gradient(
-    to bottom,
-    rgba(17, 17, 17, 0.95) 0%,
-    rgba(17, 17, 17, 0.85) 100%
-  );
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(239, 68, 68, 0.1);
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    0 0 20px rgba(239, 68, 68, 0.1);
+    0 0 20px rgba(245, 158, 11, 0.1);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, box-shadow, border-color;
 }
 
-.product-card::before {
+.product-card::before,
+.product-card::after {
   content: '';
   position: absolute;
   inset: 0;
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.product-card::before {
   background: 
-    linear-gradient(to bottom right, rgba(239, 68, 68, 0.2) 0%, transparent 30%),
-    linear-gradient(to top left, rgba(239, 68, 68, 0.2) 0%, transparent 30%);
+    linear-gradient(120deg, 
+      rgba(245, 158, 11, 0) 0%,
+      rgba(245, 158, 11, 0.2) 40%,
+      rgba(245, 158, 11, 0.2) 60%,
+      rgba(245, 158, 11, 0) 100%
+    );
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transform: translateX(-100%);
+}
+
+.product-card::after {
+  background: 
+    linear-gradient(to bottom right, rgba(245, 158, 11, 0.2) 0%, transparent 30%),
+    linear-gradient(to top left, rgba(245, 158, 11, 0.2) 0%, transparent 30%);
+  opacity: 0;
+  transition-delay: 0.2s;
 }
 
 .product-card:hover {
-  transform: translateY(-8px) rotateX(5deg) rotateY(-5deg);
+  background: rgba(255, 255, 255, 0.05) !important;
+  transform: translateY(-5px) scale(1.02) rotateX(2deg);
   box-shadow: 
-    20px 20px 60px rgba(0, 0, 0, 0.5),
-    -20px -20px 60px rgba(239, 68, 68, 0.05);
-  border-color: rgba(239, 68, 68, 0.3);
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 4px 8px rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 .product-card:hover::before {
   opacity: 1;
+  transform: translateX(100%);
 }
 
-.strip-container {
-  display: none;
+.product-card:hover::after {
+  opacity: 1;
 }
 
 .product-image-wrapper {
@@ -465,21 +495,14 @@ onUnmounted(() => {
 
 .product-info {
   @apply p-4 text-center relative;
-  background: linear-gradient(
-    to top,
-    rgba(17, 17, 17, 0.8) 0%,
-    transparent 100%
-  );
+  background: rgba(255, 255, 255, 0.02) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
 }
 
 .product-name {
   @apply text-xl font-bold mb-2 text-gray-200;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.product-price {
-  @apply text-xl font-bold;
-  color: #ef4444;
 }
 
 .product-card:hover .product-info {
@@ -499,71 +522,93 @@ onUnmounted(() => {
 .quantity-controls {
   @apply flex items-center justify-center gap-1 w-auto;
   transform-style: preserve-3d;
-  background: rgba(17, 17, 17, 0.7);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 0.5rem;
   padding: 0.25rem;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .quantity-btn {
   @apply w-7 h-7 rounded-md flex items-center justify-center relative;
-  background: rgba(23, 23, 23, 0.7);
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  transform-style: preserve-3d;
+  transition: all 0.15s ease;
+  transform-origin: center center;
+  will-change: transform;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.quantity-btn svg {
+  color: #f59e0b;
+  transition: all 0.3s ease;
+}
+
+.quantity-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.quantity {
+  @apply text-lg font-semibold text-center rounded-md text-gray-200;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  width: 2.5rem;
+  height: 1.75rem;
+  outline: none;
+  -moz-appearance: textfield;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.quantity:hover,
+.quantity:focus {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 
+    0 0 0 2px rgba(245, 158, 11, 0.1),
+    0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+.add-to-cart-btn {
+  @apply w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 
+         text-base font-semibold relative;
+  background: transparent;
+  border: 1px solid rgba(245, 158, 11, 0.3);
   transform-style: preserve-3d;
   transition: all 0.15s ease;
   transform-origin: center center;
   will-change: transform;
 }
 
-.quantity-btn svg {
-  color: #ef4444;
+.add-to-cart-btn span,
+.add-to-cart-btn svg {
+  color: #f59e0b;
   transition: all 0.3s ease;
 }
 
-.quantity-btn:hover {
-  border-color: rgba(255, 107, 107, 0.4);
-  box-shadow: 0 0 15px rgba(255, 107, 107, 0.2);
-}
-
-.quantity {
-  @apply text-lg font-semibold text-center rounded-md text-gray-200;
-  background: rgba(23, 23, 23, 0.7);
-  border: 1px solid rgba(255, 107, 107, 0.2);
-  width: 2.5rem;
-  height: 1.75rem;
-  outline: none;
-  -moz-appearance: textfield;
-  transition: all 0.15s ease;
-  backdrop-filter: blur(4px);
-}
-
-.quantity:hover,
-.quantity:focus {
-  background: rgba(23, 23, 23, 0.9);
-  border-color: rgba(255, 107, 107, 0.4);
-  box-shadow: 
-    0 0 0 2px rgba(255, 107, 107, 0.1),
-    0 0 20px rgba(255, 107, 107, 0.2);
-}
-
-.add-to-cart-btn {
-  @apply w-full py-2 px-4 text-white rounded-lg
-         flex items-center justify-center gap-2
-         transition-all duration-200
-         disabled:opacity-50 disabled:cursor-not-allowed;
-  background-color: #ef4444;
-}
-
 .add-to-cart-btn:hover {
-  background-color: #dc2626;
-  box-shadow: 0 0 20px rgba(255, 107, 107, 0.2);
+  border-color: rgba(245, 158, 11, 0.8);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.add-to-cart-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(245, 158, 11, 0.1);
+  box-shadow: none;
 }
 
 .remove-btn {
   @apply w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 
          text-base font-semibold relative;
   background: transparent;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   transform-style: preserve-3d;
   transition: all 0.15s ease;
   transform-origin: center center;
@@ -572,13 +617,13 @@ onUnmounted(() => {
 
 .remove-btn span,
 .remove-btn svg {
-  color: #ef4444;
+  color: #f59e0b;
   transition: all 0.3s ease;
 }
 
 .remove-btn:hover {
-  border-color: rgba(239, 68, 68, 0.8);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+  border-color: rgba(245, 158, 11, 0.8);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
 }
 
 button:not(:disabled):active {

@@ -63,8 +63,8 @@
             >
             <button 
               @click="subscribeNewsletter"
-              class="px-4 py-2 bg-red-500 text-white rounded-r-lg hover:bg-red-600 
-                     transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
+              class="px-4 py-2 bg-amber-500 text-white rounded-r-lg hover:bg-amber-600 
+                     transition duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               Subscribe
             </button>
@@ -125,11 +125,11 @@ const subscribeNewsletter = () => {
     rgba(17, 17, 17, 0.85) 100%
   );
   backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255, 107, 107, 0.1);
+  border-top: 1px solid rgba(245, 158, 11, 0.1);
   box-shadow: 
     0 -4px 6px -1px rgba(0, 0, 0, 0.1),
     0 -2px 4px -1px rgba(0, 0, 0, 0.06),
-    0 0 20px rgba(255, 107, 107, 0.1);
+    0 0 20px rgba(245, 158, 11, 0.1);
   transform-style: preserve-3d;
   perspective: 1000px;
 }
@@ -140,7 +140,7 @@ const subscribeNewsletter = () => {
   inset: 0;
   background: radial-gradient(
     circle at bottom center,
-    rgba(255, 107, 107, 0.15),
+    rgba(245, 158, 11, 0.15),
     transparent 70%
   );
   opacity: 0;
@@ -172,7 +172,7 @@ const subscribeNewsletter = () => {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 107, 107, 0.8),
+    rgba(245, 158, 11, 0.8),
     transparent
   );
   transition: all 0.3s ease;
@@ -188,7 +188,7 @@ const subscribeNewsletter = () => {
          transition-all duration-300 w-fit;
   background: linear-gradient(
     135deg,
-    rgba(255, 107, 107, 0.1),
+    rgba(245, 158, 11, 0.1),
     transparent
   );
   transform-style: preserve-3d;
@@ -198,20 +198,20 @@ const subscribeNewsletter = () => {
   transform: translateZ(10px);
   background: linear-gradient(
     135deg,
-    rgba(255, 107, 107, 0.2),
+    rgba(245, 158, 11, 0.2),
     transparent
   );
   box-shadow: 
-    0 0 20px rgba(255, 107, 107, 0.1),
-    0 0 40px rgba(255, 107, 107, 0.05);
+    0 0 20px rgba(245, 158, 11, 0.1),
+    0 0 40px rgba(245, 158, 11, 0.05);
 }
 
 .logo-text {
   @apply font-bold text-transparent bg-clip-text;
   background-image: linear-gradient(
     135deg,
-    #FF8585,
-    #FF6B6B
+    #FCD34D,
+    #F59E0B
   );
 }
 
@@ -219,7 +219,7 @@ const subscribeNewsletter = () => {
   @apply relative px-4 py-2 text-gray-100 
          transition-all duration-300;
   background: rgba(23, 23, 23, 0.7);
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.2);
   backdrop-filter: blur(4px);
   transform-style: preserve-3d;
 }
@@ -227,10 +227,10 @@ const subscribeNewsletter = () => {
 .search-input:focus {
   @apply outline-none;
   background: rgba(23, 23, 23, 0.9);
-  border-color: rgba(255, 107, 107, 0.4);
+  border-color: rgba(245, 158, 11, 0.4);
   box-shadow: 
-    0 0 0 2px rgba(255, 107, 107, 0.1),
-    0 0 20px rgba(255, 107, 107, 0.2);
+    0 0 0 2px rgba(245, 158, 11, 0.1),
+    0 0 20px rgba(245, 158, 11, 0.2);
   transform: translateZ(5px);
 }
 </style>

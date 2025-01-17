@@ -1,163 +1,263 @@
 <template>
   <div class="animated-background">
-    <!-- Gradient Definitions -->
-    <svg class="background-pattern" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1000 1000">
-      <defs>
-        <!-- Primary Gradient -->
-        <linearGradient id="stroke-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color: #FF6B6B; stop-opacity: 1" />
-          <stop offset="50%" style="stop-color: #FF4646; stop-opacity: 1" />
-          <stop offset="100%" style="stop-color: #FF2525; stop-opacity: 1" />
-        </linearGradient>
-
-        <!-- Secondary Gradient -->
-        <linearGradient id="stroke-gradient-2" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color: #FF8585; stop-opacity: 1" />
-          <stop offset="50%" style="stop-color: #FF6B6B; stop-opacity: 1" />
-          <stop offset="100%" style="stop-color: #FF4646; stop-opacity: 1" />
-        </linearGradient>
-
-        <!-- Enhanced Glow Filter -->
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
-          <feColorMatrix in="blur" type="matrix" values="
-            1 0 0 0 1
-            0 0 0 0 0.2
-            0 0 0 0 0.2
-            0 0 0 20 -10" 
-            result="glow" />
-          <feComposite in="glow" in2="SourceGraphic" operator="over" result="colored-glow" />
-          <feMerge>
-            <feMergeNode in="colored-glow" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-
-        <!-- Professional Bakery Elements -->
-        <g id="bakery-elements">
-          <!-- Professional Croissant -->
-          <path id="croissant" d="
-            M 30,50 
-            C 20,30 25,15 45,15 
-            C 65,15 75,25 80,40 
-            C 85,55 80,70 65,75 
-            C 50,80 35,75 30,50 
-            M 40,35 C 45,30 55,30 60,35 
-            M 35,55 C 40,50 50,50 55,55" />
-
-          <!-- Elegant Coffee Cup -->
-          <path id="coffee" d="
-            M 25,35 
-            L 75,35 
-            C 85,35 85,45 85,50 
-            C 85,70 75,80 50,80 
-            C 25,80 15,70 15,50 
-            C 15,45 15,35 25,35 
-            M 75,45 
-            L 85,45 
-            C 95,45 95,55 85,55 
-            L 75,55 
-            M 35,25 
-            Q 50,15 65,25" />
-
-          <!-- Detailed Cake -->
-          <path id="cake" d="
-            M 20,80 L 80,80 
-            L 80,60 C 80,55 65,50 50,50 C 35,50 20,55 20,60 
-            L 20,80 
-            M 25,60 L 75,60 
-            L 75,40 C 75,35 65,30 50,30 C 35,30 25,35 25,40 
-            L 25,60 
-            M 35,30 L 65,30 
-            C 65,25 60,20 50,20 C 40,20 35,25 35,30 
-            M 45,20 L 55,20 
-            M 50,20 L 50,10" />
-
-          <!-- Professional Cookie -->
-          <path id="cookie" d="
-            M 50,15 
-            C 75,15 85,40 85,60 
-            C 85,80 65,85 50,85 
-            C 35,85 15,80 15,60 
-            C 15,40 25,15 50,15 
-            M 35,40 A 3,3 0 1,1 35,46 
-            M 65,40 A 3,3 0 1,1 65,46 
-            M 50,60 A 3,3 0 1,1 50,66 
-            M 30,55 A 3,3 0 1,1 30,61 
-            M 70,55 A 3,3 0 1,1 70,61" />
-
-          <!-- Detailed Bread -->
-          <path id="bread" d="
-            M 25,70 
-            C 25,40 75,40 75,70 
-            C 75,85 65,90 50,90 
-            C 35,90 25,85 25,70 
-            M 35,50 C 35,35 65,35 65,50 
-            M 30,60 Q 50,55 70,60 
-            M 35,70 Q 50,65 65,70" />
-        </g>
-      </defs>
-
-      <!-- Animated Elements -->
-      <g v-for="n in elementCount" :key="n">
-        <use :href="`#${randomElement()}`"
-             class="bakery-element"
-             :style="getElementStyle()" />
-      </g>
-    </svg>
+    <div class="gradient-overlay"></div>
+    <div class="bakery-items">
+      <div
+        v-for="(item, index) in displayedItems"
+        :key="item.id"
+        class="bakery-item"
+        :ref="el => itemRefs[index] = el"
+      >
+        <img 
+          :src="item.src" 
+          :alt="'Bakery item ' + (index + 1)"
+          class="bakery-image"
+          @load="initializeAnimation(index, $event.target)"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useWindowSize } from '@vueuse/core'
+import { processImages } from '@/utils/imageProcessor'
+import gsap from 'gsap'
+import { MotionPathPlugin } from 'gsap/MotionPathPlugin'
 
-const elementCount = ref(18)
-const elements = ['croissant', 'coffee', 'cake', 'cookie', 'bread']
+gsap.registerPlugin(MotionPathPlugin)
 
-const randomElement = () => elements[Math.floor(Math.random() * elements.length)]
-
-const getElementStyle = () => {
-  const x = Math.random() * 1000
-  const y = Math.random() * 1000
-  const scale = 0.35 + Math.random() * 0.3
-  const rotation = Math.random() * 360
-  const delay = Math.random() * -40
-  const duration = 30 + Math.random() * 20
-  const gradient = Math.random() > 0.5 ? 'stroke-gradient-1' : 'stroke-gradient-2'
-
-  return {
-    '--x': `${x}px`,
-    '--y': `${y}px`,
-    '--scale': scale,
-    '--rotation': `${rotation}deg`,
-    '--delay': `${delay}s`,
-    '--duration': `${duration}s`,
-    '--gradient': `url(#${gradient})`
+const props = defineProps({
+  images: {
+    type: Array,
+    required: true
+  },
+  maxItems: {
+    type: Number,
+    default: 30
+  },
+  visibleItems: {
+    type: Number,
+    default: 15
   }
+})
+
+const { width, height } = useWindowSize()
+const processedItems = ref([])
+const displayedItems = ref([])
+const itemRefs = ref([])
+const animations = ref([])
+const currentSet = ref(0)
+
+const BATCH_SIZE = 8
+const STAGGER_DELAY = 0.3
+const BASE_DURATION = 25
+const ROTATION_INTERVAL = 45000
+const zones = [
+  { x: 0.3, y: 0.3, width: 0.4, height: 0.4 },
+  { x: 0, y: 0, width: 0.4, height: 0.4 },
+  { x: 0.6, y: 0, width: 0.4, height: 0.4 },
+  { x: 0, y: 0.6, width: 0.4, height: 0.4 },
+  { x: 0.6, y: 0.6, width: 0.4, height: 0.4 }
+]
+
+const getRandomPosition = (isEdge = false, preferredZone = null) => {
+  const depth = Math.random() * 0.3 + 0.7
+  const scale = 0.8 + (depth * 0.3)
+  const opacity = 0.5 + (depth * 0.5)
+  
+  let x, y
+  const extraSpace = 200
+  
+  if (isEdge) {
+    const edge = Math.floor(Math.random() * 4)
+    switch (edge) {
+      case 0: // Top
+        x = Math.random() * width.value
+        y = -extraSpace
+        break
+      case 1: // Right
+        x = width.value + extraSpace
+        y = Math.random() * height.value
+        break
+      case 2: // Bottom
+        x = Math.random() * width.value
+        y = height.value + extraSpace
+        break
+      case 3: // Left
+        x = -extraSpace
+        y = Math.random() * height.value
+        break
+    }
+  } else if (preferredZone) {
+    const offsetX = (Math.random() - 0.5) * 50
+    const offsetY = (Math.random() - 0.5) * 50
+    
+    x = (preferredZone.x + Math.random() * preferredZone.width) * width.value + offsetX
+    y = (preferredZone.y + Math.random() * preferredZone.height) * height.value + offsetY
+  } else {
+    x = Math.random() * width.value
+    y = Math.random() * height.value
+  }
+
+  return { x, y, scale, opacity, depth }
 }
 
-let animationFrame
-const animate = () => {
-  const elements = document.querySelectorAll('.bakery-element')
-  elements.forEach(element => {
-    if (Math.random() < 0.01) {
-      const newStyle = getElementStyle()
-      Object.entries(newStyle).forEach(([key, value]) => {
-        element.style.setProperty(key, value)
-      })
+const updateDisplayedItems = () => {
+  const totalItems = processedItems.value.length
+  const itemsPerSet = props.visibleItems
+  const startIndex = (currentSet.value * itemsPerSet) % totalItems
+  
+  let items = []
+  for (let i = 0; i < itemsPerSet; i++) {
+    const index = (startIndex + i) % totalItems
+    items.push(processedItems.value[index])
+  }
+  
+  const itemsPerZone = Math.ceil(itemsPerSet / zones.length)
+  const distributedItems = items.map((item, index) => {
+    const zoneIndex = Math.floor(index / itemsPerZone) % zones.length
+    return {
+      ...item,
+      preferredZone: zones[zoneIndex]
     }
   })
-  animationFrame = requestAnimationFrame(animate)
+  
+  displayedItems.value = distributedItems
 }
 
-onMounted(() => {
-  animate()
+const rotateItems = () => {
+  const fadeOutPromises = animations.value.map((anim, index) => {
+    if (!anim) return Promise.resolve()
+    
+    const element = document.querySelector(`.bakery-item-${index}`)
+    if (!element) return Promise.resolve()
+
+    return new Promise(resolve => {
+      gsap.to(element, {
+        opacity: 0,
+        scale: 0.5,
+        duration: 1.5,
+        ease: "power2.inOut",
+        onComplete: () => {
+          if (anim && anim.kill) anim.kill()
+          resolve()
+        }
+      })
+    })
+  })
+
+  Promise.all(fadeOutPromises).then(() => {
+    animations.value = []
+    itemRefs.value = []
+    currentSet.value = (currentSet.value + 1) % Math.ceil(processedItems.value.length / props.visibleItems)
+    updateDisplayedItems()
+  })
+}
+
+const initializeAnimation = (index, element) => {
+  if (!element || animations.value[index]) return
+
+  const item = displayedItems.value[index]
+  const batchIndex = Math.floor(index / BATCH_SIZE)
+  const startPos = getRandomPosition(true)
+  
+  gsap.set(element.parentElement, {
+    x: startPos.x,
+    y: startPos.y,
+    opacity: 0,
+    scale: startPos.scale * 0.8,
+    rotation: Math.random() * 30 - 15,
+    transformOrigin: "center center",
+    force3D: true
+  })
+
+  const masterTimeline = gsap.timeline({
+    repeat: -1,
+    defaults: { ease: "none" }
+  })
+
+  masterTimeline
+    .to(element.parentElement, {
+      opacity: startPos.opacity,
+      scale: startPos.scale,
+      duration: 2,
+      ease: "power2.out"
+    })
+    
+  const createMovementSequence = () => {
+    const timeline = gsap.timeline()
+    const duration = BASE_DURATION + (Math.random() * 4 - 2)
+    
+    const segments = 2
+    let lastPos = getRandomPosition(false, item.preferredZone)
+    
+    for (let i = 0; i < segments; i++) {
+      const nextPos = getRandomPosition(false, item.preferredZone)
+      const segmentDuration = duration / segments
+      
+      const cp1x = lastPos.x + (nextPos.x - lastPos.x) * (0.4 + Math.random() * 0.2)
+      const cp1y = lastPos.y + (Math.random() - 0.5) * 100
+      const cp2x = nextPos.x - (nextPos.x - lastPos.x) * (0.4 + Math.random() * 0.2)
+      const cp2y = nextPos.y + (Math.random() - 0.5) * 100
+      
+      timeline.to(element.parentElement, {
+        motionPath: {
+          path: `M${lastPos.x},${lastPos.y} C${cp1x},${cp1y} ${cp2x},${cp2y} ${nextPos.x},${nextPos.y}`,
+          autoRotate: false
+        },
+        rotation: Math.random() * 30 - 15,
+        scale: nextPos.scale,
+        duration: segmentDuration,
+        ease: "power1.inOut"
+      })
+      
+      lastPos = nextPos
+    }
+
+    return timeline
+  }
+
+  for (let i = 0; i < 2; i++) {
+    const sequence = createMovementSequence()
+    masterTimeline.add(sequence, i === 0 ? ">" : "-=1")
+  }
+
+  const staggerDelay = batchIndex * STAGGER_DELAY
+  masterTimeline.delay(staggerDelay)
+  
+  animations.value[index] = masterTimeline
+}
+
+onMounted(async () => {
+  try {
+    const processed = await processImages(props.images)
+    const extraSpace = 200
+    
+    processedItems.value = processed.map((img, index) => ({
+      ...img,
+      id: `bakery-${index}`,
+      x: -extraSpace + Math.random() * (width.value + extraSpace * 2),
+      y: -extraSpace + Math.random() * (height.value + extraSpace * 2),
+      rotation: Math.random() * 30 - 15,
+      scale: 0.8
+    }))
+    
+    updateDisplayedItems()
+    
+    setInterval(rotateItems, ROTATION_INTERVAL)
+  } catch (error) {
+    console.error('Error processing bakery images:', error)
+  }
 })
 
 onUnmounted(() => {
-  if (animationFrame) {
-    cancelAnimationFrame(animationFrame)
-  }
+  animations.value.forEach(anim => {
+    if (anim) {
+      anim.kill()
+    }
+  })
 })
 </script>
 
@@ -166,75 +266,61 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
+  pointer-events: none;
   z-index: -1;
-  background: rgba(17, 17, 17, 0.98);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
-.background-pattern {
+.gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(
+      to bottom,
+      #1a1a1a 0%,
+      transparent 150px,
+      transparent calc(100% - 150px),
+      #1a1a1a 100%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(239, 68, 68, 0.03) 0%,
+      transparent 70%
+    );
+  mix-blend-mode: overlay;
+}
+
+.bakery-items {
   width: 100%;
   height: 100%;
+  transform-style: preserve-3d;
+  perspective: 1500px;
+  will-change: transform;
 }
 
-.bakery-element {
-  fill: none;
-  stroke: var(--gradient);
-  stroke-width: 3.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: url(#glow);
-  opacity: 0;
-  transform-origin: center;
+.bakery-item {
+  position: absolute;
   will-change: transform, opacity;
-  animation: 
-    elementFade var(--duration) var(--delay) infinite cubic-bezier(0.645, 0.045, 0.355, 1.000),
-    elementFloat calc(var(--duration) * 1.2) var(--delay) infinite cubic-bezier(0.445, 0.050, 0.550, 0.950);
-  transition: all 0.3s ease-in-out;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
-@keyframes elementFade {
-  0%, 100% {
-    opacity: 0;
-    stroke-dashoffset: 1000;
-  }
-  10%, 90% {
-    opacity: 0.4;
-    stroke-dashoffset: 0;
-  }
-  50% {
-    opacity: 0.7;
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes elementFloat {
-  0% {
-    transform: translate(var(--x), var(--y)) 
-               scale(var(--scale)) 
-               rotate(var(--rotation));
-  }
-  33% {
-    transform: translate(calc(var(--x) + 40px), calc(var(--y) - 30px))
-               scale(calc(var(--scale) * 1.15))
-               rotate(calc(var(--rotation) + 120deg));
-  }
-  66% {
-    transform: translate(calc(var(--x) - 30px), calc(var(--y) + 40px))
-               scale(var(--scale))
-               rotate(calc(var(--rotation) + 240deg));
-  }
-  100% {
-    transform: translate(var(--x), var(--y))
-               scale(var(--scale))
-               rotate(calc(var(--rotation) + 360deg));
-  }
+.bakery-image {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bakery-element {
-    animation: none !important;
+  .bakery-item {
+    transition: opacity 0.3s ease;
   }
 }
 </style>

@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    --color-primary: #FF6B6B;
-    --color-primary-dark: #FF5252;
-    --color-primary-light: #FF8585;
+    --color-primary: #F59E0B;
+    --color-primary-dark: #D97706;
+    --color-primary-light: #FCD34D;
     /* Dark theme colors */
     --color-bg-primary: #0A0A0A;
     --color-bg-secondary: #141414;
@@ -15,8 +15,8 @@
     --color-text-secondary: #e0e0e0;
     --color-text-tertiary: #a0a0a0;
     --color-border: #2A2A2A;
-    --color-accent: #FF6B6B;
-    --color-accent-hover: #FF5252;
+    --color-accent: #F59E0B;
+    --color-accent-hover: #D97706;
     --color-error: #FF4444;
     --color-success: #4CAF50;
     --color-warning: #FFA726;
@@ -49,7 +49,7 @@
   }
 
   a {
-    @apply hover:text-red-300;
+    @apply hover:text-amber-300;
     color: var(--color-accent);
   }
 
@@ -61,15 +61,17 @@
   }
 
   button {
-    @apply hover:bg-red-500 text-white;
+    @apply hover:bg-amber-600 text-white;
     background-color: var(--color-accent);
   }
 
   /* Card styles */
   .card {
     @apply rounded-lg shadow-lg overflow-hidden;
-    background-color: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   /* Form styles */
@@ -125,7 +127,57 @@
 
   /* Product Card Styles */
   .product-card {
-    @apply bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300;
+    @apply rounded-lg shadow-lg overflow-hidden transition-all duration-300 relative;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .product-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(245, 158, 11, 0.06) 0%,
+      rgba(245, 158, 11, 0.03) 40%,
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .product-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: radial-gradient(
+      400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(245, 158, 11, 0.4),
+      transparent 40%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .product-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 8px rgba(245, 158, 11, 0.2);
+  }
+
+  .product-card:hover::before {
+    opacity: 1;
+  }
+
+  .product-card:hover::after {
+    opacity: 0.5;
   }
 
   .product-image-wrapper {
@@ -157,11 +209,11 @@
   }
 
   .product-name {
-    @apply text-lg font-semibold text-gray-800 line-clamp-2;
+    @apply text-lg font-semibold text-gray-200 line-clamp-2;
   }
 
   .product-price {
-    @apply text-xl font-bold text-blue-600;
+    @apply text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600;
   }
 
   .cart-controls {
@@ -199,6 +251,28 @@
 
   .out-of-stock-message {
     @apply mt-4 text-center text-red-600 font-medium;
+  }
+
+  /* Product List Container */
+  .products-container {
+    @apply rounded-lg p-6 transition-all duration-300 relative overflow-hidden;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .products-container:hover {
+    background: radial-gradient(
+      600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(245, 158, 11, 0.15) 0%,
+      rgba(245, 158, 11, 0.1) 20%,
+      rgba(255, 255, 255, 0.02) 40%
+    );
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 4px 8px rgba(245, 158, 11, 0.2);
   }
 
   /* Navbar Styles */
@@ -283,18 +357,6 @@
     @apply p-4 border-t;
     background-color: var(--color-bg-tertiary);
     border-color: var(--color-border);
-  }
-
-  /* Product Card Styles */
-  .product-card {
-    @apply rounded-lg shadow-lg overflow-hidden transition-transform duration-300;
-    background-color: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-  }
-
-  .product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   }
 
   .auth-btn {

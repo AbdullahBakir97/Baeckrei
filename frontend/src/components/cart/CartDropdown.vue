@@ -15,7 +15,7 @@
           {{ cartItemCount }}
         </span>
       </div>
-      <span class="cart-total" aria-label="Cart total">${{ formatPrice(cartTotal) }}</span>
+      <span class="cart-total" aria-label="Cart total">{{ formatPrice(cartTotal) }} €</span>
     </button>
 
     <div 
@@ -62,7 +62,7 @@
               <span class="item-name text-gray-900">{{ item.product.name }}</span>
               <div class="item-info">
                 <span class="item-quantity text-gray-700" :id="'cart-item-quantity-' + item.product.id">x{{ item.quantity }}</span>
-                <span class="item-price text-gray-900" :id="'cart-item-price-' + item.product.id">${{ formatPrice(item.total_price) }}</span>
+                <span class="item-price text-gray-900" :id="'cart-item-price-' + item.product.id">{{ formatPrice(item.total_price) }} €</span>
               </div>
             </div>
           </div>
@@ -80,7 +80,7 @@
         <div v-if="items.length > 0" class="cart-summary">
           <div class="cart-total">
             <span class="total-label text-gray-900">Total:</span>
-            <span class="total-amount text-gray-900" id="cart-total-amount">${{ formatPrice(cartTotal) }}</span>
+            <span class="total-amount text-gray-900" id="cart-total-amount">{{ formatPrice(cartTotal) }} €</span>
           </div>
 
           <div class="cart-actions">

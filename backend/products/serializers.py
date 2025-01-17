@@ -51,6 +51,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     ingredients = IngredientSerializer(many=True, read_only=True)
     nutrition_info = NutritionInfoSerializer(read_only=True)
+    allergens = AllergenInfoSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
@@ -59,5 +60,5 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'price', 'ingredients', 'nutrition_info', 'image',
             'is_vegan', 'is_vegetarian', 'is_gluten_free',
             'available', 'status', 'stock', 'created_at',
-            'modified_at'
+            'modified_at', 'allergens'
         ]

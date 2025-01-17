@@ -3,198 +3,212 @@
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
       <h1 class="text-2xl sm:text-3xl font-bold text-gray-200">Our Products</h1>
-      <div class="flex flex-wrap items-center gap-4">
-        <!-- View Toggle -->
-        <div class="flex items-center glass-panel rounded-lg p-1">
-          <button
-            @click="viewMode = 'grid'"
-            class="p-2 rounded-md transition-all duration-300"
-            :class="viewMode === 'grid' ? 'active-view' : 'hover:bg-opacity-20 hover:bg-red-500'"
-          >
-            <font-awesome-icon icon="fa-solid fa-th-large" class="text-lg" />
-          </button>
-          <button
-            @click="viewMode = 'list'"
-            class="p-2 rounded-md transition-all duration-300"
-            :class="viewMode === 'list' ? 'active-view' : 'hover:bg-opacity-20 hover:bg-red-500'"
-          >
-            <font-awesome-icon icon="fa-solid fa-list" class="text-lg" />
-          </button>
-        </div>
-        <!-- Sort Dropdown -->
-        <select
-          v-model="sortBy"
-          class="search-input min-w-[160px] rounded-lg"
-          @change="handleSort"
-        >
-          <option value="name">Name</option>
-          <option value="price_asc">Price: Low to High</option>
-          <option value="price_desc">Price: High to Low</option>
-          <option value="newest">Newest</option>
-        </select>
-      </div>
+      
     </div>
 
-    <!-- Filters and Products Grid -->
-    <div class="flex flex-col lg:flex-row gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
       <!-- Filters Sidebar -->
-      <aside class="w-full lg:w-64 flex-shrink-0">
-        <div class="sticky top-4">
-          <div class="glass-panel p-6 space-y-6 rounded-lg">
-            <!-- Category Filter -->
-            <div>
-              <h3 class="text-gray-200 font-semibold mb-3">Categories</h3>
-              <div class="space-y-2">
-                <label
-                  v-for="category in categories"
-                  :key="category.id"
-                  class="flex items-center gap-2 cursor-pointer filter-item"
-                >
-                  <input
-                    type="checkbox"
-                    :value="category.id"
-                    v-model="selectedCategories"
-                    class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+      <div class="lg:col-span-1">
+        <div class="bg-[rgba(255,255,255,0.02)] backdrop-blur-[8px] border border-white/5 
+                    hover:border-white/20 hover:shadow-red-500/10 transition-all duration-300
+                    rounded-lg p-6 space-y-6">
+          <div class="sticky top-4">
+            <div class="glass-panel p-6 space-y-6 rounded-lg">
+              <!-- Category Filter -->
+              <div>
+                <h3 class="text-gray-200 font-semibold mb-3">Categories</h3>
+                <div v-if="productStore.categoriesLoading" class="flex justify-center py-4">
+                  <font-awesome-icon icon="spinner" class="animate-spin text-amber-500" />
+                </div>
+                <div v-else-if="categories?.length > 0" class="space-y-2">
+                  <label
+                    v-for="category in categories"
+                    :key="category?.id"
+                    class="flex items-center gap-2 cursor-pointer filter-item"
                   >
-                  <span class="text-gray-300">{{ category.name }}</span>
-                </label>
+                    <input
+                      type="checkbox"
+                      :value="category?.id"
+                      v-model="selectedCategories"
+                      class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+                    >
+                    <span class="text-gray-300">{{ category?.name }}</span>
+                  </label>
+                </div>
+                <div v-else class="text-gray-400 text-sm py-2">
+                  No categories available
+                </div>
               </div>
-            </div>
 
-            <!-- Price Range Filter -->
-            <div>
-              <h3 class="text-gray-200 font-semibold mb-3">Price Range</h3>
-              <div class="space-y-4">
-                <div class="flex gap-4">
-                  <div class="flex-1">
-                    <input
-                      type="number"
-                      v-model="priceRange[0]"
-                      placeholder="Min"
-                      class="search-input w-full rounded-lg"
-                    >
-                  </div>
-                  <div class="flex-1">
-                    <input
-                      type="number"
-                      v-model="priceRange[1]"
-                      placeholder="Max"
-                      class="search-input w-full rounded-lg"
-                    >
+              <!-- Price Range Filter -->
+              <div>
+                <h3 class="text-gray-200 font-semibold mb-3">Price Range</h3>
+                <div class="space-y-4">
+                  <div class="flex gap-4">
+                    <div class="flex-1">
+                      <input
+                        type="number"
+                        v-model="priceRange[0]"
+                        placeholder="Min"
+                        class="search-input w-full rounded-lg"
+                      >
+                    </div>
+                    <div class="flex-1">
+                      <input
+                        type="number"
+                        v-model="priceRange[1]"
+                        placeholder="Max"
+                        class="search-input w-full rounded-lg"
+                      >
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Dietary Preferences -->
-            <div>
-              <h3 class="text-gray-200 font-semibold mb-3">Dietary Preferences</h3>
-              <div class="space-y-2">
-                <label class="flex items-center gap-2 cursor-pointer filter-item">
-                  <input
-                    type="checkbox"
-                    v-model="filters.dietary.isVegan"
-                    class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
-                  >
-                  <span class="text-gray-300">Vegan</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer filter-item">
-                  <input
-                    type="checkbox"
-                    v-model="filters.dietary.isVegetarian"
-                    class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
-                  >
-                  <span class="text-gray-300">Vegetarian</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer filter-item">
-                  <input
-                    type="checkbox"
-                    v-model="filters.dietary.isGlutenFree"
-                    class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
-                  >
-                  <span class="text-gray-300">Gluten Free</span>
-                </label>
+              <!-- Dietary Preferences -->
+              <div>
+                <h3 class="text-gray-200 font-semibold mb-3">Dietary Preferences</h3>
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2 cursor-pointer filter-item">
+                    <input
+                      type="checkbox"
+                      v-model="filters.dietary.isVegan"
+                      class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+                    >
+                    <span class="text-gray-300">Vegan</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer filter-item">
+                    <input
+                      type="checkbox"
+                      v-model="filters.dietary.isVegetarian"
+                      class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+                    >
+                    <span class="text-gray-300">Vegetarian</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer filter-item">
+                    <input
+                      type="checkbox"
+                      v-model="filters.dietary.isGlutenFree"
+                      class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
+                    >
+                    <span class="text-gray-300">Gluten Free</span>
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <!-- Clear Filters Button -->
-            <button
-              @click="clearFilters"
-              class="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 
-                     transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              Clear Filters
-            </button>
+              <!-- Clear Filters Button -->
+              <button
+                @click="clearFilters"
+                class="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 
+                       transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                Clear Filters
+              </button>
+            </div>
           </div>
         </div>
-      </aside>
+      </div>
 
-      <!-- Products Grid -->
-      <div class="flex-grow">
-        <!-- Loading State -->
-        <div v-if="productStore.loading" class="grid place-items-center h-96">
-          <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500"></div>
-        </div>
+      <!-- Product Grid -->
+      <div class="lg:col-span-3">
+        <div class="bg-[rgba(255,255,255,0.02)] backdrop-blur-[8px] border border-white/5 rounded-lg p-6">
+          <!-- View Toggle and Sort -->
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <!-- View Toggle -->
+            <div class="flex items-center glass-panel rounded-lg p-1">
+              <button
+                @click="viewMode = 'grid'"
+                class="p-2 rounded-md transition-all duration-300"
+                :class="viewMode === 'grid' ? 'active-view' : 'hover:bg-opacity-20 hover:bg-red-500'"
+              >
+                <font-awesome-icon icon="fa-solid fa-th-large" class="text-lg" />
+              </button>
+              <button
+                @click="viewMode = 'list'"
+                class="p-2 rounded-md transition-all duration-300"
+                :class="viewMode === 'list' ? 'active-view' : 'hover:bg-opacity-20 hover:bg-red-500'"
+              >
+                <font-awesome-icon icon="fa-solid fa-list" class="text-lg" />
+              </button>
+            </div>
+            <!-- Sort Dropdown -->
+            <select
+              v-model="sortBy"
+              class="search-input min-w-[160px] rounded-lg bg-[rgba(255,255,255,0.03)] backdrop-blur-sm 
+                     border border-white/5 text-white px-4 py-2
+                     focus:border-red-500/30 focus:ring-1 focus:ring-red-500/30"
+              @change="handleSort"
+            >
+              <option value="name">Name</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="popularity">Popularity</option>
+            </select>
+          </div>
 
-        <!-- Products Grid/List View -->
-        <div v-else-if="!productStore.error && productStore.products && productStore.products.length > 0" 
-          :class="[
-            viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'
-          ]"
-        >
-          <template v-if="viewMode === 'grid'">
-            <ProductCard 
-              v-for="product in productStore.products"
-              :key="product.id"
-              :product="product"
-              cardColor="#313131"
-              stripColor="#35AFFB"
-              buttonColor="#35AFFB"
-              textColor="#ffffff"
-              @add-to-cart="addToCart"
-            />
-          </template>
+          <!-- Loading State -->
+          <div v-if="productStore.loading" class="flex justify-center items-center p-8">
+            <font-awesome-icon icon="spinner" spin class="text-4xl text-gray-400" />
+          </div>
+
+          <!-- Products Grid/List View -->
           <template v-else>
-            <ProductListItem 
-              v-for="product in productStore.products"
-              :key="product.id"
-              :product="product"
-              @add-to-cart="addToCart"
-            />
+            <div class="products-container" ref="container" @mousemove="handleMouseMove">
+              <div v-if="!productStore.error && productStore.products && productStore.products.length > 0" 
+                :class="[viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4']"
+              >
+                <template v-if="viewMode === 'grid'">
+                  <ProductCard 
+                    v-for="product in productStore.products"
+                    :key="product.id"
+                    :product="product"
+                    cardColor="#313131"
+                    stripColor="#35AFFB"
+                    buttonColor="#35AFFB"
+                    textColor="#ffffff"
+                    @add-to-cart="addToCart"
+                  />
+                </template>
+                <template v-else>
+                  <ProductListItem 
+                    v-for="product in productStore.products"
+                    :key="product.id"
+                    :product="product"
+                    @add-to-cart="addToCart"
+                  />
+                </template>
+              </div>
+
+              <div v-else class="card p-8 text-center">
+                <template v-if="productStore.error">
+                  <p class="text-red-600">{{ productStore.error }}</p>
+                </template>
+                <template v-else>
+                  <font-awesome-icon icon="fa-solid fa-box-open" class="text-4xl text-gray-400 mb-4" />
+                  <h3 class="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
+                  <p class="text-gray-600">Try adjusting your filters or search criteria</p>
+                </template>
+              </div>
+
+              <!-- Pagination -->
+              <div v-if="productStore.products && productStore.products.length > 0" class="mt-8 flex justify-center gap-4">
+                <button
+                  @click="previousPage"
+                  :disabled="!productStore.hasPreviousPage"
+                  class="btn btn-secondary"
+                >
+                  Previous
+                </button>
+                <button
+                  @click="nextPage"
+                  :disabled="!productStore.hasNextPage"
+                  class="btn btn-secondary"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </template>
-        </div>
-
-        <!-- Empty State -->
-        <div 
-          v-else-if="!productStore.loading && !productStore.error && (!productStore.products || productStore.products.length === 0)" 
-          class="card p-8 text-center"
-        >
-          <font-awesome-icon icon="fa-solid fa-box-open" class="text-4xl text-gray-400 mb-4" />
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
-          <p class="text-gray-600">Try adjusting your filters or search criteria</p>
-        </div>
-
-        <!-- Error State -->
-        <div v-else-if="productStore.error" class="card p-8 text-center text-red-600">
-          <p>{{ productStore.error }}</p>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="productStore.products.length" class="mt-8 flex justify-center gap-4">
-          <button
-            @click="previousPage"
-            :disabled="!productStore.hasPreviousPage"
-            class="btn btn-secondary"
-          >
-            Previous
-          </button>
-          <button
-            @click="nextPage"
-            :disabled="!productStore.hasNextPage"
-            class="btn btn-secondary"
-          >
-            Next
-          </button>
         </div>
       </div>
     </div>
@@ -234,13 +248,21 @@ const filters = ref({
   category: ''
 })
 
-// Mock categories (replace with API data)
-const categories = ref([
-  { id: 'breads', name: 'Breads' },
-  { id: 'pastries', name: 'Pastries' },
-  { id: 'cakes', name: 'Cakes' },
-  { id: 'cookies', name: 'Cookies' }
-])
+// Categories from store
+const categories = computed(() => productStore.categories)
+
+// Mouse tracking for gradient effect
+const container = ref(null)
+
+const handleMouseMove = (e) => {
+  if (container.value) {
+    const rect = container.value.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    container.value.style.setProperty('--mouse-x', `${x}px`)
+    container.value.style.setProperty('--mouse-y', `${y}px`)
+  }
+}
 
 // Computed
 const maxPrice = computed(() => {
@@ -260,8 +282,9 @@ const loadProducts = async () => {
       categories: selectedCategories.value,
       price_min: priceRange.value[0],
       price_max: priceRange.value[1],
-      ...filters.value.dietary,
-      category: filters.value.category
+      isVegan: filters.value.dietary.isVegan,
+      isVegetarian: filters.value.dietary.isVegetarian,
+      isGlutenFree: filters.value.dietary.isGlutenFree
     })
   } catch (error) {
     console.error('Error loading products:', error)
@@ -280,7 +303,6 @@ const clearFilters = () => {
     isVegetarian: false,
     isGlutenFree: false
   }
-  filters.value.category = ''
   loadProducts()
 }
 
@@ -321,79 +343,87 @@ watch(() => route.params.category, (newCategory) => {
 })
 
 // Lifecycle
-onMounted(() => {
-  loadProducts()
+onMounted(async () => {
+  try {
+    await productStore.fetchCategories()
+    loadProducts()
+  } catch (error) {
+    console.error('Error initializing product list:', error)
+  }
 })
 </script>
 
 <style scoped>
+.container {
+  position: relative;
+  z-index: 1;
+}
+
 .glass-panel {
-  background: linear-gradient(
-    to bottom,
-    rgba(17, 17, 17, 0.95) 0%,
-    rgba(17, 17, 17, 0.85) 100%
-  );
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 107, 107, 0.1);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    0 0 20px rgba(255, 107, 107, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.product-container {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+  padding: 1rem;
 }
 
 .search-input {
-  @apply relative px-4 py-2 text-gray-100 
-         transition-all duration-300;
-  background: rgba(23, 23, 23, 0.7);
-  border: 1px solid rgba(255, 107, 107, 0.2);
-  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 0.5rem 1rem;
 }
 
-.search-input:focus {
-  @apply outline-none;
-  background: rgba(23, 23, 23, 0.9);
-  border-color: rgba(255, 107, 107, 0.4);
-  box-shadow: 
-    0 0 0 2px rgba(255, 107, 107, 0.1),
-    0 0 20px rgba(255, 107, 107, 0.2);
+.search-input option {
+  background: rgba(45, 45, 45, 0.95);
+  color: #fff;
 }
 
 .active-view {
-  @apply bg-red-500 bg-opacity-20 text-red-400;
-  box-shadow: 0 0 10px rgba(255, 107, 107, 0.2);
+  background: rgba(239, 68, 68, 0.2);
+  color: rgb(239, 68, 68);
 }
 
-.filter-item {
-  @apply transition-all duration-300;
+.product-list-enter-active,
+.product-list-leave-active {
+  transition: all 0.3s ease;
 }
 
-.filter-item:hover span {
-  @apply text-gray-100;
+.product-list-enter-from,
+.product-list-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
 }
 
-/* Custom checkbox styles */
-.form-checkbox {
-  @apply rounded transition-all duration-300;
-  border: 1px solid rgba(255, 107, 107, 0.2);
-}
-
-.form-checkbox:checked {
-  background-color: rgba(255, 107, 107, 0.8);
-  border-color: rgba(255, 107, 107, 0.4);
-}
-
-.form-checkbox:focus {
-  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
+@supports not (backdrop-filter: blur(10px)) {
+  .glass-panel,
+  .product-container,
+  .search-input {
+    background: rgba(23, 23, 23, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
   to {
     transform: rotate(360deg);
   }

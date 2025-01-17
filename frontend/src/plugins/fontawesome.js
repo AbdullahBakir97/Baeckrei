@@ -10,13 +10,28 @@ import {
   faTrash,
   faList,
   faTable,
-  faWheatAlt,
   faLeaf,
   faSeedling,
   faLocationDot,
   faPhone,
-  faEnvelope
+  faEnvelope,
+  faSpinner,
+  faCartPlus,
+  faCircle,
+  faExclamationTriangle,
+  faExclamationCircle,
+  faRotate,
+  faWheatAlt,
+  faCircleXmark,
+  faCheck,
+  faXmark,
+  faUtensils,
+  faBolt,
+  faDumbbell,
+  faBreadSlice,
+  faOilCan
 } from '@fortawesome/free-solid-svg-icons'
+
 import {
   faFacebook,
   faTwitter,
@@ -24,7 +39,7 @@ import {
   faLinkedin
 } from '@fortawesome/free-brands-svg-icons'
 
-// Add icons to the library
+// Add all icons to the library
 library.add(
   faShoppingCart,
   faSearch,
@@ -35,12 +50,27 @@ library.add(
   faTrash,
   faList,
   faTable,
-  faWheatAlt,
   faLeaf,
   faSeedling,
   faLocationDot,
   faPhone,
   faEnvelope,
+  faSpinner,
+  faCartPlus,
+  faCircle,
+  faExclamationTriangle,
+  faExclamationCircle,
+  faRotate,
+  faWheatAlt,
+  faCircleXmark,
+  faCheck,
+  faXmark,
+  faUtensils,
+  faBolt,
+  faDumbbell,
+  faBreadSlice,
+  faOilCan,
+  // Social media icons
   faFacebook,
   faTwitter,
   faInstagram,

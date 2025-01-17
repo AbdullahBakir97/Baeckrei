@@ -1,11 +1,12 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
-import { FontAwesomeIcon } from './plugins/fontawesome'
 import VueGlow from '@aksharahegde/vue-glow'
 import './style.css'
 import App from './App.vue'
 import axios from './plugins/axios'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import './plugins/fontawesome'
 
 // Initialize Pinia
 const pinia = createPinia()
