@@ -151,19 +151,21 @@ const getStatusColor = (status) => {
 
 const fetchDashboardData = async () => {
   try {
-    // Fetch dashboard statistics
-    const statsResponse = await axios.get('/api/admin/dashboard/stats/')
+    const [statsResponse, ordersResponse, productsResponse] = await Promise.all([
+      axios.get('/api/admin/dashboard/stats/'),
+      axios.get('/api/admin/dashboard/recent-orders/'),
+      axios.get('/api/admin/dashboard/low-stock/')
+    ])
+
     stats.value = statsResponse.data
-
-    // Fetch recent orders
-    const ordersResponse = await axios.get('/api/admin/dashboard/recent-orders/')
     recentOrders.value = ordersResponse.data
-
-    // Fetch low stock products
-    const productsResponse = await axios.get('/api/admin/dashboard/low-stock/')
     lowStockProducts.value = productsResponse.data
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
+    // Add error state handling
+    stats.value = {}
+    recentOrders.value = []
+    lowStockProducts.value = []
   }
 }
 

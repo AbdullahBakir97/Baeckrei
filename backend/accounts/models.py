@@ -35,7 +35,8 @@ class User(AbstractUser):
     last_login = models.DateTimeField(_('last login'), default=timezone.now)
     is_active = models.BooleanField(_('active'), default=True)
     is_staff = models.BooleanField(_('staff status'), default=False)
-
+    is_admin = models.BooleanField(_('admin status'), default=False)
+    
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -56,6 +57,7 @@ class User(AbstractUser):
 
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    address = models.ForeignKey('Address', on_delete=models.SET_NULL, null=True, blank=True, related_name='customers')
     customer_id = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -76,3 +78,18 @@ class Customer(models.Model):
         if self.user:
             return self.user.email
         return None
+
+class Address(models.Model):
+    customer = models.ForeignKey('Customer', on_delete=models.CASCADE, related_name='addresses')
+    address_line_1 = models.CharField(max_length=255)
+    address_line_2 = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.address_line_1}, {self.city}, {self.state}, {self.country}"

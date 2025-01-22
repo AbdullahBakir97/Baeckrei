@@ -6,8 +6,9 @@
     <div class="w-48 flex-shrink-0">
       <div class="relative h-full">
         <img
-          :src="product.image"
+          :src="getImageUrl(product)"
           :alt="product.name"
+          @error="handleImageError"
           class="w-full h-full object-cover"
         >
         <!-- Badges -->
@@ -74,21 +75,21 @@
       <!-- Price and Actions -->
       <div class="flex items-center justify-between mt-4">
         <div class="flex flex-col">
-          <span class="text-2xl font-bold text-amber-500">
+          <span class="text-2xl font-bold text-amber-500" v-if="product.price">
             ${{ formatPrice(product.price) }}
           </span>
           <span
-            v-if="product.oldPrice"
+            v-if="product.old_price || product.oldPrice"
             class="text-sm text-gray-400"
           >
-            ${{ formatPrice(product.oldPrice) }} each
+            ${{ formatPrice(product.old_price || product.oldPrice || 0) }} each
           </span>
         </div>
 
         <div class="flex items-center gap-2">
           <button
             v-if="product.available"
-            @click="$emit('add-to-cart', product)"
+            @click="emit('add-to-cart', product)"
             class="px-4 py-2 rounded-lg text-white font-medium
                    bg-gradient-to-r from-amber-500/90 to-amber-600/90
                    hover:from-amber-500 hover:to-amber-600
@@ -114,13 +115,16 @@
     v-if="showQuickView"
     :product="product"
     @close="showQuickView = false"
-    @add-to-cart="$emit('add-to-cart', product)"
+    @add-to-cart="emit('add-to-cart', product)"
   />
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import QuickViewModal from './QuickViewModal.vue'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const defaultImage = ref('/assets/images/placeholder.jpg')
 
 const props = defineProps({
   product: {
@@ -129,14 +133,52 @@ const props = defineProps({
   }
 })
 
-defineEmits(['add-to-cart'])
+const emit = defineEmits(['add-to-cart'])
 
 // State
 const showQuickView = ref(false)
 
 // Methods
 const formatPrice = (price) => {
-  return price.toFixed(2)
+  if (!price) return '0.00'
+  return parseFloat(price).toFixed(2)
+}
+
+const getImageUrl = (product) => {
+  if (!product) {
+    console.log('Debug - No product provided')
+    return defaultImage.value
+  }
+
+  console.log('Debug - Processing image for product:', {
+    id: product.id,
+    image: product.image,
+    defaultImage: defaultImage.value
+  })
+  
+  // Use the image URL directly if it's already absolute
+  if (product.image?.startsWith('http')) {
+    return product.image
+  }
+  
+  // If we have an image path, construct the full URL
+  if (product.image) {
+    const fullUrl = `${API_URL}${product.image.startsWith('/') ? '' : '/'}${product.image}`
+    console.log('Debug - Constructed image URL:', fullUrl)
+    return fullUrl
+  }
+  
+  console.log('Debug - Using default image')
+  return defaultImage.value
+}
+
+const handleImageError = (event) => {
+  console.error('Image failed to load:', {
+    src: event.target.src,
+    product: props.product?.id,
+    fallback: defaultImage.value
+  })
+  event.target.src = defaultImage.value
 }
 </script>
 

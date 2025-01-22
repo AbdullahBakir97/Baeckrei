@@ -2,6 +2,8 @@ from typing import TypeVar, Generic, Type, List, Optional, Dict, Any
 from django.db.models import Model, QuerySet
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from .. import EXCEPTIONS
+import uuid
 
 T = TypeVar('T', bound=Model)
 
@@ -10,6 +12,27 @@ class BaseService(Generic[T]):
     
     def __init__(self, model_class: Type[T]):
         self.model_class = model_class
+        
+    def handle_django_validation_error(self, error: ValidationError) -> None:
+        """Convert Django validation errors to our custom exceptions."""
+        if hasattr(error, 'message_dict'):
+            # Handle multiple field errors
+            fields = list(error.message_dict.keys())
+            messages = [msg for msgs in error.message_dict.values() for msg in msgs]
+            raise EXCEPTIONS.ValidationError(
+                field=fields[0] if fields else None,
+                value=None,
+                reason=messages[0] if messages else str(error),
+                message=f"Validation failed: {', '.join(messages)}"
+            )
+        else:
+            # Handle single field error
+            raise EXCEPTIONS.ValidationError(
+                field=None,
+                value=None,
+                reason=str(error),
+                message=f"Validation failed: {str(error)}"
+            )
     
     def get_queryset(self) -> QuerySet[T]:
         """Get the base queryset for the model."""
@@ -33,18 +56,18 @@ class BaseService(Generic[T]):
     
     @transaction.atomic
     def create(self, **data) -> T:
-        """Create a new instance with validation."""
+        """Create a new instance with validation and error handling."""
         try:
             instance = self.model_class(**data)
             instance.full_clean()
             instance.save()
             return instance
         except ValidationError as e:
-            raise ValidationError(f"Validation error during creation: {str(e)}")
+            self.handle_django_validation_error(e)
     
     @transaction.atomic
     def update(self, instance: T, **data) -> T:
-        """Update an instance with validation."""
+        """Update an instance with validation and error handling."""
         try:
             for key, value in data.items():
                 setattr(instance, key, value)
@@ -52,7 +75,7 @@ class BaseService(Generic[T]):
             instance.save()
             return instance
         except ValidationError as e:
-            raise ValidationError(f"Validation error during update: {str(e)}")
+            self.handle_django_validation_error(e)
     
     @transaction.atomic
     def delete(self, instance: T) -> bool:
@@ -72,9 +95,19 @@ class BaseService(Generic[T]):
         return self.get_queryset().filter(**filters).count()
     
     def bulk_create(self, instances: List[T]) -> List[T]:
-        """Bulk create instances."""
-        return self.model_class.objects.bulk_create(instances)
+        """Bulk create instances with error handling."""
+        try:
+            for instance in instances:
+                instance.full_clean()
+            return self.model_class.objects.bulk_create(instances)
+        except ValidationError as e:
+            self.handle_django_validation_error(e)
     
     def bulk_update(self, instances: List[T], fields: List[str]) -> None:
-        """Bulk update instances."""
-        self.model_class.objects.bulk_update(instances, fields)
+        """Bulk update instances with error handling."""
+        try:
+            for instance in instances:
+                instance.full_clean()
+            self.model_class.objects.bulk_update(instances, fields)
+        except ValidationError as e:
+            self.handle_django_validation_error(e)

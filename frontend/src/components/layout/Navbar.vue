@@ -51,83 +51,38 @@
           <!-- Cart -->
           <div 
             class="relative"
+            @click="navigateToCart"
             @mouseenter="showCartDropdown = true"
             @mouseleave="showCartDropdown = false"
           >
-            <div
-            class="p-2 text-gray-400 hover:text-gray-200 flex items-center gap-2 cursor-pointer cart-icon"
-          >
-            <div class="relative">
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              <span
-                v-if="cartItemCount > 0"
-                class="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center cart-count"
-              >
-                {{ cartItemCount }}
-              </span>
-            </div>
-            <span class="font-medium">{{ formatPrice(cartTotal) }} €</span>
+            <div class="p-2 text-gray-400 hover:text-gray-200 flex items-center gap-2 cursor-pointer cart-icon">
+              <div class="relative">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <span
+                  v-if="cartItemCount > 0"
+                  class="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center cart-count"
+                >
+                  {{ cartItemCount }}
+                </span>
+              </div>
+              <span class="font-medium">{{ formatPrice(cartTotal) }} €</span>
             </div>
 
             <!-- Cart Dropdown -->
-            <div 
-              v-show="showCartDropdown"
-              class="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl z-50 glass-dropdown"
-            >
-              <div class="p-4 border-b">
-                <h3 class="text-lg font-semibold">Cart Summary</h3>
-              </div>
-                
-              <div v-if="items.value?.length" class="max-h-96 overflow-y-auto">
-                <div v-for="item in displayedItems" :key="item.product.id" class="flex items-center p-4 hover:bg-gray-600 border-b">
-                  <img 
-                    :src="item.product.image" 
-                    :alt="item.product.name"
-                    class="w-16 h-16 object-cover rounded"
-                  >
-                  <div class="ml-4 flex-1">
-                    <h4 class="font-medium text-sm">{{ item.product.name }}</h4>
-                    <div class="flex justify-between items-center">
-                      <span class="text-gray-400">Qty: {{ item.quantity }}</span>
-                      <span class="font-medium">{{ formatPrice(item.total_price) }} €</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="items.value?.length > 3" class="px-4 py-2 text-sm text-gray-400 italic border-t">
-                  and {{ items.value.length - 3 }} more item(s)
-                </div>
-              </div>
-                
-              <div v-else class="p-4 text-center text-gray-400">
-                Your cart is empty
-              </div>
-
-              <div v-if="items.value?.length" class="p-4 bg-gray-600">
-                <div class="flex justify-between items-center mb-4">
-                  <span class="font-medium">Subtotal:</span>
-                  <span class="font-bold">{{ formatPrice(cartTotal) }} €</span>
-                </div>
-                <router-link
-                  to="/cart"
-                  class="block w-full bg-amber-600 text-white text-center py-2 rounded-md hover:bg-amber-700"
-                  @click="navigateToCart"
-                >
-                  View Cart
-                </router-link>
-              </div>
+            <div v-show="showCartDropdown" class="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl z-50 glass-dropdown">
+              <CartDropdown />
             </div>
           </div>
 
@@ -230,6 +185,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
+import CartDropdown from '@/components/cart/CartDropdown.vue';
 
 const router = useRouter()
 const route = useRoute()
@@ -389,6 +345,10 @@ nav:hover::before {
   @apply w-full;
 }
 
+.navbar {
+  @apply flex items-center justify-between p-4 bg-gray-800 text-white;
+}
+
 .brand-logo .logo-text {
   @apply font-bold text-transparent bg-clip-text;
   background-image: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
@@ -423,6 +383,14 @@ nav:hover::before {
   background: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
   border: 2px solid rgba(17, 17, 17, 0.95);
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.cart-icon .cart-count {
+  @apply absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center;
+}
+
+.dropdown-menu {
+  @apply absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl z-50 glass-dropdown;
 }
 
 .user-menu-button:hover {

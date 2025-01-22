@@ -1,26 +1,27 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import router from './router'
-import VueGlow from '@aksharahegde/vue-glow'
-import './style.css'
 import App from './App.vue'
+import router from './router'
+import './style.css'
+import { useAuthStore } from './stores/authStore'
 import axios from './plugins/axios'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import './plugins/fontawesome'
+import VueGlow from '@aksharahegde/vue-glow'
 
-// Initialize Pinia
+const app = createApp(App)
 const pinia = createPinia()
 
-// Create Vue app
-const app = createApp(App)
-
-// Use plugins
 app.use(pinia)
 app.use(router)
 app.use(VueGlow)
 
 // Register global components
 app.component('font-awesome-icon', FontAwesomeIcon)
+
+// Initialize auth state before mounting the app
+const authStore = useAuthStore()
+await authStore.initializeAuth()
 
 // Restore auth token if it exists
 const token = localStorage.getItem('token')

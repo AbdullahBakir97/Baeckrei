@@ -11,6 +11,7 @@
     </main>
     <Footer />
     <Toast />
+    <ModalWrapper />
   </div>
 </template>
 
@@ -20,6 +21,7 @@ import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Toast from '@/components/common/Toast.vue'
 import AnimatedBackground from '@/components/layout/AnimatedBackground.vue'
+import ModalWrapper from '@/components/common/ModalWrapper.vue'
 
 // Import bakery images
 import img1 from '@/assets/bakery/_6c31eb8b-2e73-4336-8100-0d4665af533f-removebg-preview.png'

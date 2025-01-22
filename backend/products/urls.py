@@ -1,17 +1,25 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views
+from .views import ProductManagementViewSet
 
 router = DefaultRouter()
-router.register('categories', views.CategoryViewSet, basename='category')
-router.register('products', views.ProductViewSet, basename='product')
-router.register('ingredients', views.IngredientViewSet, basename='ingredient')
-router.register('allergens', views.AllergenViewSet, basename='allergen')
+router.register(r'', ProductManagementViewSet, basename='products')
 
 app_name = 'products'
 
+# The router automatically generates URLs for:
+# List/Create: /api/products/
+# Retrieve/Update/Delete: /api/products/{id}/
+# Categories: /api/products/categories/
+# Category operations: /api/products/{id}/category_summary/
+# Ingredients: /api/products/ingredients/
+# Ingredient operations: /api/products/{id}/ingredient_details/
+# Allergens: /api/products/allergens/
+# Allergen operations: /api/products/{id}/allergen_usage/
+# Nutrition: /api/products/{id}/product_nutrition/
+# Reports: /api/products/report/, /api/products/inventory_report/
+# Search: /api/products/search/
+
 urlpatterns = [
     path('', include(router.urls)),
-    path('reports/', views.ReportsView.as_view(), name='reports-all'),
-    path('reports/<str:report_type>/', views.ReportsView.as_view(), name='reports-specific'),
 ]

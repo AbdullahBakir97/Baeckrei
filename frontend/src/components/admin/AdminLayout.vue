@@ -69,12 +69,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { isAdmin } = storeToRefs(authStore)
 
 const navItems = [
   {
@@ -103,6 +105,12 @@ const navItems = [
     icon: 'UsersIcon',
   },
 ]
+
+onMounted(() => {
+  if (!isAdmin.value) {
+    router.push({ name: 'products' })
+  }
+})
 
 const currentPageTitle = computed(() => {
   const currentPath = router.currentRoute.value.path

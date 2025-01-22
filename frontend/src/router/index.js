@@ -6,9 +6,7 @@ import Contact from '../components/pages/Contact.vue'
 import Profile from '../components/account/Profile.vue'
 import Orders from '../components/account/Orders.vue'
 import Settings from '../components/account/Settings.vue'
-import AdminLayout from '@/components/layout/AdminLayout.vue'
-import ProductManagement from '@/components/admin/products/ProductManagement.vue'
-import AdminDashboard from '@/components/admin/dashboard/AdminDashboard.vue'
+import { adminRoutes } from '@/router/admin.routers.js'
 import { useAuthStore } from '@/stores/authStore'
 
 const routes = [
@@ -20,61 +18,61 @@ const routes = [
     path: '/products',
     name: 'products',
     component: ProductList,
-    meta: { title: 'Products' }
+    meta: { title: 'Products', requiresAuth: false }
   },
   {
     path: '/products/:id',
     name: 'product-detail',
     component: ProductDetail,
-    meta: { title: 'Product Details' }
+    meta: { title: 'Product Details', requiresAuth: false }
   },
   {
     path: '/categories/:category',
     name: 'category',
     component: ProductList,
     props: true,
-    meta: { title: 'Category Products' }
+    meta: { title: 'Category Products', requiresAuth: false }
   },
   {
     path: '/blog',
     name: 'blog',
     component: () => import('@/components/pages/Blog.vue'),
-    meta: { title: 'Blog' }
+    meta: { title: 'Blog', requiresAuth: false }
   },
   {
     path: '/breads',
     name: 'breads',
     component: ProductList,
     props: { category: 'breads' },
-    meta: { title: 'Breads' }
+    meta: { title: 'Breads', requiresAuth: false }
   },
   {
     path: '/pastries',
     name: 'pastries',
     component: ProductList,
     props: { category: 'pastries' },
-    meta: { title: 'Pastries' }
+    meta: { title: 'Pastries', requiresAuth: false }
   },
   {
     path: '/cakes',
     name: 'cakes',
     component: ProductList,
     props: { category: 'cakes' },
-    meta: { title: 'Cakes' }
+    meta: { title: 'Cakes', requiresAuth: false }
   },
   {
     path: '/cookies',
     name: 'cookies',
     component: ProductList,
     props: { category: 'cookies' },
-    meta: { title: 'Cookies' }
+    meta: { title: 'Cookies', requiresAuth: false }
   },
   {
     path: '/seasonal',
     name: 'seasonal',
     component: ProductList,
     props: { category: 'seasonal' },
-    meta: { title: 'Seasonal Products' }
+    meta: { title: 'Seasonal Products', requiresAuth: false }
   },
   {
     path: '/cart',
@@ -86,13 +84,13 @@ const routes = [
     path: '/about',
     name: 'about',
     component: About,
-    meta: { title: 'About Us' }
+    meta: { title: 'About Us', requiresAuth: false }
   },
   {
     path: '/contact',
     name: 'contact',
     component: Contact,
-    meta: { title: 'Contact Us' }
+    meta: { title: 'Contact Us', requiresAuth: false }
   },
   {
     path: '/profile',
@@ -112,86 +110,89 @@ const routes = [
     component: Settings,
     meta: { requiresAuth: true, title: 'Settings' }
   },
-  {
-    path: '/admin',
-    component: AdminLayout,
-    meta: { requiresAuth: true, requiresAdmin: true },
-    children: [
-      {
-        path: '',
-        name: 'admin-dashboard',
-        component: AdminDashboard,
-        meta: { title: 'Admin Dashboard' }
-      },
-      {
-        path: 'products',
-        name: 'product-management',
-        component: ProductManagement,
-        meta: { title: 'Product Management' }
-      },
-      {
-        path: 'products/:id',
-        name: 'admin-product-detail',
-        component: () => import('@/components/admin/products/ProductDetail.vue'),
-        meta: { requiresAuth: true, requiresAdmin: true }
-      },
-      {
-        path: 'orders',
-        name: 'order-management',
-        component: () => import('@/components/admin/orders/OrderManagement.vue'),
-        meta: { title: 'Order Management' }
-      }
-    ]
-  },
+  adminRoutes,
   {
     path: '/login',
     name: 'login',
     component: () => import('@/components/auth/LoginForm.vue'),
-    meta: { title: 'Login' }
+    meta: { title: 'Login', requiresAuth: false }
   },
   {
     path: '/register',
     name: 'register',
     component: () => import('@/components/auth/RegisterForm.vue'),
-    meta: { title: 'Register' }
-  }
+    meta: { title: 'Register', requiresAuth: false }
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    return { top: 0, behavior: 'smooth' }
+  }
 })
 
 router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore()
+  document.body.classList.add('page-loading')
   
-  // Initialize auth state if not already done
-  if (!authStore.initialized) {
-    await authStore.initializeAuth()
-  }
-  
-  // If logged in as admin and accessing login page, redirect to admin dashboard
-  if (authStore.isAuthenticated && authStore.isAdmin && to.name === 'login') {
-    next({ name: 'admin-dashboard' })
-    return
-  }
+  try {
+    const authStore = useAuthStore()
+    const isAuthenticated = authStore.isAuthenticated
+    const isAdmin = authStore.isAdmin
 
-  // Check authentication requirements
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'login', query: { redirect: to.fullPath } })
-    return
-  }
+    // First check admin routes
+    if (to.meta.requiresAdmin) {
+      if (!isAuthenticated) {
+        next({ 
+          name: 'login', 
+          query: { redirect: to.fullPath },
+          replace: true 
+        })
+        return
+      }
+      
+      if (!isAdmin) {
+        next({ 
+          name: 'products',
+          replace: true 
+        })
+        return
+      }
+    }
 
-  // Check admin requirements
-  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    // Then check general auth routes
+    if (to.meta.requiresAuth && !isAuthenticated) {
+      next({ 
+        name: 'login', 
+        query: { redirect: to.fullPath },
+        replace: true 
+      })
+      return
+    }
+
+    // Handle authenticated user redirects
+    if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {
+      next(isAdmin ? { name: 'admin-dashboard' } : { name: 'products' })
+      return
+    }
+
+    // Update document title
+    document.title = to.meta.title ? `${to.meta.title} - Beackrei` : 'Beackrei'
+    
+    next()
+  } catch (error) {
+    console.error('Navigation error:', error)
     next({ name: 'products' })
-    return
+  } finally {
+    document.body.classList.remove('page-loading')
   }
-
-  // Update document title
-  document.title = to.meta.title ? `${to.meta.title} - Beackrei` : 'Beackrei'
-  
-  next()
 })
 
 export default router

@@ -4,47 +4,6 @@ import {
   faShoppingCart,
   faSearch,
   faUserCircle,
-  faTimes,
-  faPlus,
-  faMinus,
-  faTrash,
-  faList,
-  faTable,
-  faLeaf,
-  faSeedling,
-  faLocationDot,
-  faPhone,
-  faEnvelope,
-  faSpinner,
-  faCartPlus,
-  faCircle,
-  faExclamationTriangle,
-  faExclamationCircle,
-  faRotate,
-  faWheatAlt,
-  faCircleXmark,
-  faCheck,
-  faXmark,
-  faUtensils,
-  faBolt,
-  faDumbbell,
-  faBreadSlice,
-  faOilCan
-} from '@fortawesome/free-solid-svg-icons'
-
-import {
-  faFacebook,
-  faTwitter,
-  faInstagram,
-  faLinkedin
-} from '@fortawesome/free-brands-svg-icons'
-
-// Add all icons to the library
-library.add(
-  faShoppingCart,
-  faSearch,
-  faUserCircle,
-  faTimes,
   faPlus,
   faMinus,
   faTrash,
@@ -70,11 +29,70 @@ library.add(
   faDumbbell,
   faBreadSlice,
   faOilCan,
-  // Social media icons
+  faMagnifyingGlassPlus,
+  faChevronLeft,
+  faChevronRight,
+  faShareNodes,
+  faCodeCompare,
+  faMortarPestle,
+  faTriangleExclamation,
+  faChartPie
+} from '@fortawesome/free-solid-svg-icons'
+
+import {
+  faHeart as farHeart
+} from '@fortawesome/free-regular-svg-icons'
+
+import {
   faFacebook,
   faTwitter,
-  faInstagram,
-  faLinkedin
+  faInstagram
+} from '@fortawesome/free-brands-svg-icons'
+
+// Add icons to library
+library.add(
+  faShoppingCart,
+  faSearch,
+  faUserCircle,
+  faPlus,
+  faMinus,
+  faTrash,
+  faList,
+  faTable,
+  faLeaf,
+  faSeedling,
+  faLocationDot,
+  faPhone,
+  faEnvelope,
+  faSpinner,
+  faCartPlus,
+  faCircle,
+  faExclamationTriangle,
+  faExclamationCircle,
+  faRotate,
+  faWheatAlt,
+  faCircleXmark,
+  faCheck,
+  faXmark,
+  faUtensils,
+  faBolt,
+  faDumbbell,
+  faBreadSlice,
+  faOilCan,
+  faMagnifyingGlassPlus,
+  faChevronLeft,
+  faChevronRight,
+  faShareNodes,
+  faCodeCompare,
+  faMortarPestle,
+  faTriangleExclamation,
+  faChartPie,
+  farHeart,
+  faFacebook,
+  faTwitter,
+  faInstagram
 )
 
-export { FontAwesomeIcon }
+export default function installFontAwesome(app) {
+  app.component('font-awesome-icon', FontAwesomeIcon)
+}

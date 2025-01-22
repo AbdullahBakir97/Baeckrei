@@ -56,13 +56,20 @@
                 :alt="item.product.name"
                 @error="$event.target.src = '/images/placeholder.png'"
                 :id="'cart-item-image-' + item.product.id"
-              >
+              />
             </div>
             <div class="item-details">
               <span class="item-name text-gray-900">{{ item.product.name }}</span>
               <div class="item-info">
-                <span class="item-quantity text-gray-700" :id="'cart-item-quantity-' + item.product.id">x{{ item.quantity }}</span>
-                <span class="item-price text-gray-900" :id="'cart-item-price-' + item.product.id">{{ formatPrice(item.total_price) }} €</span>
+                <span class="item-quantity text-gray-700" :id="'cart-item-quantity-' + item.product.id">
+                  x{{ item.quantity }}
+                </span>
+                <span class="item-price text-gray-900" :id="'cart-item-price-' + item.product.id">
+                  {{ formatPrice(item.product?.price) }} € each
+                </span>
+                <span class="item-subtotal text-gray-900">
+                  Subtotal: {{ formatPrice(item.total_price) }} €
+                </span>
               </div>
             </div>
           </div>
@@ -80,7 +87,9 @@
         <div v-if="items.length > 0" class="cart-summary">
           <div class="cart-total">
             <span class="total-label text-gray-900">Total:</span>
-            <span class="total-amount text-gray-900" id="cart-total-amount">{{ formatPrice(cartTotal) }} €</span>
+            <span class="total-amount text-gray-900" id="cart-total-amount">
+              {{ formatPrice(cartTotal) }} €
+            </span>
           </div>
 
           <div class="cart-actions">
@@ -106,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useCartStore } from '@/stores/cartStore'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
@@ -122,27 +131,28 @@ library.add(faShoppingCart, faShoppingBasket, faTimes)
 
 const router = useRouter()
 const cartStore = useCartStore()
-const { state } = storeToRefs(cartStore)
-const isOpen = ref(false)
+
+const { items, loading, total, total_items, dropdownVisible } = storeToRefs(cartStore)
 
 // Computed properties from store state
-const cartItemCount = computed(() => state.value.total_items || 0)
-const cartTotal = computed(() => Number(state.value.total || 0))
-const items = computed(() => state.value.items || [])
-const displayedItems = computed(() => items.value.slice(0, 3))
-const isLoading = computed(() => state.value.loading)
+const cartItemCount = computed(() => total_items.value || 0)
+const cartTotal = computed(() => Number(total.value || 0))
+const displayedItems = computed(() => items.value?.slice(0, 3) || [])
+const isOpen = computed(() => dropdownVisible.value)
+const isLoading = computed(() => loading.value)
 
 const formatPrice = (price) => {
   return Number(price || 0).toFixed(2)
 }
 
+
 const openDropdown = async () => {
-  isOpen.value = true
   await cartStore.fetchCart()
+  cartStore.showDropdown()
 }
 
 const closeDropdown = () => {
-  isOpen.value = false
+  cartStore.hideDropdown()
 }
 
 const navigateToCart = () => {
@@ -209,16 +219,61 @@ onMounted(async () => {
   @apply w-full h-full object-cover rounded;
 }
 
+.item-info {
+  @apply flex flex-col space-y-1 mt-1 w-full;
+}
+
 .item-details {
-  @apply ml-4 flex-1;
+  @apply ml-4 flex-1 min-w-0; /* Added min-w-0 to prevent text overflow */
 }
 
 .item-name {
-  @apply block font-medium;
+  @apply block font-medium text-sm truncate mb-1; /* Added truncate for long names */
 }
 
-.item-info {
-  @apply flex justify-between mt-1;
+.item-quantity {
+  @apply text-sm text-gray-600;
+}
+
+.item-price {
+  @apply text-sm text-gray-600;
+}
+
+.item-subtotal {
+  @apply text-sm font-semibold text-gray-900;
+}
+
+/* Update dropdown width */
+.dropdown-menu {
+  @apply absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg z-50 border border-gray-200;
+}
+
+/* Update cart item spacing */
+.cart-item {
+  @apply flex items-start p-4 hover:bg-gray-50 transition-colors duration-150;
+}
+
+/* Update image size and style */
+.item-image {
+  @apply w-20 h-20 flex-shrink-0 rounded-md overflow-hidden border border-gray-200;
+}
+
+/* Update cart summary section */
+.cart-summary {
+  @apply p-4 bg-gray-50 rounded-b-lg border-t border-gray-200;
+}
+
+.cart-actions {
+  @apply grid grid-cols-2 gap-3 mt-4;
+}
+
+.view-cart-btn, .checkout-btn {
+  @apply px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200;
+}
+
+/* Update more items section */
+.more-items {
+  @apply p-3 text-center text-sm bg-gray-50 border-t border-gray-200;
 }
 
 .empty-cart {

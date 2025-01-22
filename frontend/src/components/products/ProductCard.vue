@@ -232,7 +232,6 @@ const props = defineProps({
 defineEmits(['addToCart'])
 
 const cartStore = useCartStore()
-const { state } = storeToRefs(cartStore)
 const { showToast } = useToast()
 const loading = ref(false)
 const message = ref('')
@@ -240,9 +239,10 @@ const messageType = ref('')
 const quantity = ref(1)
 const showQuickView = ref(false)
 const showQuickPreview = ref(false)
+const { items } = storeToRefs(cartStore)
 
 const cartItem = computed(() => 
-  state.value?.items?.find(item => item.product.id === props.product.id)
+  items.value?.find(item => item.product?.id === props.product?.id)
 )
 
 const isInCart = computed(() => !!cartItem.value)
