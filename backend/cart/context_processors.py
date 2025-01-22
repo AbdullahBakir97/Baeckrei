@@ -23,14 +23,17 @@ def cart_context(request):
                 if not column_exists:
                     return {'cart_total': 0, 'cart_items_count': 0}
 
-        if hasattr(request, 'cart'):
+        if hasattr(request, 'cart') and request.cart:
             cart = request.cart
+            items = cart.items.values('product__name', 'quantity', 'product__price', 'product__image')
             return {
                 'cart_total': cart.total if cart else 0,
                 'cart_items_count': cart.total_items if cart else 0,
+                'cart_items': list(items),  # Pass detailed items to the context
             }
-    except Exception:
-        # During migrations or if there are any DB issues, return empty context
-        pass
+    except Exception as e:
+        # Handle any exceptions (e.g., during migrations)
+        print(f"Error in cart_context: {e}")
     
-    return {'cart_total': 0, 'cart_items_count': 0}
+    # Default context
+    return {'cart_total': 0, 'cart_items_count': 0, 'cart_items': []}
