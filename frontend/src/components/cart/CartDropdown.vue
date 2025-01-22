@@ -1,5 +1,6 @@
 <template>
   <div class="cart-dropdown" @mouseleave="closeDropdown">
+    <!-- Cart Button -->
     <button 
       id="cart-dropdown-button"
       class="cart-button" 
@@ -18,6 +19,7 @@
       <span class="cart-total" aria-label="Cart total">{{ formatPrice(cartTotal) }} €</span>
     </button>
 
+    <!-- Dropdown Menu -->
     <div 
       id="cart-dropdown-menu"
       v-if="isOpen" 
@@ -26,6 +28,7 @@
       role="dialog"
       aria-label="Shopping Cart Details"
     >
+      <!-- Dropdown Header -->
       <div class="dropdown-header">
         <h3 id="cart-dropdown-title">Cart Summary</h3>
         <button 
@@ -38,10 +41,12 @@
         </button>
       </div>
 
+      <!-- Loading State -->
       <div v-if="isLoading" class="p-4 text-center" aria-live="polite">
         <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mx-auto" aria-label="Loading cart contents"></div>
       </div>
 
+      <!-- Cart Items -->
       <template v-else>
         <div v-if="items.length > 0" class="cart-items">
           <div 
@@ -50,6 +55,7 @@
             class="cart-item"
             :id="'cart-item-' + item.product.id"
           >
+            <!-- Product Image -->
             <div class="item-image">
               <img 
                 :src="item.product.image" 
@@ -58,32 +64,39 @@
                 :id="'cart-item-image-' + item.product.id"
               />
             </div>
+            <!-- Product Details -->
             <div class="item-details">
               <span class="item-name text-gray-900">{{ item.product.name }}</span>
               <div class="item-info">
+                <!-- Quantity -->
                 <span class="item-quantity text-gray-700" :id="'cart-item-quantity-' + item.product.id">
                   x{{ item.quantity }}
                 </span>
+                <!-- Price -->
                 <span class="item-price text-gray-900" :id="'cart-item-price-' + item.product.id">
-                  {{ formatPrice(item.product?.price) }} € each
+                  {{ formatPrice(item.product.price) }} € each
                 </span>
+                <!-- Subtotal -->
                 <span class="item-subtotal text-gray-900">
-                  Subtotal: {{ formatPrice(item.total_price) }} €
+                  Subtotal: {{ formatPrice(item.subtotal) }} €
                 </span>
               </div>
             </div>
           </div>
 
+          <!-- More Items Message -->
           <div v-if="cartItemCount > 3" class="more-items text-gray-700">
             and {{ cartItemCount - 3 }} more item(s)
           </div>
         </div>
-        
+
+        <!-- Empty Cart State -->
         <div v-else class="empty-cart" aria-live="polite">
           <font-awesome-icon icon="fa-solid fa-shopping-basket" class="empty-icon text-gray-600" aria-hidden="true" />
           <p class="text-gray-700">Your cart is empty</p>
         </div>
 
+        <!-- Cart Summary -->
         <div v-if="items.length > 0" class="cart-summary">
           <div class="cart-total">
             <span class="total-label text-gray-900">Total:</span>
@@ -92,6 +105,7 @@
             </span>
           </div>
 
+          <!-- Cart Actions -->
           <div class="cart-actions">
             <button 
               id="view-cart-button"
