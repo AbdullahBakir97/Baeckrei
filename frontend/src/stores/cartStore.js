@@ -22,6 +22,7 @@ export const useCartStore = defineStore('cart', {
     subtotalAmount: (state) => Number(state.subtotal || 0),
     taxAmount: (state) => Number(state.tax || 0),
     totalAmount: (state) => Number(state.total || 0),
+    displayedItems: (state) => state.items.slice(0, 3),
     isDropdownVisible: (state) => state.dropdownVisible
   },
 
@@ -46,19 +47,29 @@ export const useCartStore = defineStore('cart', {
           withCredentials: true
         })
         
-        this.items = response.data.items || []
-        this.subtotal = response.data.subtotal || '0.00'
-        this.tax = response.data.tax || '0.00'
-        this.total = response.data.total || '0.00'
-        this.total_items = response.data.total_items || 0
-        
-        return response.data
+        this.items = response.data.items.map((item) => ({
+          id: item.id,
+          product: {
+            id: item.product_id,
+            name: item.product_name,
+            image: item.product_image,
+            price: parseFloat(item.product_price),
+          },
+          quantity: item.quantity,
+          subtotal: parseFloat(item.subtotal),
+        }));
+        this.subtotal = response.data.subtotal || '0.00';
+        this.tax = response.data.tax || '0.00';
+        this.total = response.data.total || '0.00';
+        this.total_items = response.data.total_items || 0;
+    
+        return response.data;
       } catch (error) {
-        console.error('Error fetching cart:', error)
-        this.error = error.response?.data?.message || 'Failed to load cart'
-        throw error
+        console.error('Error fetching cart:', error);
+        this.error = error.response?.data?.message || 'Failed to load cart';
+        throw error;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
 
