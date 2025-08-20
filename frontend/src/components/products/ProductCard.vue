@@ -84,14 +84,16 @@
                              transition-all duration-200">
                 View Details
               </button>
-              <button @click="addToCart"
-                      :disabled="!product.available"
-                      class="flex-1 py-1.5 px-3 rounded-lg text-sm
-                             bg-transparent border border-amber-500/30
-                             hover:border-amber-500/80 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]
-                             disabled:opacity-50 disabled:cursor-not-allowed">
-                <span class="text-amber-400">Add to Cart</span>
-              </button>
+              <ProductCardButtons
+                :product="product"
+                :cart-item="cartItem"
+                :is-in-cart="isInCart"
+                :loading="loading"
+                @add-to-cart="addToCart"
+                @update-quantity="updateQuantity"
+                @remove-from-cart="removeFromCart"
+                class="flex-1"
+              />
             </div>
           </div>
         </div>
@@ -122,59 +124,16 @@
       <p class="product-price">{{ formatPrice(product.price) }} €</p>
       
       <!-- Cart Controls -->
-      <div v-if="product.stock > 0">
-        <div class="cart-controls">
-          <template v-if="!isInCart">
-            <button 
-              ref="addToCartBtn"
-              class="add-to-cart-btn"
-              :disabled="loading"
-              @click="addToCart"
-            >
-              <font-awesome-icon icon="fa-solid fa-cart-plus" />
-              <span>{{ loading ? 'Adding...' : 'Add to Cart' }}</span>
-            </button>
-          </template>
-          <template v-else>
-            <div class="cart-actions">
-              <div class="quantity-controls">
-                <button 
-                  ref="el => quantityBtns.push(el)"
-                  class="quantity-btn"
-                  :disabled="loading || cartItem.quantity <= 1"
-                  @click="updateQuantity(cartItem.quantity - 1)"
-                >
-                  <font-awesome-icon icon="fa-solid fa-minus" />
-                </button>
-                
-                <input 
-                  class="quantity"
-                  type="number"
-                  :value="cartItem.quantity"
-                  @input="updateQuantity($event.target.valueAsNumber)"
-                />
-                
-                <button 
-                  ref="el => quantityBtns.push(el)"
-                  class="quantity-btn"
-                  :disabled="loading || cartItem.quantity >= product.stock"
-                  @click="updateQuantity(cartItem.quantity + 1)"
-                >
-                  <font-awesome-icon icon="fa-solid fa-plus" />
-                </button>
-              </div>
-              <button 
-                ref="removeBtn"
-                class="remove-btn"
-                :disabled="loading"
-                @click="removeFromCart"
-              >
-                <font-awesome-icon icon="fa-solid fa-trash-can" />
-                <span>Remove</span>
-              </button>
-            </div>
-          </template>
-        </div>
+      <div v-if="product.stock > 0 || isInCart">
+        <ProductCardButtons
+          :product="product"
+          :cart-item="cartItem"
+          :is-in-cart="isInCart"
+          :loading="loading"
+          @add-to-cart="addToCart"
+          @update-quantity="updateQuantity"
+          @remove-from-cart="removeFromCart"
+        />
       </div>
       <div v-else class="out-of-stock-message" :style="{ color: textColor }">
         Out of Stock
@@ -189,22 +148,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useCartStore } from '@/stores/cartStore'
+import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { 
-  faCartPlus,
-  faPlus,
-  faMinus,
-  faTrashCan,
-  faEye
-} from '@fortawesome/free-solid-svg-icons'
+import { faEye } from '@fortawesome/free-solid-svg-icons'
 import { useToast } from '@/composables/useToast'
 import QuickViewModal from './QuickViewModal.vue'
+import ProductCardButtons from './ProductCardButtons.vue'
 
-library.add(faCartPlus, faPlus, faMinus, faTrashCan, faEye)
+library.add(faEye)
 
 const props = defineProps({
   product: {
@@ -229,30 +184,28 @@ const props = defineProps({
   }
 })
 
-defineEmits(['addToCart'])
+const emits = defineEmits(['addToCart'])
 
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 const { showToast } = useToast()
 const loading = ref(false)
 const message = ref('')
 const messageType = ref('')
-const quantity = ref(1)
 const showQuickView = ref(false)
 const showQuickPreview = ref(false)
 const { items } = storeToRefs(cartStore)
 
-const cartItem = computed(() => 
-  items.value?.find(item => item.product?.id === props.product?.id)
-)
+const isInCart = computed(() => {
+  return cartStore.items.some(item => item.product.id === props.product.id)
+})
 
-const isInCart = computed(() => !!cartItem.value)
-
-const addToCartBtn = ref(null)
-const quantityBtns = ref([])
-const removeBtn = ref(null)
+const cartItem = computed(() => {
+  return cartStore.items.find(item => item.product.id === props.product.id)
+})
 
 const handleImageError = (e) => {
-  e.target.src = '/images/placeholder.png' // Fallback image
+  e.target.src = '/images/placeholder.png'
 }
 
 const formatPrice = (price) => {
@@ -260,103 +213,71 @@ const formatPrice = (price) => {
 }
 
 const updateQuantity = async (newQuantity) => {
+  if (!newQuantity || newQuantity < 1) {
+    message.value = 'Quantity must be at least 1'
+    messageType.value = 'error'
+    setTimeout(() => message.value = '', 3000)
+    return
+  }
+
+  if (newQuantity > props.product.stock) {
+    message.value = `Only ${props.product.stock} items available`
+    messageType.value = 'error'
+    setTimeout(() => message.value = '', 3000)
+    return
+  }
+
   try {
-    if (newQuantity < 1) return
+    loading.value = true
     await cartStore.updateQuantity(props.product.id, newQuantity)
-    showToast('Cart updated successfully')
+    message.value = 'Cart updated'
+    messageType.value = 'success'
   } catch (error) {
-    console.error('Error updating quantity:', error)
-    showToast('Failed to update cart', 'error')
+    message.value = error.response?.data?.detail || 'Failed to update cart'
+    messageType.value = 'error'
+  } finally {
+    loading.value = false
+    setTimeout(() => message.value = '', 3000)
   }
 }
 
 const addToCart = async () => {
+  if (!props.product.available) {
+    message.value = 'Product is not available'
+    messageType.value = 'error'
+    setTimeout(() => message.value = '', 3000)
+    return
+  }
+
   try {
-    await cartStore.addItem(props.product.id, quantity.value)
-    showToast('Product added to cart')
-    quantity.value = 1 // Reset quantity after adding
+    loading.value = true
+    await cartStore.addItem(props.product.id)
+    message.value = 'Added to cart successfully!'
+    messageType.value = 'success'
+    emits('addToCart')
   } catch (error) {
-    console.error('Error adding to cart:', error)
-    showToast('Failed to add to cart', 'error')
+    message.value = error.response?.data?.detail || 'Failed to add to cart'
+    messageType.value = 'error'
+  } finally {
+    loading.value = false
+    setTimeout(() => message.value = '', 3000)
   }
 }
 
 const removeFromCart = async () => {
   try {
+    loading.value = true
     await cartStore.removeItem(props.product.id)
-    showToast('Product removed from cart')
+    message.value = 'Removed from cart'
+    messageType.value = 'success'
   } catch (error) {
-    console.error('Error removing from cart:', error)
-    showToast('Failed to remove from cart', 'error')
+    message.value = error.response?.data?.detail || 'Failed to remove from cart'
+    messageType.value = 'error'
+  } finally {
+    loading.value = false
+    setTimeout(() => message.value = '', 3000)
   }
 }
-
-const handleMouseMove = (e, button) => {
-  if (!button) return
-  
-  const rect = button.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-  
-  const centerX = rect.width / 2
-  const centerY = rect.height / 2
-  
-  const rotateX = (y - centerY) / 8
-  const rotateY = (centerX - x) / 8
-  
-  button.style.transform = `
-    perspective(1000px)
-    rotateX(${rotateX}deg)
-    rotateY(${rotateY}deg)
-    translateZ(10px)
-  `
-}
-
-const resetButtonTransform = (button) => {
-  if (!button) return
-  button.style.transform = `
-    perspective(1000px)
-    rotateX(0deg)
-    rotateY(0deg)
-    translateZ(0px)
-  `
-}
-
-onMounted(() => {
-  // Add event listeners for mouse movement
-  if (addToCartBtn.value) {
-    addToCartBtn.value.addEventListener('mousemove', (e) => handleMouseMove(e, addToCartBtn.value))
-    addToCartBtn.value.addEventListener('mouseleave', () => resetButtonTransform(addToCartBtn.value))
-  }
-  
-  quantityBtns.value.forEach(btn => {
-    btn.addEventListener('mousemove', (e) => handleMouseMove(e, btn))
-    btn.addEventListener('mouseleave', () => resetButtonTransform(btn))
-  })
-  
-  if (removeBtn.value) {
-    removeBtn.value.addEventListener('mousemove', (e) => handleMouseMove(e, removeBtn.value))
-    removeBtn.value.addEventListener('mouseleave', () => resetButtonTransform(removeBtn.value))
-  }
-})
-
-onUnmounted(() => {
-  // Clean up event listeners
-  if (addToCartBtn.value) {
-    addToCartBtn.value.removeEventListener('mousemove', handleMouseMove)
-    addToCartBtn.value.removeEventListener('mouseleave', resetButtonTransform)
-  }
-  
-  quantityBtns.value.forEach(btn => {
-    btn.removeEventListener('mousemove', handleMouseMove)
-    btn.removeEventListener('mouseleave', resetButtonTransform)
-  })
-  
-  if (removeBtn.value) {
-    removeBtn.value.removeEventListener('mousemove', handleMouseMove)
-    removeBtn.value.removeEventListener('mouseleave', resetButtonTransform)
-  }
-})
 </script>
 
 <style scoped>
@@ -507,137 +428,6 @@ onUnmounted(() => {
 
 .product-card:hover .product-info {
   transform: translateZ(10px);
-}
-
-.cart-controls {
-  @apply flex flex-col items-center gap-2 relative w-full;
-  transform-style: preserve-3d;
-}
-
-.cart-actions {
-  @apply flex flex-col items-center gap-3 w-full;
-  transform-style: preserve-3d;
-}
-
-.quantity-controls {
-  @apply flex items-center justify-center gap-1 w-auto;
-  transform-style: preserve-3d;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 0.5rem;
-  padding: 0.25rem;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.quantity-btn {
-  @apply w-7 h-7 rounded-md flex items-center justify-center relative;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  transform-style: preserve-3d;
-  transition: all 0.15s ease;
-  transform-origin: center center;
-  will-change: transform;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.quantity-btn svg {
-  color: #f59e0b;
-  transition: all 0.3s ease;
-}
-
-.quantity-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(245, 158, 11, 0.4);
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
-}
-
-.quantity {
-  @apply text-lg font-semibold text-center rounded-md text-gray-200;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  width: 2.5rem;
-  height: 1.75rem;
-  outline: none;
-  -moz-appearance: textfield;
-  transition: all 0.15s ease;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.quantity:hover,
-.quantity:focus {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(245, 158, 11, 0.4);
-  box-shadow: 
-    0 0 0 2px rgba(245, 158, 11, 0.1),
-    0 0 20px rgba(245, 158, 11, 0.2);
-}
-
-.add-to-cart-btn {
-  @apply w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 
-         text-base font-semibold relative;
-  background: transparent;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  transform-style: preserve-3d;
-  transition: all 0.15s ease;
-  transform-origin: center center;
-  will-change: transform;
-}
-
-.add-to-cart-btn span,
-.add-to-cart-btn svg {
-  color: #f59e0b;
-  transition: all 0.3s ease;
-}
-
-.add-to-cart-btn:hover {
-  border-color: rgba(245, 158, 11, 0.8);
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
-}
-
-.add-to-cart-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  border-color: rgba(245, 158, 11, 0.1);
-  box-shadow: none;
-}
-
-.remove-btn {
-  @apply w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 
-         text-base font-semibold relative;
-  background: transparent;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  transform-style: preserve-3d;
-  transition: all 0.15s ease;
-  transform-origin: center center;
-  will-change: transform;
-}
-
-.remove-btn span,
-.remove-btn svg {
-  color: #f59e0b;
-  transition: all 0.3s ease;
-}
-
-.remove-btn:hover {
-  border-color: rgba(245, 158, 11, 0.8);
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
-}
-
-button:not(:disabled):active {
-  transform: perspective(1000px) translateZ(-10px);
-}
-
-button:disabled {
-  @apply opacity-50 cursor-not-allowed;
-  transform: none !important;
-}
-
-button:disabled span,
-button:disabled svg {
-  opacity: 0.5;
 }
 
 .preview-enter-active,

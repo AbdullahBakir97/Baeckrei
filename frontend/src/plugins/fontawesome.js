@@ -36,7 +36,11 @@ import {
   faCodeCompare,
   faMortarPestle,
   faTriangleExclamation,
-  faChartPie
+  faChartPie,
+  faShoppingBag,
+  faTruck,
+  faCalendar,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -87,6 +91,10 @@ library.add(
   faMortarPestle,
   faTriangleExclamation,
   faChartPie,
+  faShoppingBag,
+  faTruck,
+  faCalendar,
+  faTimes,
   farHeart,
   faFacebook,
   faTwitter,

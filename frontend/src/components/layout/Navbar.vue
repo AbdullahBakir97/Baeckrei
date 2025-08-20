@@ -180,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -192,7 +192,7 @@ const route = useRoute()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
 const { items } = storeToRefs(cartStore)
-
+const { itemCount, totalAmount } = storeToRefs(cartStore);
 const showCartDropdown = ref(false)
 const searchQuery = ref('')
 const isUserMenuOpen = ref(false)
@@ -201,13 +201,8 @@ const displayedItems = computed(() => {
   return items.value?.slice(0, 3) || []
 })
 
-const cartItemCount = computed(() => {
-  return items.value?.reduce((total, item) => total + item.quantity, 0) || 0
-})
-
-const cartTotal = computed(() => {
-  return items.value?.reduce((total, item) => total + Number(item.total_price), 0) || 0
-})
+const cartItemCount = computed(() => itemCount.value);
+const cartTotal = computed(() => totalAmount.value);
 
 const formatPrice = (price) => {
   return Number(price || 0).toFixed(2)
@@ -218,6 +213,14 @@ const navigateToCart = () => {
   showCartDropdown.value = false
   router.push('/cart')
 }
+
+const openDropdown = () => {
+  cartStore.showDropdown();
+};
+
+const closeDropdown = () => {
+  cartStore.hideDropdown();
+};
 
 // Navigation links
 const navigationLinks = [
@@ -256,9 +259,24 @@ const handleLogout = async () => {
 }
 
 // Fetch cart data on component mount
-onMounted(() => {
-  cartStore.fetchCart()
+onMounted(async () => {
+  try {
+    await cartStore.fetchCart()
+  } catch (error) {
+    console.error('Error loading cart:', error)
+    // Cart store will handle setting empty cart state
+  }
 })
+
+// Watch for cart changes
+watch(
+  () => cartStore.items,
+  () => {
+    if (cartStore.error) {
+      console.error('Cart error:', cartStore.error)
+    }
+  }
+)
 </script>
 
 <style scoped>

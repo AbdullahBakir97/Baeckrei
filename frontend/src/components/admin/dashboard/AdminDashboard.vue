@@ -151,15 +151,33 @@ const getStatusColor = (status) => {
 
 const fetchDashboardData = async () => {
   try {
-    const [statsResponse, ordersResponse, productsResponse] = await Promise.all([
-      axios.get('/api/admin/dashboard/stats/'),
-      axios.get('/api/admin/dashboard/recent-orders/'),
-      axios.get('/api/admin/dashboard/low-stock/')
+    const [
+      productsStats,
+      ordersStats,
+      usersStats,
+      recentOrdersData,
+      lowStockData
+    ] = await Promise.all([
+      axios.get('/api/products/dashboard_stats/'),
+      axios.get('/api/orders/dashboard_stats/'),
+      axios.get('/api/accounts/dashboard_stats/'),
+      axios.get('/api/orders/recent_orders/'),
+      axios.get('/api/products/low_stock/')
     ])
 
-    stats.value = statsResponse.data
-    recentOrders.value = ordersResponse.data
-    lowStockProducts.value = productsResponse.data
+    stats.value = {
+      totalProducts: productsStats.data.total_products,
+      totalOrders: ordersStats.data.total_orders,
+      totalUsers: usersStats.data.total_users,
+      totalRevenue: ordersStats.data.total_revenue,
+      todayOrders: ordersStats.data.today_orders,
+      todayRevenue: ordersStats.data.today_revenue,
+      todayUsers: usersStats.data.today_users,
+      lowStockCount: productsStats.data.low_stock_count
+    }
+    
+    recentOrders.value = recentOrdersData.data
+    lowStockProducts.value = lowStockData.data
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
     // Add error state handling

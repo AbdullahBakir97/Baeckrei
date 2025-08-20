@@ -94,6 +94,12 @@
         <div v-else class="empty-cart" aria-live="polite">
           <font-awesome-icon icon="fa-solid fa-shopping-basket" class="empty-icon text-gray-600" aria-hidden="true" />
           <p class="text-gray-700">Your cart is empty</p>
+          <router-link
+            to="/products"
+            class="text-sm text-amber-400 hover:underline"
+          >
+            Browse Products
+          </router-link>
         </div>
 
         <!-- Cart Summary -->
@@ -152,7 +158,7 @@ const { items, loading, total, total_items, dropdownVisible } = storeToRefs(cart
 const cartItemCount = computed(() => total_items.value || 0)
 const cartTotal = computed(() => Number(total.value || 0))
 const displayedItems = computed(() => items.value?.slice(0, 3) || [])
-const isOpen = computed(() => dropdownVisible.value)
+const isOpen = computed(() => cartStore.dropdownVisible);
 const isLoading = computed(() => loading.value)
 
 const formatPrice = (price) => {

@@ -6,6 +6,7 @@ import Contact from '../components/pages/Contact.vue'
 import Profile from '../components/account/Profile.vue'
 import Orders from '../components/account/Orders.vue'
 import Settings from '../components/account/Settings.vue'
+import Login from '../components/auth/LoginForm.vue'
 import { adminRoutes } from '@/router/admin.routers.js'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -106,17 +107,16 @@ const routes = [
   },
   {
     path: '/settings',
-    name: 'settings',
     component: Settings,
     meta: { requiresAuth: true, title: 'Settings' }
   },
-  adminRoutes,
   {
     path: '/login',
-    name: 'login',
-    component: () => import('@/components/auth/LoginForm.vue'),
-    meta: { title: 'Login', requiresAuth: false }
+    name: 'Login',
+    component: Login,
+    meta: { title: 'Login' }
   },
+  adminRoutes,
   {
     path: '/register',
     name: 'register',

@@ -32,38 +32,37 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+BACKEND_APPS = [
+    'apps.core',
+    'apps.accounts',
+    'apps.products',
+    'apps.cart',
+    'apps.orders',
+]
+
 INSTALLED_APPS = [
-    # Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    # Third party apps
     'rest_framework',
     'corsheaders',
-    'rest_framework_simplejwt',
-    
-    # Local apps
-    'accounts',
-    'products',
-    'orders',
-    'cart',
-]
+    'drf_yasg',  # Swagger UI generation
+] + BACKEND_APPS
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',  
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'accounts.middleware.CustomerMiddleware',
-    'cart.middleware.CartMiddleware',
+    'layers.middleware.customer_middleware.CustomerMiddleware',
+    'layers.middleware.cart_middleware.CartMiddleware',
 ]
 
 ROOT_URLCONF = 'project.urls'
@@ -79,7 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'cart.context_processors.cart_context',
+                'layers.context_processors.cart_processor.cart_context_processor',
             ],
         },
     },
@@ -155,20 +154,38 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,
 }
 
-# Rest Framework settings
+# Django REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    'URL_FORMAT_OVERRIDE': None,  # Disable format suffixes
 }
 
-# Spectacular API documentation settings
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'Bäckerei API',
-    'DESCRIPTION': 'API for managing bakery products, orders, and content',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+# Swagger settings
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    },
+    'SECURITY_REQUIREMENTS': [{'Bearer': []}],
 }
 
 # CORS settings
@@ -176,6 +193,26 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Session settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_DOMAIN = None  # Allow localhost
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
@@ -185,17 +222,45 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False  # False to allow JavaScript access
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_NAME = 'csrftoken'
-
-# Session settings
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_DOMAIN = None  # Allow localhost
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "unique-snowflake",
     }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.cart': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'layers.middleware': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
 }
 
 # Default primary key field type

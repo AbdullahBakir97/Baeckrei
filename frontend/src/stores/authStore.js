@@ -8,7 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
   const error = ref(null)
   const initialized = ref(false)
-  const isAuthenticated = computed(() => !!token.value) 
+  const isAuthenticated = ref(!!token.value)
 
   const isAdmin = computed(() => {
     return user.value?.is_admin === true
@@ -35,7 +35,7 @@ export const useAuthStore = defineStore('auth', () => {
       const tokenResponse = response.data.access
       setAuthToken(tokenResponse)
       await fetchCurrentUser()
-      return isAdmin.value ? 'admin' : 'customer'
+      return isAdmin.value ? '/admin' : '/'
     } catch (err) {
       error.value = err.response?.data?.detail || 'Failed to login'
       throw err
@@ -52,7 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
         await axios.post('/api/accounts/users/logout/')
       }
     } catch (error) {
-      error.value = error.response?.data?.detail || 'Failed to logout'
+      console.error('Error during logout:', error)
     } finally {
       setAuthToken(null)
       user.value = null
@@ -99,6 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null
       const response = await axios.patch('/api/accounts/users/me/', userData)
       user.value = response.data
+      return response.data
     } catch (error) {
       error.value = error.response?.data?.detail || 'Failed to update profile'
       throw error
@@ -111,7 +112,8 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
       error.value = null
-      await axios.post('/api/accounts/users/change_password/', passwords)
+      await axios.post('/api/accounts/users/change-password/', passwords)
+      return true
     } catch (error) {
       error.value = error.response?.data?.detail || 'Failed to change password'
       throw error
@@ -134,33 +136,19 @@ export const useAuthStore = defineStore('auth', () => {
     initialized.value = true
   }
 
-  // Setup axios interceptor for 401 responses
-  axios.interceptors.response.use(
-    response => response,
-    error => {
-      if (error.response?.status === 401 && token.value) {
-        setAuthToken(null)
-        user.value = null
-      }
-      return Promise.reject(error)
-    }
-  )
-
   return {
     user,
     token,
     loading,
     error,
-    initialized,
     isAuthenticated,
     isAdmin,
     login,
     logout,
-    fetchCurrentUser,
     register,
     updateProfile,
     changePassword,
     initializeAuth,
-    setAuthToken
+    fetchCurrentUser
   }
 })

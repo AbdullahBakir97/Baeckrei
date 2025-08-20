@@ -6,6 +6,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const API_PATH = `${API_BASE}/api/products`
 
 export const useProductStore = defineStore('products', () => {
+  // State
   const products = ref([])
   const product = ref(null)
   const categories = ref([])
@@ -14,68 +15,178 @@ export const useProductStore = defineStore('products', () => {
   const nutritionInfo = ref(null)
   const similarProducts = ref([])
   const relatedProducts = ref([])
-  const categoriesLoading = ref(false)
-  const relatedProductsLoading = ref(false)
-  const totalItems = ref(0)
-  const currentPage = ref(1)
-  const pageSize = ref(12)
   const loading = ref(false)
   const error = ref(null)
+
+  // Pagination state
+  const pagination = ref({
+    count: 0,
+    current_page: 1,
+    total_pages: 1,
+    page_size: 12,
+    has_next: false,
+    has_previous: false,
+    page_range: [],
+  })
+
+  // Computed properties
+  const hasProducts = computed(() => products.value.length > 0)
+  const hasNextPage = computed(() => pagination.value.has_next)
+  const hasPreviousPage = computed(() => pagination.value.has_previous)
 
   const fetchProducts = async (filters = {}) => {
     try {
       loading.value = true
       error.value = null
       
-      const params = {
-        page: filters.page || currentPage.value,
-        page_size: filters.pageSize || pageSize.value,
-        ordering: filters.sort === 'price_desc' ? '-price' : 
-                 filters.sort === 'price_asc' ? 'price' : 
-                 filters.sort === 'popularity' ? '-popularity' : 'name',
+      const params = new URLSearchParams()
+
+      // Pagination params
+      params.append('page', filters.page || pagination.value.current_page)
+      params.append('page_size', filters.page_size || pagination.value.page_size)
+      
+      // View mode
+      if (filters.view_mode) {
+        params.append('view_mode', filters.view_mode)
       }
 
-      if (filters.categories?.length > 0) {
-        params.category__in = filters.categories.join(',')
+      // Ordering
+      let ordering = 'name'
+      if (filters.ordering) {
+        if (filters.ordering === 'price_desc') ordering = '-price'
+        else if (filters.ordering === 'price_asc') ordering = 'price'
+        else if (filters.ordering === 'popularity') ordering = '-popularity'
+        else ordering = filters.ordering
+      }
+      params.append('ordering', ordering)
+
+      // Category filter
+      if (filters.categories?.length) {
+        params.append('category_ids', filters.categories.join(','))
       }
 
-      if (filters.price_min) params.price__gte = filters.price_min
-      if (filters.price_max) params.price__lte = filters.price_max
-      if (filters.isVegan) params.is_vegan = true
-      if (filters.isVegetarian) params.is_vegetarian = true
-      if (filters.isGlutenFree) params.is_gluten_free = true
-      if (filters.search) params.search = filters.search
+      // Price range filter
+      if (filters.price_min) params.append('price__gte', filters.price_min)
+      if (filters.price_max) params.append('price__lte', filters.price_max)
+
+      // Dietary preferences
+      if (filters.is_vegan) params.append('is_vegan', true)
+      if (filters.is_vegetarian) params.append('is_vegetarian', true)
+      if (filters.is_gluten_free) params.append('is_gluten_free', true)
+
+      // Stock filter
+      if (filters.in_stock) params.append('in_stock', true)
+
+      // Search
+      if (filters.search) params.append('search', filters.search)
 
       const response = await axios.get(`${API_PATH}/`, {
-        params,
+        params: params,
         withCredentials: true
+      }).catch(err => {
+        console.error('Axios error:', {
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data,
+          config: {
+            url: err.config?.url,
+            params: err.config?.params,
+            baseURL: err.config?.baseURL
+          }
+        })
+        throw err
       })
-      
-      if (response.data.results) {
-        // Log the first product for debugging
-        console.log('Debug - Product data from API:', {
-          id: response.data.results[0]?.id,
-          image: response.data.results[0]?.image,
-          image_url: response.data.results[0]?.image_url
+
+      // Debug log for API request
+      console.log('API Request:', {
+        url: `${API_PATH}/`,
+        params: Object.fromEntries(params.entries())
+      })
+
+      console.log('API Response:', {
+        status: response.status,
+        data: response.data,
+        count: response.data?.count,
+        results: response.data?.results?.length,
+        pagination: {
+          current_page: response.data?.current_page,
+          total_pages: response.data?.total_pages,
+          page_size: response.data?.page_size,
+          has_next: response.data?.has_next,
+          has_previous: response.data?.has_previous,
+        }
+      })
+
+      if (response.data) {
+        // Update pagination state
+        pagination.value = {
+          count: response.data.count || 0,
+          current_page: response.data.current_page || 1,
+          total_pages: response.data.total_pages || 1,
+          page_size: response.data.page_size || 12,
+          has_next: response.data.has_next || false,
+          has_previous: response.data.has_previous || false,
+          page_range: response.data.page_range || [],
+        }
+
+        console.log('Products before mapping:', response.data.results)
+
+        // Update products with normalized image URLs
+        products.value = (response.data.results || []).map(product => {
+          console.log('Processing product:', product)
+          const normalizedProduct = {
+            ...product,
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            description: product.description || '',
+            price: parseFloat(product.price),
+            stock: product.stock || 0,
+            available: product.available ?? true,
+            isNew: false, // You can set this based on your criteria
+            image: product.image_url || 
+                  (product.image ? 
+                    (product.image.startsWith('http') ? product.image : `${API_BASE}/media/${product.image}`)
+                    : null),
+            category: product.category ? {
+              ...product.category,
+              name: product.category.name || '',
+              image: product.category?.image_url || 
+                    (product.category?.image ? 
+                      (product.category.image.startsWith('http') ? product.category.image : `${API_BASE}/media/${product.category.image}`)
+                      : null)
+            } : null,
+            is_vegan: product.is_vegan || false,
+            is_vegetarian: product.is_vegetarian || false,
+            is_gluten_free: product.is_gluten_free || false
+          }
+          console.log('Normalized product:', normalizedProduct)
+          return normalizedProduct
         })
 
-        // Store products with normalized image URLs
-        products.value = response.data.results.map(product => ({
-          ...product,
-          // Use image_url if available, otherwise construct URL from image path
-          image: product.image_url || 
-                (product.image ? 
-                  (product.image.startsWith('http') ? product.image : `/media/${product.image}`)
-                  : null)
-        }))
-        totalItems.value = response.data.count || 0
-      } else {
-        products.value = []
-        totalItems.value = 0
+        console.log('Final products array:', products.value)
+
+        return {
+          results: products.value,
+          pagination: pagination.value
+        }
+      }
+
+      return {
+        results: [],
+        pagination: {
+          count: 0,
+          current_page: 1,
+          total_pages: 1,
+          page_size: 12,
+          has_next: false,
+          has_previous: false,
+          page_range: [],
+        }
       }
     } catch (err) {
-      error.value = 'Error fetching products'
       console.error('Error fetching products:', err)
+      error.value = err.response?.data?.error || 'Error fetching products'
       throw err
     } finally {
       loading.value = false
@@ -86,7 +197,7 @@ export const useProductStore = defineStore('products', () => {
     try {
       loading.value = true
       error.value = null
-      const response = await axios.get('/api/products/categories/', {
+      const response = await axios.get(`${API_PATH}/categories/`, {
         params: { page_size: 100 }
       })
       categories.value = response.data.results || []
@@ -94,7 +205,6 @@ export const useProductStore = defineStore('products', () => {
     } catch (err) {
       error.value = 'Error fetching categories'
       console.error('Error fetching categories:', err)
-      // Return empty array instead of throwing
       categories.value = []
       return []
     } finally {
@@ -102,7 +212,7 @@ export const useProductStore = defineStore('products', () => {
     }
   }
 
-  async function fetchProductById(id) {
+  const fetchProductById = async (id) => {
     loading.value = true
     error.value = null
     
@@ -119,7 +229,7 @@ export const useProductStore = defineStore('products', () => {
           // Ensure image URLs are absolute
           image: response.data.image_url || 
                 (response.data.image ? 
-                  (response.data.image.startsWith('http') ? response.data.image : `/media/${response.data.image}`)
+                  (response.data.image.startsWith('http') ? response.data.image : `${API_BASE}/media/${response.data.image}`)
                   : null),
           images: response.data.images || []
         }
@@ -212,45 +322,14 @@ export const useProductStore = defineStore('products', () => {
 
   const fetchRelatedProducts = async (productId) => {
     try {
-      relatedProductsLoading.value = true
-      error.value = null
-      
       const response = await axios.get(`${API_PATH}/${productId}/related_products/`, {
         withCredentials: true
       })
-      
-      // Process and validate image paths
-      relatedProducts.value = (response.data || []).map(product => {
-        // Helper to validate image extensions
-        const isValidImagePath = (path) => {
-          if (!path) return false
-          const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
-          const ext = path.toLowerCase().split('.').pop()
-          return validExtensions.includes(`.${ext}`)
-        }
-
-        // Process main image
-        let mainImage = product.image_url || product.image
-        if (!isValidImagePath(mainImage)) {
-          mainImage = '/images/placeholder.png'
-        }
-
-        // Process image array
-        const validImages = (product.images || [])
-          .filter(isValidImagePath)
-          .map(img => img.startsWith('http') ? img : `/media/${img}`)
-
-        return {
-          ...product,
-          image: mainImage,
-          images: validImages
-        }
-      })
+      relatedProducts.value = response.data.results || []
+      return relatedProducts.value
     } catch (err) {
       console.error('Error fetching related products:', err)
-      error.value = 'Failed to load related products'
-    } finally {
-      relatedProductsLoading.value = false
+      throw err
     }
   }
 
@@ -311,6 +390,7 @@ export const useProductStore = defineStore('products', () => {
   }
   
   return {
+    // State
     products,
     product,
     categories,
@@ -319,13 +399,16 @@ export const useProductStore = defineStore('products', () => {
     nutritionInfo,
     similarProducts,
     relatedProducts,
-    relatedProductsLoading,
-    categoriesLoading,
-    totalItems,
-    currentPage,
-    pageSize,
     loading,
     error,
+    pagination,
+
+    // Computed properties
+    hasProducts,
+    hasNextPage,
+    hasPreviousPage,
+
+    // Actions
     fetchProducts,
     fetchCategories,
     fetchProductById,
@@ -338,6 +421,7 @@ export const useProductStore = defineStore('products', () => {
     fetchRelatedProducts,
     fetchReport,
     fetchInventoryReport,
-    searchProducts
+    searchProducts,
+    getImageUrl
   }
 })

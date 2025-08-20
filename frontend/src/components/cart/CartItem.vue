@@ -31,8 +31,8 @@
           :product="product"
           :total-price="numericTotalPrice"
           :unit-price="numericUnitPrice"
-          @update-quantity="(id, newQuantity) => $emit('update-quantity', id, newQuantity)"
-          @remove-item="(id) => $emit('remove-item', id)"
+          @update-quantity="(_, newQuantity) => $emit('update-quantity', product.id, newQuantity)"
+          @remove-item="() => $emit('remove-item', product.id)"
         />
       </div>
     </div>
@@ -47,26 +47,35 @@ import QuantityControl from './QuantityControl.vue'
 const props = defineProps({
   product: {
     type: Object,
-    required: true
+    required: true,
+    default: () => ({
+      id: 0,
+      name: '',
+      image: '',
+      price: '0.00',
+      description: ''
+    })
   },
   quantity: {
     type: Number,
-    required: true
+    required: true,
+    default: 0
   },
   unitPrice: {
     type: [Number, String],
-    required: true
+    required: true,
+    default: '0.00'
   },
   totalPrice: {
     type: [Number, String],
-    required: true
+    required: true,
+    default: '0.00'
   },
   loading: {
     type: Boolean,
     default: false
   }
 })
-
 const numericTotalPrice = computed(() => Number(props.totalPrice))
 const numericUnitPrice = computed(() => Number(props.unitPrice))
 

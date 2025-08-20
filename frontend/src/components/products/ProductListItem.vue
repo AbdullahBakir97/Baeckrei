@@ -88,21 +88,31 @@
 
         <div class="flex items-center gap-2">
           <button
-            v-if="product.available"
-            @click="emit('add-to-cart', product)"
+            v-if="product.available && !isInCart"
+            @click="addToCart(product)"
             class="px-4 py-2 rounded-lg text-white font-medium
-                   bg-gradient-to-r from-amber-500/90 to-amber-600/90
-                   hover:from-amber-500 hover:to-amber-600
-                   transform hover:-translate-y-0.5 transition-all duration-300
-                   shadow-lg hover:shadow-amber-500/25">
+                  bg-gradient-to-r from-amber-500/90 to-amber-600/90
+                  hover:from-amber-500 hover:to-amber-600
+                  transform hover:-translate-y-0.5 transition-all duration-300
+                  shadow-lg hover:shadow-amber-500/25">
             Add to Cart
           </button>
           <button
-            v-else
+            v-if="product.available && isInCart"
+            @click="removeFromCart(product)"
+            class="px-4 py-2 rounded-lg text-white font-medium
+                  bg-gradient-to-r from-red-500/90 to-red-600/90
+                  hover:from-red-500 hover:to-red-600
+                  transform hover:-translate-y-0.5 transition-all duration-300
+                  shadow-lg hover:shadow-red-500/25">
+            Remove
+          </button>
+          <button
+            v-if="!product.available"
             disabled
             class="px-4 py-2 rounded-lg text-gray-400 font-medium
-                   bg-[rgba(255,255,255,0.03)]
-                   cursor-not-allowed opacity-50">
+                  bg-[rgba(255,255,255,0.03)]
+                  cursor-not-allowed opacity-50">
             Out of Stock
           </button>
         </div>
@@ -115,14 +125,16 @@
     v-if="showQuickView"
     :product="product"
     @close="showQuickView = false"
-    @add-to-cart="emit('add-to-cart', product)"
+    @add-to-cart="addToCart(product)"
   />
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import QuickViewModal from './QuickViewModal.vue'
+import { useCartStore } from '@/stores/cartStore' 
 
+const cartStore = useCartStore()
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const defaultImage = ref('/assets/images/placeholder.jpg')
 
@@ -133,7 +145,29 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['add-to-cart'])
+const isInCart = computed(() => {
+  return cartStore.items.some(item => 
+    String(item.product.id) === String(props.product.id)
+  )
+})
+
+const addToCart = async (product) => {
+  try {
+    await cartStore.addItem(product.id)
+    cartStore.showDropdown() // Show the cart dropdown after adding
+  } catch (error) {
+    console.error('Failed to add item to cart:', error)
+  }
+}
+
+const removeFromCart = async (product) => {
+  try {
+    await cartStore.removeItem(product.id)
+    await cartStore.fetchCart({ silent: true }) // Refresh cart state silently
+  } catch (error) {
+    console.error('Failed to remove item from cart:', error)
+  }
+}
 
 // State
 const showQuickView = ref(false)
