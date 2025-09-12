@@ -3,6 +3,7 @@ from typing import Optional
 from django.core.exceptions import ValidationError
 from django.db import transaction, DatabaseError, OperationalError, IntegrityError
 from django.utils import timezone
+from apps.cart.exceptions import VersionConflict
 from apps.core.exceptions import VersionConflictError
 from .base import BaseCommand
 from ..models import Cart, CartItem, CartEvent
@@ -43,7 +44,7 @@ class AddItemCommand(BaseCommand[CartItem]):
                     product = Product.objects.select_for_update(nowait=True).get(pk=self.product.pk)
                 except OperationalError:
                     # If we can't get the lock, raise a version conflict
-                    raise VersionConflictError(obj_type="Cart", obj_id=self.cart.pk)
+                    raise VersionConflict(obj_type="Cart", obj_id=self.cart.pk)
                     
                 if self.quantity > product.stock:
                     raise InsufficientStockError(
@@ -58,7 +59,7 @@ class AddItemCommand(BaseCommand[CartItem]):
                     ).first()
                 except OperationalError:
                     # If we can't get the lock, raise a version conflict
-                    raise VersionConflictError(obj_type="Cart", obj_id=self.cart.pk)
+                    raise VersionConflict(obj_type="Cart", obj_id=self.cart.pk)
                 
                 if cart_item:
                     new_quantity = cart_item.quantity + self.quantity
@@ -99,11 +100,11 @@ class AddItemCommand(BaseCommand[CartItem]):
                 
         except InsufficientStockError:
             raise
-        except VersionConflictError:
+        except (VersionConflictError, VersionConflict):
             raise
         except Exception as e:
             logger.error(f"Error executing add item command: {str(e)}")
-            raise VersionConflictError(obj_type="Cart", obj_id=self.cart.pk)
+            raise VersionConflict(obj_type="Cart", obj_id=self.cart.pk)
 
 class UpdateItemCommand(BaseCommand[Optional[CartItem]]):
     """Command for updating cart item quantities."""
@@ -239,7 +240,7 @@ class ValidateCartCommand:
                 self.cart.save()
                 
             return self.cart
-        except VersionConflictError:
+        except (VersionConflictError, VersionConflict):
             # Log but return cart since this is just validation
             logger.warning(f"Version conflict validating cart {self.cart.id}")
             return self.cart

@@ -1,5 +1,5 @@
 from django.db import models
-from ...exceptions import VersionConflictError as VersionConflict
+from ...exceptions import VersionConflictError
 
 class VersionMixin(models.Model):
     """Mixin class for version-controlled models."""
@@ -17,7 +17,7 @@ class VersionMixin(models.Model):
     def check_version(self, expected_version: int) -> None:
         """Check version matches expected."""
         if self.version != expected_version:
-            raise VersionConflict(
+            raise VersionConflictError(
                 f"{self._meta.model_name} version mismatch",
                 obj_type=self._meta.model_name,
                 obj_id=self.pk

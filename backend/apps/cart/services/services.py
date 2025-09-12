@@ -16,6 +16,7 @@ from apps.cart.exceptions import (
     CartError,
     VersionConflict
 )
+from apps.core.exceptions import VersionConflictError
 from ..utils.cart_utils import format_price
 from apps.core.version_control.context_managers import VersionAwareTransaction
 from ..services.cart_event_service import CartEventService
@@ -54,7 +55,7 @@ class CartService:
         try:
             # self._cart_version_service.get_with_version(cart.id, self._initial_version)
             pass
-        except VersionConflict as e:
+        except (VersionConflictError, VersionConflict) as e:
             logger.warning(f"Version conflict for cart {cart.id}: {str(e)}")
             raise
 

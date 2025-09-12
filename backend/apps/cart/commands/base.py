@@ -2,7 +2,7 @@
 from typing import Optional, TypeVar, Generic
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError
-from apps.core.exceptions import VersionConflictError
+from apps.cart.exceptions import VersionConflict
 from ..strategies.base import BaseCartStrategy
 from apps.cart.models import Cart, CartItem
 import logging
@@ -23,12 +23,12 @@ class BaseCommand(Generic[T]):
         """Execute the command using the strategy."""
         try:
             return self._execute()
-        except (VersionConflictError, DatabaseError) as e:
-            # Re-raise VersionConflictError directly
-            if isinstance(e, VersionConflictError):
+        except (VersionConflict, DatabaseError) as e:
+            # Re-raise VersionConflict directly
+            if isinstance(e, VersionConflict):
                 raise
-            # Convert DatabaseError to VersionConflictError
-            raise VersionConflictError(obj_type="Cart", obj_id=self.cart.pk if self.cart else None)
+            # Convert DatabaseError to VersionConflict
+            raise VersionConflict(obj_type="Cart", obj_id=self.cart.pk if self.cart else None)
         except Exception as e:
             logger.error(f"Error executing command: {str(e)}")
             raise

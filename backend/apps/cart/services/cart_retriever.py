@@ -4,10 +4,10 @@ from django.core.cache import cache
 from django.http import HttpRequest
 from django.utils import timezone
 from apps.cart.models import Cart, CartEvent, CartItem
-from apps.cart.exceptions import CartError, CartNotFoundError, CartException, CartAlreadyCheckedOutError, VersionConflictError
+from apps.cart.exceptions import CartError, CartNotFoundError, CartException, CartAlreadyCheckedOutError, VersionConflict
+from apps.core.exceptions import VersionConflictError
 from apps.cart.utils.cart_utils import format_price, calculate_cart_totals, validate_stock_availability
 from apps.accounts.models import Customer
-from apps.core.exceptions import VersionConflictError
 import logging
 from typing import Optional, Tuple
 
@@ -133,7 +133,7 @@ class CartRetriever:
             if cart:
                 self._cache_cart(str(customer.id), cart)
             return cart
-        except VersionConflictError as e:
+        except (VersionConflictError, VersionConflict) as e:
             logger.warning(f"Version conflict getting customer cart: {str(e)}")
             return None
         except Exception as e:
@@ -149,7 +149,7 @@ class CartRetriever:
             if cart:
                 self._cache_cart(session_key, cart)
             return cart
-        except VersionConflictError as e:
+        except (VersionConflictError, VersionConflict) as e:
             logger.warning(f"Version conflict getting session cart: {str(e)}")
             return None
         except Exception as e:
@@ -247,7 +247,7 @@ class CartRetriever:
             cart = self._get_customer_cart(customer)
             if cart:
                 return cart, False
-        except (CartNotFoundError, VersionConflictError) as e:
+        except (CartNotFoundError, VersionConflict) as e:
             logger.info(f"Error getting customer cart: {str(e)}")
 
         try:
@@ -269,7 +269,7 @@ class CartRetriever:
             cart = self._get_session_cart(session_key)
             if cart:
                 return cart, False
-        except (CartNotFoundError, VersionConflictError) as e:
+        except (CartNotFoundError, VersionConflict) as e:
             logger.info(f"Error getting session cart: {str(e)}")
 
         try:

@@ -7,6 +7,7 @@ from django.db import transaction
 from apps.cart.services.cart_retriever import CartRetriever
 from apps.cart.models import Cart
 from apps.cart.commands.cart_commands import ValidateCartCommand, RetrieveCartCommand, ExpireCartCommand
+from apps.cart.exceptions import VersionConflict
 from apps.core.exceptions import VersionConflictError
 import logging
 
@@ -73,7 +74,7 @@ class CartMiddleware(MiddlewareMixin):
             # Cache cart if needed
             if request.cart:
                 self._cache_cart(request, request.cart)
-        except VersionConflictError as e:
+        except (VersionConflictError, VersionConflict) as e:
             logger.warning(f"Version conflict retrieving cart: {str(e)}")
             request.cart = None
             # Clear cache to force refresh
@@ -98,7 +99,7 @@ class CartMiddleware(MiddlewareMixin):
                     cache_key = self._get_cache_key(request)
                     if cache_key:
                         cache.delete(cache_key)
-            except VersionConflictError as e:
+            except (VersionConflictError, VersionConflict) as e:
                 logger.warning(f"Version conflict in process_response: {str(e)}")
                 # Remove conflicted cart from cache
                 cache_key = self._get_cache_key(request)

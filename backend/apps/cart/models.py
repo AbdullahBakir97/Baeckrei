@@ -11,13 +11,13 @@ import uuid
 import logging
 import time
 
-from apps.core.exceptions import VersionConflictError
 from apps.core.models.mixins.version_mixin import VersionMixin
 from apps.core.models.mixins.timestamped_mixin import TimeStampedModel
 from apps.core.services.version_service import VersionService
 from apps.core.version_control.context_managers import VersionAwareTransaction
 from apps.products.models import Product
 from apps.cart.exceptions import VersionConflict, InsufficientStockError
+from apps.core.exceptions import VersionConflictError
 from .constants import *
 from .managers import CartManager, CartItemManager
 from .querysets import CartQuerySet, CartItemQuerySet
@@ -91,7 +91,7 @@ class Cart(VersionMixin, TimeStampedModel):
     def save(self, *args, **kwargs):
         """Save cart with version control."""
         from django.db import transaction
-        from apps.core.exceptions import VersionConflictError
+        from apps.cart.exceptions import VersionConflict
 
         if self.pk:  # Only do version control for existing carts
             with transaction.atomic():
@@ -106,7 +106,7 @@ class Cart(VersionMixin, TimeStampedModel):
                     self.version = latest.version + 1
                 # Otherwise check version match
                 elif latest.version != self.version:
-                    raise VersionConflictError(obj_type="Cart", obj_id=self.pk)
+                    raise VersionConflict(obj_type="Cart", obj_id=self.pk)
 
                 # Call parent save
                 super().save(*args, **kwargs)
@@ -184,7 +184,7 @@ class Cart(VersionMixin, TimeStampedModel):
     def add_item(self, product: 'Product', quantity: int) -> 'CartItem':
         """Add item to cart using command pattern."""
         from apps.cart.commands.cart_commands import AddItemCommand
-        from apps.core.exceptions import VersionConflictError
+        from apps.cart.exceptions import VersionConflict
         from django.db import DatabaseError
         from .utils.version_control import CartLock
         from .exceptions import InsufficientStockError, CartAlreadyCheckedOutError
@@ -200,7 +200,7 @@ class Cart(VersionMixin, TimeStampedModel):
                     # Get cart with lock and version check
                     cart = Cart.objects.select_for_update(nowait=True).get(pk=self.pk)
                     if cart.version != self.version:
-                        raise VersionConflictError(obj_type="Cart", obj_id=self.pk)
+                        raise VersionConflict(obj_type="Cart", obj_id=self.pk)
                         
                     if cart.completed:
                         raise CartAlreadyCheckedOutError("Cannot add items to completed cart")
@@ -224,7 +224,7 @@ class Cart(VersionMixin, TimeStampedModel):
                     time.sleep(0.1 * retry_count)  # Add small delay between retries
                     self.refresh_from_db()
                     continue
-            except (InsufficientStockError, CartAlreadyCheckedOutError, VersionConflictError) as e:
+            except (InsufficientStockError, CartAlreadyCheckedOutError, VersionConflict) as e:
                 raise  # Re-raise these exceptions directly
             except Exception as e:
                 logger.error(f"Error executing add item command: {str(e)}")
@@ -238,9 +238,9 @@ class Cart(VersionMixin, TimeStampedModel):
         # If we got here, we've exhausted all retries
         if last_error:
             logger.error(f"Failed to add item after {max_retries} retries: {str(last_error)}")
-            raise VersionConflictError(obj_type="Cart", obj_id=self.pk)
+            raise VersionConflict(obj_type="Cart", obj_id=self.pk)
         else:
-            raise VersionConflictError(obj_type="Cart", obj_id=self.pk)
+            raise VersionConflict(obj_type="Cart", obj_id=self.pk)
 
     def remove_item(self, product: 'Product') -> None:
         """Remove item from cart."""
@@ -505,7 +505,7 @@ class CartItem(VersionMixin, TimeStampedModel):
             raise ValidationError("Cart item no longer exists")
         except ValidationError:
             raise
-        except VersionConflict:
+        except (VersionConflictError, VersionConflict):
             raise
         except Exception as e:
             logger.error(f"Error updating cart item quantity: {str(e)}")

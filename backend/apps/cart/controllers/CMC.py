@@ -244,7 +244,7 @@ class CartManagementController(BaseController):
 
             # Initialize cart service and add item
             try:
-                cart_service = CartService(cart)
+                cart_service = CartService()
                 
                 # Check stock availability
                 product = Product.objects.get(id=product_id)
@@ -254,7 +254,7 @@ class CartManagementController(BaseController):
                         f"Insufficient stock. Only {product.stock} items available."
                     )
                 
-                cart_service.add_item(product_id, quantity)
+                cart_service.add_item(cart, product_id, quantity)
                 
                 # Mark cart as modified for middleware
                 request._cart_modified = True
@@ -304,10 +304,10 @@ class CartManagementController(BaseController):
                 )
 
             cart, _ = self.get_or_create_cart(request)
-            cart_service = CartService(cart)
+            cart_service = CartService()
             
             try:
-                result = cart_service.remove_item(product_id)
+                result = cart_service.remove_item(cart, product_id)
                 return self.response_factory.create_success_response(
                     result,
                     "Item removed from cart successfully"
@@ -333,12 +333,12 @@ class CartManagementController(BaseController):
                 return error_response
 
             cart, _ = self.get_or_create_cart(request)
-            cart_service = CartService(cart)
+            cart_service = CartService()
             
             quantity = validated_data['quantity']
             
             try:
-                result = cart_service.update_item(product_id, quantity)
+                result = cart_service.update_item(cart, product_id, quantity)
                 return self.response_factory.create_success_response(
                     result,
                     "Cart item updated successfully"
@@ -357,8 +357,8 @@ class CartManagementController(BaseController):
             cart, _ = self.get_or_create_cart(request)
             
             # Initialize cart service and clear items
-            cart_service = CartService(cart)
-            result = cart_service.clear()
+            cart_service = CartService()
+            result = cart_service.clear(cart)
             
             # Mark cart as modified for middleware
             request._cart_modified = True

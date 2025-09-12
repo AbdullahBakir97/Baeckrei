@@ -10,7 +10,7 @@ urlpatterns = [
     path('', CartViewSet.as_view({'get': 'current'}), name='cart-detail'),
     
     # Add item to cart
-    path('add/', CartViewSet.as_view({'post': 'add_item'}), name='add-to-cart'),
+    path('add_item/', CartViewSet.as_view({'post': 'add_item'}), name='add-to-cart'),
     
     # Remove item from cart
     path('remove/<uuid:product_id>/', 

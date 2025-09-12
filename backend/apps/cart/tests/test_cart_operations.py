@@ -12,7 +12,6 @@ from apps.cart.exceptions import (
     InsufficientStockError,
     CartAlreadyCheckedOutError
 )
-from apps.core.exceptions import VersionConflictError
 from apps.cart.services.services import CartService
 from apps.products.models import Product, Category
 import uuid
@@ -44,7 +43,7 @@ class TestCartOperations(TransactionTestCase):
 
     def test_concurrent_cart_updates(self):
         """Test version conflicts during concurrent updates"""
-        from apps.core.exceptions import VersionConflictError
+        from apps.cart.exceptions import VersionConflict
         
         # Create a cart and product for testing
         cart = Cart.objects.create(version=1)
@@ -71,16 +70,16 @@ class TestCartOperations(TransactionTestCase):
                 logger.info(f"Thread {thread_id}: Successfully added item")
                 results.append(result)
                 completed.append(thread_id)
-            except VersionConflictError as e:
+            except VersionConflict as e:
                 logger.error(f"Thread {thread_id}: Version conflict: {str(e)}")
                 exceptions.append(e)
             except OperationalError:
-                error = VersionConflictError(obj_type="Cart", obj_id=cart.pk)
+                error = VersionConflict(obj_type="Cart", obj_id=cart.pk)
                 logger.error(f"Thread {thread_id}: Version conflict due to lock: {str(error)}")
                 exceptions.append(error)
             except Exception as e:
                 logger.error(f"Thread {thread_id}: Failed with error: {str(e)}")
-                exceptions.append(VersionConflictError(obj_type="Cart", obj_id=cart.pk))
+                exceptions.append(VersionConflict(obj_type="Cart", obj_id=cart.pk))
 
         # Create threads with different delays
         threads = [
@@ -107,7 +106,7 @@ class TestCartOperations(TransactionTestCase):
 
         # Verify that only one update succeeded
         self.assertTrue(len(exceptions) >= 1, "Expected at least one operation to fail")
-        self.assertIsInstance(exceptions[0], VersionConflictError)
+        self.assertIsInstance(exceptions[0], VersionConflict)
         self.assertEqual(len(results), 1, "Expected one operation to succeed")
         self.assertEqual(cart.items.count(), 1, "Cart should have one item")
         self.assertEqual(cart.items.first().quantity, 2, "Cart item quantity should be 2")
@@ -248,7 +247,7 @@ class TestCartOperations(TransactionTestCase):
                         logger.info(f"Thread {thread_id}: Retrying after error: {str(e)}")
                         continue
                         
-                    except VersionConflictError as e:
+                    except VersionConflict as e:
                         if retry_count == max_retries - 1:
                             logger.error(f"Thread {thread_id}: Max retries exceeded with version conflict")
                             exceptions.append(e)

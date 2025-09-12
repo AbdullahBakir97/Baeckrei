@@ -4,7 +4,7 @@ from django.db.models import F
 from django.utils import timezone
 from functools import wraps
 from apps.cart.models import Cart
-from apps.core.exceptions import VersionConflictError
+from apps.cart.exceptions import VersionConflict
 import logging
 from typing import Optional, Tuple, Any, Callable
 from apps.core.version_control.base import validate_version, with_version_lock
@@ -98,7 +98,7 @@ class CartLock:
                 )
                 # Validate version
                 if locked_cart.version != self.cart.version:
-                    raise VersionConflictError(obj_type="Cart", obj_id=self.cart.pk)
+                    raise VersionConflict(obj_type="Cart", obj_id=self.cart.pk)
                 return locked_cart
         except Exception as e:
             logger.error(f"Error acquiring cart lock: {str(e)}")
@@ -184,7 +184,7 @@ class CartItemLock:
                 )
                 
                 if self.locked_item.version != self.item.version:
-                    raise VersionConflictError(
+                    raise VersionConflict(
                         f"Version mismatch: expected {self.item.version}, got {self.locked_item.version}",
                         obj_type=self.item.__class__.__name__,
                         obj_id=self.item.pk
@@ -194,7 +194,7 @@ class CartItemLock:
                 
         except Exception as e:
             logger.error(f"Failed to acquire lock on cart item: {str(e)}")
-            raise VersionConflictError("Failed to acquire lock on cart item")
+            raise VersionConflict("Failed to acquire lock on cart item")
         
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Release lock and increment version if no error."""
@@ -210,7 +210,7 @@ class CartItemLock:
                 )
                 
                 if not updated:
-                    raise VersionConflictError("Failed to update cart item version")
+                    raise VersionConflict("Failed to update cart item version")
                     
                 self.locked_item.refresh_from_db()
                 

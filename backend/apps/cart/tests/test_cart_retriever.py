@@ -8,7 +8,7 @@ from django.core.cache import cache
 from .base import CartTestCase
 from apps.cart.services.cart_retriever import CartRetriever
 from apps.cart.models import Cart, CartItem
-from apps.cart.exceptions import CartAlreadyCheckedOutError, CartError, VersionConflictError
+from apps.cart.exceptions import CartAlreadyCheckedOutError, CartError, VersionConflict
 from apps.cart.utils.version_control import CartLock
 import threading
 import time
@@ -223,9 +223,9 @@ class TestCartRetriever(CartTestCase):
         try:
             # Simulate version conflict by updating version in database
             Cart.objects.filter(pk=cart.pk).update(version=999)
-            cart.save()  # This should raise VersionConflictError
-            self.fail("Should have raised VersionConflictError")
-        except VersionConflictError:
+            cart.save()  # This should raise VersionConflict
+            self.fail("Should have raised VersionConflict")
+        except VersionConflict:
             # Expected behavior
             pass
             

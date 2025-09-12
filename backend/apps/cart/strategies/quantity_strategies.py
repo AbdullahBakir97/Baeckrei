@@ -5,7 +5,7 @@ from django.utils import timezone
 from typing import Literal, TypeVar, Optional, overload, Tuple, TYPE_CHECKING
 from apps.core.version_control.base import VersionOperation
 from apps.core.version_control.context_managers import VersionAwareTransaction
-from apps.core.exceptions import VersionConflictError, VersionLockTimeoutError
+from apps.core.exceptions import VersionLockTimeoutError
 from ..exceptions import VersionConflict, InsufficientStockError
 from ..services.cart_event_service import CartEventService
 from ..constants import (
