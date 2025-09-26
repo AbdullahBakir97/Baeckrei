@@ -1,8 +1,10 @@
 """Cart event logging service."""
 from typing import Optional, Dict, Any
 from django.utils import timezone
+from ..exceptions import VersionConflict
 from .event_logger import CartEventLogger
 from ..constants import CART_EVENT_TYPES
+from apps.products.models import Product
 from apps.core.utils.json_encoder import ExtendedJSONEncoder
 import uuid
 import json
@@ -63,3 +65,4 @@ class CartEventService:
             quantity=quantity,
             details=event_details
         )
+ 

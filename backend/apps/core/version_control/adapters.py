@@ -24,7 +24,7 @@ class GenericVersionAdapter(Generic[ModelType]):
         """Get object with version validation."""
         obj = self.model_class.objects.get(pk=obj_id)
         if obj.version != expected_version:
-            raise VersionConflict(
+            raise VersionConflictError(
                 f"{self.model_class.__name__} version mismatch",
                 obj_type=self.model_class.__name__,
                 obj_id=obj_id

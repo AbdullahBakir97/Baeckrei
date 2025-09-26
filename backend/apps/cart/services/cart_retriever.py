@@ -3,13 +3,19 @@ from django.db import transaction
 from django.core.cache import cache
 from django.http import HttpRequest
 from django.utils import timezone
+from typing import Optional, Tuple
+import logging
+
 from apps.cart.models import Cart, CartEvent, CartItem
-from apps.cart.exceptions import CartError, CartNotFoundError, CartException, CartAlreadyCheckedOutError, VersionConflict
-from apps.core.exceptions import VersionConflictError
+from apps.cart.exceptions import (
+    CartError, 
+    CartNotFoundError, 
+    CartException, 
+    CartAlreadyCheckedOutError, 
+    VersionConflict
+)
 from apps.cart.utils.cart_utils import format_price, calculate_cart_totals, validate_stock_availability
 from apps.accounts.models import Customer
-import logging
-from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -126,34 +132,64 @@ class CartRetriever:
 
     def _get_customer_cart(self, customer: Customer) -> Optional[Cart]:
         """Get customer's active cart with version check and caching."""
-        try:
-            from apps.cart.commands.cart_commands import GetCustomerCartCommand
-            command = GetCustomerCartCommand(customer)
-            cart = command.execute()
-            if cart:
-                self._cache_cart(str(customer.id), cart)
-            return cart
-        except (VersionConflictError, VersionConflict) as e:
-            logger.warning(f"Version conflict getting customer cart: {str(e)}")
+        if not customer:
             return None
+            
+        cache_key = self._get_cache_key(f"customer_{customer.id}")
+        
+        # Try to get from cache first
+        cart = cache.get(cache_key)
+        if cart:
+            return cart
+            
+        try:
+            # Get the most recent active cart for the customer
+            cart = Cart.objects.filter(
+                customer=customer,
+                completed=False
+            ).select_related('customer').prefetch_related('items').first()
+            
+            if cart:
+                # Pass raw identifier (customer id) so _cache_cart can build the final key correctly
+                self._cache_cart(str(customer.id), cart)
+                
+            return cart
+            
+        except VersionConflict as e:
+            logger.warning(f"Version conflict getting customer cart: {str(e)}")
+            raise  # Re-raise to be handled by the caller
         except Exception as e:
-            logger.error(f"Error getting customer cart: {str(e)}")
+            logger.error(f"Error getting customer cart: {str(e)}", exc_info=True)
             return None
 
     def _get_session_cart(self, session_key: str) -> Optional[Cart]:
         """Get session cart with version check and caching."""
+        if not session_key:
+            return None
+            
+        cache_key = self._get_cache_key(f"session_{session_key}")
+        
+        # Try to get from cache first
+        cart = cache.get(cache_key)
+        if cart:
+            return cart
+            
         try:
-            from apps.cart.commands.cart_commands import GetSessionCartCommand
-            command = GetSessionCartCommand(session_key)
-            cart = command.execute()
+            # Get the most recent active cart for the session
+            cart = Cart.objects.filter(
+                session_key=session_key,
+                completed=False
+            ).select_related('customer').prefetch_related('items').first()
+            
             if cart:
                 self._cache_cart(session_key, cart)
             return cart
-        except (VersionConflictError, VersionConflict) as e:
+            
+        except VersionConflict as e:
             logger.warning(f"Version conflict getting session cart: {str(e)}")
-            return None
+            raise  # Re-raise to be handled by the caller
         except Exception as e:
-            logger.error(f"Error getting session cart: {str(e)}")
+            logger.error(f"Error getting session cart: {str(e)}", exc_info=True)
             return None
 
     def create_cart(self, request: HttpRequest) -> Optional[Cart]:

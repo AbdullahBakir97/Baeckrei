@@ -3,26 +3,30 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.http import JsonResponse
 from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.core.cache import cache
+import logging
+import uuid
+from decimal import Decimal
+
 from apps.accounts.models import Customer
 from apps.cart.services.services import CartService
 from apps.cart.services.cart_retriever import CartRetriever
+from ..models import Cart
+from apps.products.models import Product
 from ..serializers import CartOperationSerializer, CartSerializer, CartDetailSerializer
 from ..exceptions import (
     CartNotFoundError,
     InvalidQuantityError,
     InsufficientStockError,
     CartAlreadyCheckedOutError,
-    CartException
+    CartException,
+    VersionConflict
 )
-from django.core.exceptions import ValidationError
-from ..models import Cart
 from .base import BaseController
 from .validators import CartRequestValidator
 from .response_factory import CartResponseFactory
-import logging
-import uuid
-from decimal import Decimal
-from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +48,7 @@ class CartManagementController(BaseController):
         """Validate incoming request using CartRequestValidator."""
         return self.validator.validate_cart_operation(request, required_fields, operation_type)
 
-    def get_or_create_cart(self, request) -> Tuple[Cart, bool]:
+    def get_or_create_cart(self, request) -> Tuple[Optional[Cart], bool]:
         """Get or create cart for the current session/user."""
         try:
             # Get customer from request (set by CustomerMiddleware)
@@ -54,23 +58,36 @@ class CartManagementController(BaseController):
             # Get session key, creating if needed
             if not request.session.session_key:
                 request.session.create()
-                
-            if user and not isinstance(user, AnonymousUser) and user.is_authenticated and customer:
-                # For authenticated users, get or create cart by customer
-                cart, created = self.cart_retriever.get_or_create_for_customer(customer)
-            else:
-                # For anonymous users, get or create cart by session
-                cart, created = self.cart_retriever.get_or_create_for_session(request.session.session_key)
-                
-            # Ensure cart is properly loaded with all relationships
-            if cart:
-                cart = Cart.objects.select_related('customer').prefetch_related('items').get(id=cart.id)
-                
-            return cart, created
-                
+            
+            max_retries = 3
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                try:
+                    if user and not isinstance(user, AnonymousUser) and user.is_authenticated and customer:
+                        # For authenticated users, get or create cart by customer
+                        cart, created = self.cart_retriever.get_or_create_for_customer(customer)
+                    else:
+                        # For anonymous users, get or create cart by session
+                        cart, created = self.cart_retriever.get_or_create_for_session(request.session.session_key)
+                    
+                    # Ensure cart is properly loaded with all relationships
+                    if cart:
+                        cart = Cart.objects.select_related('customer').prefetch_related('items').get(id=cart.id)
+                    
+                    return cart, created
+                    
+                except VersionConflict as e:
+                    retry_count += 1
+                    if retry_count >= max_retries:
+                        logger.error(f"Max retries ({max_retries}) reached for get_or_create_cart")
+                        raise
+                    logger.warning(f"Version conflict in get_or_create_cart, retry {retry_count}/{max_retries}")
+                    continue
+                    
         except Exception as e:
-            logger.error(f"Error in get_or_create_cart: {str(e)}")
-            raise
+            logger.error(f"Error in get_or_create_cart: {str(e)}", exc_info=True)
+            return None, False
 
     def merge_carts(self, guest_cart: Cart, user_cart: Cart) -> Cart:
         """Merge guest cart into user cart."""
@@ -198,17 +215,39 @@ class CartManagementController(BaseController):
     def view_cart(self, request) -> Response:
         """Get current cart details."""
         try:
-            cart, _ = self.get_or_create_cart(request)
+            cart, created = self.get_or_create_cart(request)
             
-            # Ensure cart is properly loaded with all relationships
-            cart = Cart.objects.select_related('customer').prefetch_related('items').get(id=cart.id)
+            if not cart:
+                logger.error("Failed to get or create cart in view_cart")
+                return self.response_factory.error_response(
+                    message="Failed to create or retrieve cart. Please try again.",
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    error_type='cart_retrieval_failed'
+                )
             
-            serializer = CartDetailSerializer(cart, context={'request': request})
-            return self.response_factory.create_success_response(
-                serializer.data,
-                "Cart retrieved successfully"
-            )
+            try:
+                # Ensure cart is properly loaded with all relationships
+                cart = Cart.objects.select_related('customer').prefetch_related('items__product').get(id=cart.id) 
+                
+                serializer = CartDetailSerializer(cart, context={'request': request})
+                return self.response_factory.success_response(
+                    {
+                        'status': 'success',
+                        'data': serializer.data,
+                        'message': 'Cart retrieved successfully'
+                    }
+                )
+                
+            except Cart.DoesNotExist:
+                logger.error(f"Cart {cart.id} not found in database")
+                return self.response_factory.error_response(
+                    message="Cart not found",
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    error_type='cart_not_found'
+                )
+                
         except Exception as e:
+            logger.error(f"Error in view_cart: {str(e)}", exc_info=True)
             return self.handle_error(e, 'view cart')
 
     def add_item(self, request) -> Response:
@@ -245,16 +284,65 @@ class CartManagementController(BaseController):
             # Initialize cart service and add item
             try:
                 cart_service = CartService()
+                # Log current quantity of this product in the cart (for diagnostics)
+                existing_item = cart.items.filter(product_id=product_id).first()
+                existing_qty = existing_item.quantity if existing_item else 0
+                logger.info(
+                    f"AddItem request: cart={cart.id}, product={product_id}, req_qty={quantity}, existing_qty={existing_qty}"
+                )
                 
-                # Check stock availability
-                product = Product.objects.get(id=product_id)
-                if quantity > product.stock:
-                    return self.response_factory.create_error_response(
-                        InsufficientStockError(f"Insufficient stock. Available: {product.stock}"),
-                        f"Insufficient stock. Only {product.stock} items available."
+                # Deduplicate rapid duplicate submissions using a short-lived lock
+                lock_key = f"cart:add_lock:{cart.id}:{product_id}"
+                # cache.add returns True if the key was set, False if it already exists
+                if not cache.add(lock_key, '1', timeout=2):  # 2-second guard
+                    logger.warning(f"Duplicate add_item suppressed for cart={cart.id}, product={product_id}")
+                    return self.response_factory.error_response(
+                        message="Duplicate add request. Please wait a moment and try again.",
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        error_type='duplicate_request'
                     )
                 
-                cart_service.add_item(cart, product_id, quantity)
+                # Check stock availability and handle existing quantity gracefully
+                try:
+                    product = Product.objects.get(id=product_id)
+                    remaining = max(0, product.stock - existing_qty)
+                    if remaining == 0:
+                        # Already at max available quantity: return current cart as success (idempotent)
+                        logger.info(
+                            f"AddItem no-op: cart={cart.id}, product={product_id}, existing_qty={existing_qty}, stock={product.stock}"
+                        )
+                        # Release duplicate guard before returning
+                        cache.delete(lock_key)
+                        # Reload and return current cart state
+                        cart = Cart.objects.select_related('customer').prefetch_related('items').get(id=cart.id)
+                        serializer = CartDetailSerializer(cart)
+                        return self.response_factory.success_response(
+                            {
+                                'status': 'success',
+                                'data': serializer.data,
+                                'message': 'Item already at maximum available quantity'
+                            },
+                            status_code=status.HTTP_200_OK
+                        )
+                    if quantity > remaining:
+                        logger.info(
+                            f"Capping add quantity: requested={quantity}, remaining={remaining} for cart={cart.id}, product={product_id}"
+                        )
+                        quantity = remaining
+                except Product.DoesNotExist:
+                    # Release duplicate guard before returning
+                    cache.delete(lock_key)
+                    return self.response_factory.error_response(
+                        message="Product not found",
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        error_type='product_not_found'
+                    )
+                
+                try:
+                    cart_service.add_item(cart, product_id, quantity)
+                finally:
+                    # Always release the duplicate guard
+                    cache.delete(lock_key)
                 
                 # Mark cart as modified for middleware
                 request._cart_modified = True
@@ -264,31 +352,17 @@ class CartManagementController(BaseController):
                 
                 # Serialize the updated cart
                 serializer = CartDetailSerializer(cart)
-                return self.response_factory.create_success_response(
-                    serializer.data,
-                    "Item added to cart successfully"
+                return self.response_factory.success_response(
+                    {
+                        'status': 'success',
+                        'data': serializer.data,
+                        'message': 'Item added to cart successfully'
+                    },
+                    status_code=status.HTTP_201_CREATED
                 )
                 
-            except CartNotFoundError as e:
-                return self.response_factory.create_error_response(
-                    e,
-                    "Product not found"
-                )
-            except InsufficientStockError as e:
-                return self.response_factory.create_error_response(
-                    e,
-                    str(e)
-                )
             except CartException as e:
-                return self.response_factory.create_error_response(
-                    e,
-                    str(e)
-                )
-            except ValidationError as e:
-                return self.response_factory.create_error_response(
-                    e,
-                    str(e)
-                )
+                return self.handle_error(e, 'add item')
 
         except Exception as e:
             return self.handle_error(e, 'add item')
@@ -298,24 +372,42 @@ class CartManagementController(BaseController):
         try:
             # Get product_id from URL kwargs
             if not product_id:
-                return self.response_factory.create_error_response(
-                    ValidationError("Product ID is required"),
-                    "Product ID is required"
+                return self.response_factory.error_response(
+                    message="Product ID is required",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_type='validation_error'
                 )
 
             cart, _ = self.get_or_create_cart(request)
             cart_service = CartService()
             
             try:
-                result = cart_service.remove_item(cart, product_id)
-                return self.response_factory.create_success_response(
-                    result,
-                    "Item removed from cart successfully"
+                cart_service.remove_item(cart, product_id)
+                
+                # Ensure cart is properly loaded with all relationships
+                cart = Cart.objects.select_related('customer').prefetch_related('items').get(id=cart.id)
+                
+                # Serialize the updated cart (same format as add_item)
+                serializer = CartDetailSerializer(cart)
+                return self.response_factory.success_response(
+                    {
+                        'status': 'success',
+                        'data': serializer.data,
+                        'message': 'Item removed from cart successfully'
+                    }
                 )
             except CartException as e:
-                return self.response_factory.create_error_response(e, str(e))
+                return self.response_factory.error_response(
+                    message=str(e),
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_type='cart_remove_failed'
+                )
             except ValidationError as e:
-                return self.response_factory.create_error_response(e, str(e))
+                return self.response_factory.error_response(
+                    message=str(e),
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_type='validation_error'
+                )
 
         except Exception as e:
             return self.handle_error(e, 'remove item')
@@ -338,16 +430,32 @@ class CartManagementController(BaseController):
             quantity = validated_data['quantity']
             
             try:
-                result = cart_service.update_item(cart, product_id, quantity)
-                return self.response_factory.create_success_response(
-                    result,
-                    "Cart item updated successfully"
+                cart_service.update_item(cart, product_id, quantity)
+                
+                # Ensure cart is properly loaded with all relationships
+                cart = Cart.objects.select_related('customer').prefetch_related('items').get(id=cart.id)
+                
+                # Serialize the updated cart (same format as add_item)
+                serializer = CartDetailSerializer(cart)
+                return self.response_factory.success_response(
+                    {
+                        'status': 'success',
+                        'data': serializer.data,
+                        'message': 'Cart item updated successfully'
+                    }
                 )
             except CartException as e:
-                return self.response_factory.create_error_response(e, str(e))
+                return self.response_factory.error_response(
+                    message=str(e),
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_type='cart_update_failed'
+                )
             except ValidationError as e:
-                return self.response_factory.create_error_response(e, str(e))
-
+                return self.response_factory.error_response(
+                    message=str(e),
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_type='validation_error'
+                )
         except Exception as e:
             return self.handle_error(e, 'update item')
 
@@ -368,9 +476,12 @@ class CartManagementController(BaseController):
             
             # Serialize the updated cart
             serializer = CartDetailSerializer(cart)
-            return self.response_factory.create_success_response(
-                serializer.data,
-                "Cart cleared successfully"
+            return self.response_factory.success_response(
+                {
+                    'status': 'success',
+                    'data': serializer.data,
+                    'message': 'Cart cleared successfully'
+                }
             )
         except Exception as e:
             return self.handle_error(e, 'clear cart')

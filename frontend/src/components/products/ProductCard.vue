@@ -197,11 +197,21 @@ const showQuickPreview = ref(false)
 const { items } = storeToRefs(cartStore)
 
 const isInCart = computed(() => {
-  return cartStore.items.some(item => item.product.id === props.product.id)
+  if (!items.value || items.value.length === 0) return false
+  return items.value.some(item => {
+    const cartItemId = item.product?.id || item.product_id
+    const productId = props.product?.id || props.product_id
+    return cartItemId && productId && String(cartItemId) === String(productId)
+  })
 })
 
 const cartItem = computed(() => {
-  return cartStore.items.find(item => item.product.id === props.product.id)
+  if (!items.value || items.value.length === 0) return null
+  return items.value.find(item => {
+    const cartItemId = item.product?.id || item.product_id
+    const productId = props.product?.id || props.product_id
+    return cartItemId && productId && String(cartItemId) === String(productId)
+  })
 })
 
 const handleImageError = (e) => {
@@ -213,10 +223,9 @@ const formatPrice = (price) => {
 }
 
 const updateQuantity = async (newQuantity) => {
+  // If quantity is 0 or less, remove the item instead of updating
   if (!newQuantity || newQuantity < 1) {
-    message.value = 'Quantity must be at least 1'
-    messageType.value = 'error'
-    setTimeout(() => message.value = '', 3000)
+    await removeFromCart()
     return
   }
 

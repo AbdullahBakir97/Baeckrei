@@ -45,7 +45,7 @@ class BaseCartStrategy(VersionOperation[T, Optional[T]]):
                     current_quantity = cart_item.quantity if cart_item.pk else 0
                     quantity_change = self._calculate_change(current_quantity, quantity)
                     
-                    # Handle stock
+                    # Handle stock (validate only, do not mutate)
                     self._handle_stock(locked_product, quantity_change)
                     
                     # Update cart item
@@ -58,26 +58,25 @@ class BaseCartStrategy(VersionOperation[T, Optional[T]]):
                         if cart_item.pk:
                             cart_item.delete()
                         result = None
-                        
-                    # Log event
+                    
+                    # Log event (stock unchanged)
                     self._event_service.log_event(
                         cart=self.cart,
                         event_type=self.event_type,
                         product=locked_product,
                         quantity=abs(quantity_change),
                         details={
-                            'old_stock': locked_product.stock + quantity_change,
+                            'old_stock': locked_product.stock,
                             'new_stock': locked_product.stock,
-                            'delta': -quantity_change
+                            'delta': 0
                         }
                     )
-                    
-                    # Update cart timestamp
-                    self.cart.updated_at = timezone.now()
-                    self.cart.save(update_fields=['updated_at'])
-                    self.cart.recalculate()
-                    
-                    return result
+            
+            # Update cart timestamp
+            self.cart.updated_at = timezone.now()
+            self.cart.save(update_fields=['updated_at'])
+            self.cart.recalculate()
+            return result
                     
         except ValidationError:
             raise
@@ -103,9 +102,10 @@ class BaseCartStrategy(VersionOperation[T, Optional[T]]):
         """Handle product stock changes."""
         if quantity_change > 0 and quantity_change > product.stock:
             raise ValidationError(f"Not enough stock. Requested: {quantity_change}, Available: {product.stock}")
-            
-        product.stock -= quantity_change
-        product.save(update_fields=['stock', 'version'])
+        
+        # Do not decrement stock during cart operations; only validate.
+        # Stock will be decremented during order/checkout flow.
+        return
         
     def _calculate_change(self, current_quantity: int, new_quantity: int) -> int:
         """Calculate quantity change."""

@@ -132,9 +132,11 @@
 <script setup>
 import { ref, computed } from 'vue'
 import QuickViewModal from './QuickViewModal.vue'
-import { useCartStore } from '@/stores/cartStore' 
+import { useCartStore } from '@/stores/cartStore'
+import { storeToRefs } from 'pinia'
 
 const cartStore = useCartStore()
+const { items } = storeToRefs(cartStore)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const defaultImage = ref('/assets/images/placeholder.jpg')
 
@@ -146,7 +148,7 @@ const props = defineProps({
 })
 
 const isInCart = computed(() => {
-  return cartStore.items.some(item => 
+  return items.value.some(item => 
     String(item.product.id) === String(props.product.id)
   )
 })
@@ -163,7 +165,6 @@ const addToCart = async (product) => {
 const removeFromCart = async (product) => {
   try {
     await cartStore.removeItem(product.id)
-    await cartStore.fetchCart({ silent: true }) // Refresh cart state silently
   } catch (error) {
     console.error('Failed to remove item from cart:', error)
   }

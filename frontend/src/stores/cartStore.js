@@ -102,19 +102,9 @@ export const useCartStore = defineStore('cart', {
         })
 
         if (response.data) {
-          // Update cart state
-          this.items = response.data.items || []
-          this.subtotal = response.data.subtotal || '0.00'
-          this.tax = response.data.tax || '0.00'
-          this.total = response.data.total || '0.00'
-          this.total_items = response.data.total_items || 0
+          // Update cart state using _updateCartState to ensure proper processing
+          this._updateCartState(response.data)
           this.lastFetch = Date.now()
-          
-          console.log('Cart state updated:', {
-            items: this.items,
-            total_items: this.total_items,
-            total: this.total
-          })
         }
       } catch (error) {
         if (!silent) {
@@ -136,9 +126,10 @@ export const useCartStore = defineStore('cart', {
         this.error = null
         
         const validProductId = this.validateUUID(productId)
-        
         const headers = {
-          'X-CSRFToken': getCSRFToken()
+          'X-CSRFToken': getCSRFToken(),
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         }
         
         if (authStore.isAuthenticated) {
@@ -146,14 +137,10 @@ export const useCartStore = defineStore('cart', {
         }
 
         // First check if item is already in cart
-        const existingItem = this.items.find(item => item.product.id === validProductId)
-        if (existingItem) {
-          console.log('Item already in cart, updating quantity:', {
-            productId: validProductId,
-            currentQuantity: existingItem.quantity,
-            addQuantity: quantity
-          })
-        }
+        const existingItem = this.items.find(item => {
+          const cartItemId = item.product?.id || item.product_id
+          return cartItemId && String(cartItemId) === String(validProductId)
+        })
 
         const response = await axios.post(`${BASE_URL}/add_item/`, {
           product_id: validProductId,
@@ -163,71 +150,121 @@ export const useCartStore = defineStore('cart', {
           headers
         })
         
+        // Handle successful response
         if (response.data) {
           // Check if it's an error response from backend
           if (response.data.status === 'error') {
-            const errorDetail = response.data.detail
-            let errorMessage = ''
-            
-            if (response.data.code === 'insufficient_stock') {
-              errorMessage = `Not enough stock. Available: ${errorDetail.available_stock}`
-            } else if (typeof errorDetail === 'object') {
-              errorMessage = errorDetail.message || Object.entries(errorDetail)
-                .map(([key, value]) => `${key}: ${value}`)
-                .join(', ')
-            } else {
-              errorMessage = errorDetail
-            }
-            
-            this.error = errorMessage
-            throw new Error(errorMessage)
+            return this._handleBackendError(response.data)
           }
-          
-          // Update cart state with response data
+
+          // Update cart state with response data when items are present
           const cartData = response.data.data || response.data
-          this.items = cartData.items || []
-          this.subtotal = cartData.subtotal || '0.00'
-          this.tax = cartData.tax || '0.00'
-          this.total = cartData.total || '0.00'
-          this.total_items = cartData.total_items || 0
-          
-          console.log('Cart updated after adding item:', {
-            items: this.items,
-            total_items: this.total_items,
-            total: this.total
-          })
+          if (cartData?.items) {
+            this._updateCartState(cartData)
+          } else {
+            await this._refreshCartState()
+          }
+        } else {
+          await this._refreshCartState()
         }
         
         return response.data
       } catch (error) {
-        console.error('Error adding item to cart:', {
-          error: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        })
+        console.error('Error adding item to cart:', error)
         
         // Handle different types of errors
-        let errorMessage = ''
-        if (error.response?.data?.detail) {
-          const detail = error.response.data.detail
-          if (detail.message) {
-            errorMessage = detail.message
-          } else if (typeof detail === 'object') {
-            errorMessage = Object.entries(detail)
-              .map(([key, value]) => `${key}: ${value}`)
-              .join(', ')
-          } else {
-            errorMessage = detail
-          }
+        if (error.response?.data) {
+          this._handleBackendError(error.response.data, error)
         } else {
-          errorMessage = error.message || 'Error adding item to cart'
+          this.error = error.message || 'Error adding item to cart'
         }
         
-        this.error = errorMessage
         throw error
       } finally {
         this.loading = false
       }
+    },
+
+    _handleBackendError(errorData, error) {
+      const errorDetail = errorData.detail || errorData
+      let errorMessage = ''
+      
+      if (errorData.code === 'insufficient_stock' || errorData.error_type === 'insufficient_stock') {
+        const availableStock = errorData.extra_data?.available_stock || errorDetail.available_stock || 'unknown'
+        errorMessage = `Not enough stock. Available: ${availableStock}`
+      } else if (typeof errorDetail === 'object') {
+        errorMessage = errorDetail.message || Object.entries(errorDetail)
+          .filter(([key]) => key !== 'available_stock')
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', ')
+      } else {
+        errorMessage = errorDetail || 'An error occurred'
+      }
+      
+      this.error = errorMessage
+      throw new Error(errorMessage)
+    },
+
+    async _refreshCartState({ silent = true, fallbackRemoveProductId = null } = {}) {
+      try {
+        await this.fetchCart({ silent })
+      } catch (fetchError) {
+        console.error('Error refreshing cart state:', fetchError)
+        if (!fallbackRemoveProductId) {
+          throw fetchError
+        }
+
+        // Optimistically remove the item locally if the fetch fails
+        const updatedItems = this.items.filter(item => {
+          const cartItemId = item.product?.id || item.product_id
+          return String(cartItemId) !== String(fallbackRemoveProductId)
+        })
+
+        if (updatedItems.length !== this.items.length) {
+          this.items = updatedItems
+          this.total_items = updatedItems.reduce((acc, it) => acc + (it.quantity || 1), 0)
+
+          if (updatedItems.length === 0) {
+            this.subtotal = '0.00'
+            this.tax = '0.00'
+            this.total = '0.00'
+          }
+        }
+      }
+    },
+
+    _updateCartState(cartData) {
+      // Handle both wrapped responses (with data property) and direct cart data
+      const actualCartData = cartData.data || cartData
+      const rawItems = actualCartData.items || []
+      
+      // Normalize keys to camelCase expected by components
+      const processedItems = rawItems.map(it => {
+        // Ensure product object exists and has proper structure
+        const product = it.product || {}
+        return {
+          ...it,
+          id: it.id,
+          product: {
+            ...product,
+            id: product.id || it.product_id,
+            name: product.name || it.product_name,
+            price: product.price || it.product_price
+          },
+          unitPrice: it.unit_price ?? it.unitPrice ?? it.product_price,
+          totalPrice: it.subtotal ?? it.totalPrice,
+          quantity: it.quantity || 1
+        }
+      })
+      
+      // Replace the entire items array to ensure reactivity
+      this.items = processedItems
+      
+      // Update other cart properties
+      this.subtotal = actualCartData.subtotal || '0.00'
+      this.tax = actualCartData.tax || '0.00'
+      this.total = actualCartData.total || '0.00'
+      this.total_items = actualCartData.total_items || processedItems.length
     },
 
     async removeItem(productId) {
@@ -246,19 +283,20 @@ export const useCartStore = defineStore('cart', {
           headers['Authorization'] = `Bearer ${authStore.token}`
         }
 
-        const response = await axios.post(`${BASE_URL}/remove_item/`, {
-          product_id: validProductId
-        }, {
+        const response = await axios.delete(`${BASE_URL}/remove/${validProductId}/`, {
           withCredentials: true,
           headers
         })
-        
+
         if (response.data) {
-          this.items = response.data.items || []
-          this.subtotal = response.data.subtotal || '0.00'
-          this.tax = response.data.tax || '0.00'
-          this.total = response.data.total || '0.00'
-          this.total_items = response.data.total_items || 0
+          const cartData = response.data.data || response.data
+          if (cartData?.items) {
+            this._updateCartState(cartData)
+          } else {
+            await this._refreshCartState({ fallbackRemoveProductId: validProductId })
+          }
+        } else {
+          await this._refreshCartState({ fallbackRemoveProductId: validProductId })
         }
         
         return response.data
@@ -275,6 +313,11 @@ export const useCartStore = defineStore('cart', {
     },
 
     async updateQuantity(productId, quantity) {
+      // If quantity is 0 or less, remove the item instead
+      if (!quantity || quantity < 1) {
+        return await this.removeItem(productId)
+      }
+      
       const authStore = useAuthStore()
       
       try {
@@ -290,8 +333,7 @@ export const useCartStore = defineStore('cart', {
           headers['Authorization'] = `Bearer ${authStore.token}`
         }
 
-        const response = await axios.post(`${BASE_URL}/update_item/`, {
-          product_id: validProductId,
+        const response = await axios.put(`${BASE_URL}/update/${validProductId}/`, {
           quantity: quantity
         }, {
           withCredentials: true,
@@ -299,11 +341,15 @@ export const useCartStore = defineStore('cart', {
         })
         
         if (response.data) {
-          this.items = response.data.items || []
-          this.subtotal = response.data.subtotal || '0.00'
-          this.tax = response.data.tax || '0.00'
-          this.total = response.data.total || '0.00'
-          this.total_items = response.data.total_items || 0
+          // Update cart state using _updateCartState to ensure proper processing
+          const cartData = response.data.data || response.data
+          if (cartData?.items) {
+            this._updateCartState(cartData)
+          } else {
+            await this._refreshCartState({ fallbackRemoveProductId: quantity < 1 ? validProductId : null })
+          }
+        } else {
+          await this._refreshCartState({ fallbackRemoveProductId: quantity < 1 ? validProductId : null })
         }
         
         return response.data

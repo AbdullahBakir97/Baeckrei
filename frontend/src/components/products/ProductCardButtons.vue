@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { 
@@ -86,6 +86,15 @@ const props = defineProps({
     default: false
   }
 })
+
+// Watch prop changes for debugging (can be removed in production)
+watch(() => props.isInCart, (newVal, oldVal) => {
+  // Optional: Add any side effects here when cart status changes
+}, { immediate: true })
+
+watch(() => props.cartItem, (newVal, oldVal) => {
+  // Optional: Add any side effects here when cart item changes
+}, { immediate: true, deep: true })
 
 defineEmits(['add-to-cart', 'update-quantity', 'remove-from-cart'])
 

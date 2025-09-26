@@ -65,12 +65,11 @@ class BaseQuantityStrategy(VersionOperation[T, Optional[T]]):
                         f"Not enough stock. Additional requested: {quantity_change}, Available: {product.stock}"
                     )
             
-            # Update product stock
+            # Do NOT mutate product stock during cart operations.
+            # Stock will be decremented at checkout (orders flow).
             old_stock = product.stock
-            new_stock = old_stock - quantity_change
-            product.stock = new_stock
-            product.save(update_fields=['stock'])
-            
+            new_stock = old_stock  # unchanged here
+
             # Update cart item
             if new_quantity > 0:
                 if cart_item.pk:
@@ -90,7 +89,7 @@ class BaseQuantityStrategy(VersionOperation[T, Optional[T]]):
                     cart_item.delete()
                 result = None
             
-            # Log stock change event
+            # Log quantity change event (without mutating stock)
             self._event_service.log_event(
                 cart=self.cart,
                 event_type=self.event_type,
@@ -99,7 +98,7 @@ class BaseQuantityStrategy(VersionOperation[T, Optional[T]]):
                 details={
                     'old_stock': old_stock,
                     'new_stock': new_stock,
-                    'delta': -quantity_change,
+                    'delta': 0,
                     'operation_id': str(uuid.uuid4()),
                     'source': 'quantity_strategy',
                     'timestamp': timezone.now().isoformat()

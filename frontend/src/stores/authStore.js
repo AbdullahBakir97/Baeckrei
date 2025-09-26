@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from '@/plugins/axios'
 import { ref, computed } from 'vue'
+import { useCartStore } from './cartStore'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -34,7 +35,11 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await axios.post('/api/token/', credentials)
       const tokenResponse = response.data.access
       setAuthToken(tokenResponse)
-      await fetchCurrentUser()
+      
+      // Refresh cart after login
+      const cartStore = useCartStore()
+      await cartStore.fetchCart()
+      
       return isAdmin.value ? '/admin' : '/'
     } catch (err) {
       error.value = err.response?.data?.detail || 'Failed to login'
@@ -56,6 +61,15 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       setAuthToken(null)
       user.value = null
+      
+      // Clear cart after logout
+      const cartStore = useCartStore()
+      cartStore.items = []
+      cartStore.subtotal = '0.00'
+      cartStore.tax = '0.00'
+      cartStore.total = '0.00'
+      cartStore.total_items = 0
+      
       loading.value = false
     }
   }

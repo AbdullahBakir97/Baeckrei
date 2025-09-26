@@ -78,10 +78,6 @@ class AddItemCommand(BaseCommand[CartItem]):
                         quantity=self.quantity,
                         unit_price=product.price
                     )
-                
-                # Update product stock
-                product.stock -= self.quantity
-                product.save(update_fields=['stock'])
 
                 # Log event
                 self._event_service.log_event(
@@ -90,8 +86,6 @@ class AddItemCommand(BaseCommand[CartItem]):
                     product=self.product,
                     quantity=self.quantity,
                     details={
-                        'old_stock': product.stock + self.quantity,
-                        'new_stock': product.stock,
                         'operation': 'add_item'
                     }
                 )

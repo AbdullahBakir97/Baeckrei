@@ -16,6 +16,7 @@ export const useProductStore = defineStore('products', () => {
   const similarProducts = ref([])
   const relatedProducts = ref([])
   const loading = ref(false)
+  const categoriesLoading = ref(false)
   const error = ref(null)
 
   // Pagination state
@@ -97,25 +98,10 @@ export const useProductStore = defineStore('products', () => {
         throw err
       })
 
-      // Debug log for API request
-      console.log('API Request:', {
-        url: `${API_PATH}/`,
-        params: Object.fromEntries(params.entries())
-      })
-
-      console.log('API Response:', {
-        status: response.status,
-        data: response.data,
-        count: response.data?.count,
-        results: response.data?.results?.length,
-        pagination: {
-          current_page: response.data?.current_page,
-          total_pages: response.data?.total_pages,
-          page_size: response.data?.page_size,
-          has_next: response.data?.has_next,
-          has_previous: response.data?.has_previous,
-        }
-      })
+      // Debug log for API request (minimal)
+      if (import.meta.env.DEV) {
+        console.log('API Request:', `${API_PATH}/`)
+      }
 
       if (response.data) {
         // Update pagination state
@@ -129,11 +115,8 @@ export const useProductStore = defineStore('products', () => {
           page_range: response.data.page_range || [],
         }
 
-        console.log('Products before mapping:', response.data.results)
-
         // Update products with normalized image URLs
         products.value = (response.data.results || []).map(product => {
-          console.log('Processing product:', product)
           const normalizedProduct = {
             ...product,
             id: product.id,
@@ -160,11 +143,8 @@ export const useProductStore = defineStore('products', () => {
             is_vegetarian: product.is_vegetarian || false,
             is_gluten_free: product.is_gluten_free || false
           }
-          console.log('Normalized product:', normalizedProduct)
           return normalizedProduct
         })
-
-        console.log('Final products array:', products.value)
 
         return {
           results: products.value,
@@ -195,7 +175,7 @@ export const useProductStore = defineStore('products', () => {
 
   const fetchCategories = async () => {
     try {
-      loading.value = true
+      categoriesLoading.value = true
       error.value = null
       const response = await axios.get(`${API_PATH}/categories/`, {
         params: { page_size: 100 }
@@ -208,7 +188,7 @@ export const useProductStore = defineStore('products', () => {
       categories.value = []
       return []
     } finally {
-      loading.value = false
+      categoriesLoading.value = false
     }
   }
 
@@ -217,13 +197,13 @@ export const useProductStore = defineStore('products', () => {
     error.value = null
     
     try {
-      console.log('Fetching product details for ID:', id)
+      // Fetching product details for ID:
       const response = await axios.get(`${API_PATH}/${id}/`, {
         withCredentials: true
       })
       
       if (response.data) {
-        console.log('Product detail data:', response.data)
+        // Product detail data received
         product.value = {
           ...response.data,
           // Ensure image URLs are absolute
@@ -400,6 +380,7 @@ export const useProductStore = defineStore('products', () => {
     similarProducts,
     relatedProducts,
     loading,
+    categoriesLoading,
     error,
     pagination,
 

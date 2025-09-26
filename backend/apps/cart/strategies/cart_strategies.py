@@ -104,10 +104,8 @@ class MergeCartStrategy(VersionOperation[T, None]):
                 self._update_existing_item(target_item, source_item, locked_product)
             else:
                 self._create_new_item(target_cart, source_item, locked_product)
-                
-            # Update product stock
-            locked_product.stock -= source_item.quantity
-            locked_product.save(update_fields=['stock', 'version'])
+                # Do NOT decrement product stock during cart merge. Stock will be decremented at checkout.
+            # We still save the product to bump version only if necessary elsewhere; skip here to avoid side effects.
                 
     def _validate_product(self, product: 'Product') -> bool:
         """Validate product availability."""

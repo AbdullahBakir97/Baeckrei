@@ -34,7 +34,7 @@ class VersionService:
         })
         
         if not updated:
-            raise VersionConflict(
+            raise VersionConflictError(
                 f"{self.model_class.__name__} {obj.pk} updated by another process"
             )
             

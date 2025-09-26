@@ -297,19 +297,13 @@ class Cart(VersionMixin, TimeStampedModel):
             # Lock product for update
             product = Product.objects.select_for_update().get(pk=product.pk)
 
-            # Calculate new stock level
-            new_stock = product.stock - quantity_change
+            # Prepare stock values and validate (do not mutate stock here)
             old_stock = product.stock
-
-            # Validate stock level
-            if new_stock < 0:
+            # Only validate for increases; removals/freeing up quantity require no check
+            if quantity_change > 0 and quantity_change > product.stock:
                 raise InsufficientStockError(
                     f"Insufficient stock. Requested: {abs(quantity_change)}, Available: {product.stock}"
                 )
-
-            # Update product stock
-            product.stock = new_stock
-            product.save(update_fields=['stock'])
 
             # Log event
             CartEventService().log_event(
@@ -320,8 +314,8 @@ class Cart(VersionMixin, TimeStampedModel):
                 details={
                     'operation_id': str(uuid.uuid4()),
                     'old_stock': old_stock,
-                    'new_stock': new_stock,
-                    'delta': -quantity_change,
+                    'new_stock': old_stock,  # unchanged during cart ops
+                    'delta': 0,
                     'current_quantity': current_quantity
                 }
             )

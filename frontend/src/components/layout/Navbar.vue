@@ -49,9 +49,9 @@
           </div>
 
           <!-- Cart -->
-          <div 
+          <router-link 
+            to="/cart"
             class="relative"
-            @click="navigateToCart"
             @mouseenter="showCartDropdown = true"
             @mouseleave="showCartDropdown = false"
           >
@@ -84,7 +84,7 @@
             <div v-show="showCartDropdown" class="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl z-50 glass-dropdown">
               <CartDropdown />
             </div>
-          </div>
+          </router-link>
 
           <!-- User Menu -->
           <div class="ml-4 relative flex items-center space-x-4">
@@ -208,11 +208,7 @@ const formatPrice = (price) => {
   return Number(price || 0).toFixed(2)
 }
 
-// Navigation functions
-const navigateToCart = () => {
-  showCartDropdown.value = false
-  router.push('/cart')
-}
+// Navigation: Cart navigation handled by router-link on the cart icon
 
 const openDropdown = () => {
   cartStore.showDropdown();

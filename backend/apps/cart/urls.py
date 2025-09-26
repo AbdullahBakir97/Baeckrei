@@ -6,8 +6,11 @@ app_name = 'cart'
 
 # Define URL patterns for cart operations
 urlpatterns = [
-    # Get current cart
+    # Get current cart (kept for backward compatibility)
     path('', CartViewSet.as_view({'get': 'current'}), name='cart-detail'),
+    
+    # Current cart endpoint
+    path('current/', CartViewSet.as_view({'get': 'current'}), name='cart-current'),
     
     # Add item to cart
     path('add_item/', CartViewSet.as_view({'post': 'add_item'}), name='add-to-cart'),

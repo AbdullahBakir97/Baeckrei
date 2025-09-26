@@ -7,9 +7,26 @@ from apps.accounts.serializers import CustomerSerializer
 from .exceptions import VersionConflict
 import uuid
 from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CartItemSerializer(serializers.ModelSerializer):
     """Serializer for cart items with enhanced validation and version control."""
+    product = ProductListSerializer(read_only=True)  # Nested product object
+    
+    def to_representation(self, instance):
+        """Add debug logging to see what's being serialized."""
+        logger.info(f"Serializing CartItem {instance.id}")
+        logger.info(f"Product field: {instance.product}")
+        logger.info(f"Product type: {type(instance.product)}")
+        if instance.product:
+            logger.info(f"Product ID: {instance.product.id}")
+            logger.info(f"Product name: {instance.product.name}")
+        
+        representation = super().to_representation(instance)
+        logger.info(f"Serialized representation: {representation}")
+        return representation
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_price = serializers.DecimalField(
         source='product.price',
@@ -30,11 +47,11 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'cart', 'product', 'product_name', 'product_price',
             'quantity', 'unit_price', 'total_price', 'version',
-            'available_stock', 'created_at', 'modified_at'
+            'available_stock', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'cart', 'unit_price', 'total_price', 'version',
-            'created_at', 'modified_at'
+            'created_at', 'updated_at'
         ]
 
     def validate_quantity(self, value):
@@ -146,7 +163,7 @@ class CartSerializer(serializers.ModelSerializer):
     tax = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=True, read_only=True)
     total = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=True, read_only=True)
     customer_email = serializers.SerializerMethodField()
-    last_modified = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
@@ -154,11 +171,11 @@ class CartSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'customer', 'customer_email', 'session_key', 'items', 
             'total_items', 'subtotal', 'tax', 'total', 'completed', 
-            'completed_at', 'last_modified', 'created_at'
+            'completed_at', 'updated_at', 'created_at'
         ]
         read_only_fields = [
             'id', 'customer', 'session_key', 'total_items', 'subtotal', 
-            'tax', 'total', 'completed_at', 'created_at', 'last_modified'
+            'tax', 'total', 'completed_at', 'created_at', 'updated_at'
         ]
 
     def get_customer_email(self, obj):
