@@ -31,8 +31,7 @@ const routes = [
     path: '/categories/:category',
     name: 'category',
     component: ProductList,
-    props: true,
-    meta: { title: 'Category Products', requiresAuth: false }
+    meta: { title: 'Category', requiresAuth: false }
   },
   {
     path: '/blog',
@@ -40,40 +39,40 @@ const routes = [
     component: () => import('@/components/pages/Blog.vue'),
     meta: { title: 'Blog', requiresAuth: false }
   },
-  {
-    path: '/breads',
-    name: 'breads',
-    component: ProductList,
-    props: { category: 'breads' },
-    meta: { title: 'Breads', requiresAuth: false }
-  },
-  {
-    path: '/pastries',
-    name: 'pastries',
-    component: ProductList,
-    props: { category: 'pastries' },
-    meta: { title: 'Pastries', requiresAuth: false }
-  },
-  {
-    path: '/cakes',
-    name: 'cakes',
-    component: ProductList,
-    props: { category: 'cakes' },
-    meta: { title: 'Cakes', requiresAuth: false }
-  },
-  {
-    path: '/cookies',
-    name: 'cookies',
-    component: ProductList,
-    props: { category: 'cookies' },
-    meta: { title: 'Cookies', requiresAuth: false }
-  },
+  // Old category paths from the footer; the categories now live under /categories/.
+  ...['breads', 'pastries', 'cakes', 'cookies'].map(slug => ({
+    path: `/${slug}`,
+    redirect: { name: 'category', params: { category: slug } }
+  })),
   {
     path: '/seasonal',
     name: 'seasonal',
     component: ProductList,
-    props: { category: 'seasonal' },
-    meta: { title: 'Seasonal Products', requiresAuth: false }
+    meta: { title: 'Seasonal Specials', requiresAuth: false, seasonal: true }
+  },
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('@/components/pages/Privacy.vue'),
+    meta: { title: 'Privacy Policy' }
+  },
+  {
+    path: '/terms',
+    name: 'terms',
+    component: () => import('@/components/pages/Terms.vue'),
+    meta: { title: 'Terms and Conditions' }
+  },
+  {
+    path: '/cookie-policy',
+    name: 'cookie-policy',
+    component: () => import('@/components/pages/CookiePolicy.vue'),
+    meta: { title: 'Cookie Policy' }
+  },
+  {
+    path: '/impressum',
+    name: 'impressum',
+    component: () => import('@/components/pages/Impressum.vue'),
+    meta: { title: 'Impressum' }
   },
   {
     path: '/cart',
@@ -134,6 +133,13 @@ const routes = [
     name: 'register',
     component: () => import('@/components/auth/RegisterForm.vue'),
     meta: { title: 'Register', requiresAuth: false }
+  },
+  // Must stay last: anything that matched no other route.
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/components/pages/NotFound.vue'),
+    meta: { title: 'Page not found' }
   },
 ]
 

@@ -84,10 +84,14 @@ export const useProductStore = defineStore('products', () => {
       if (filters.ordering) {
         if (filters.ordering === 'price_desc') ordering = '-price'
         else if (filters.ordering === 'price_asc') ordering = 'price'
-        else if (filters.ordering === 'popularity') ordering = '-popularity'
+        else if (filters.ordering === 'newest') ordering = '-created_at'
         else ordering = filters.ordering
       }
       params.append('ordering', ordering)
+
+      // Category page (slug) and seasonal page
+      if (filters.category) params.append('category', filters.category)
+      if (filters.seasonal) params.append('seasonal', true)
 
       // Category filter
       if (filters.categories?.length) {

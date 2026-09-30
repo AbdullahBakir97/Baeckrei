@@ -11,15 +11,14 @@
           <p class="text-gray-300 text-sm mb-4">
             Your trusted source for quality baked goods and confectionery products.
           </p>
-          <div class="flex space-x-4">
-            <a href="#" class="nav-link">
-              <font-awesome-icon :icon="['fab', 'facebook']" size="lg" />
-            </a>
-            <a href="#" class="nav-link">
-              <font-awesome-icon :icon="['fab', 'twitter']" size="lg" />
-            </a>
-            <a href="#" class="nav-link">
-              <font-awesome-icon :icon="['fab', 'instagram']" size="lg" />
+          <address class="not-italic text-gray-300 text-sm mb-4 space-y-1">
+            <p class="flex items-center gap-2"><font-awesome-icon icon="store" class="text-amber-500/80" /> {{ business.name }}, {{ storeAddress }}</p>
+            <p v-if="business.transit" class="flex items-center gap-2"><font-awesome-icon icon="train-subway" class="text-amber-500/80" /> {{ business.transit }}</p>
+          </address>
+          <div v-if="socialLinks.length" class="flex space-x-4">
+            <a v-for="link in socialLinks" :key="link.icon" :href="link.url" class="nav-link"
+               target="_blank" rel="noopener" :aria-label="link.label">
+              <font-awesome-icon :icon="['fab', link.icon]" size="lg" />
             </a>
           </div>
         </div>
@@ -40,10 +39,13 @@
         <div class="col-span-1">
           <h3 class="text-gray-200 font-semibold text-lg mb-4">Categories</h3>
           <ul class="space-y-2">
-            <li v-for="category in categories" :key="category.path">
-              <router-link :to="category.path" class="nav-link">
+            <li v-for="category in categories" :key="category.slug">
+              <router-link :to="{ name: 'category', params: { category: category.slug } }" class="nav-link">
                 {{ category.name }}
               </router-link>
+            </li>
+            <li>
+              <router-link :to="{ name: 'seasonal' }" class="nav-link">Seasonal</router-link>
             </li>
           </ul>
         </div>
@@ -76,13 +78,14 @@
       <div class="mt-12 pt-8 border-t border-gray-800">
         <div class="flex flex-col md:flex-row justify-between items-center">
           <p class="text-gray-300 text-sm">
-            {{ new Date().getFullYear() }} Beackrei. All rights reserved.
+            © {{ new Date().getFullYear() }} {{ business.name }}. All rights reserved.
           </p>
-          <div class="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" class="nav-link text-sm">Privacy Policy</a>
-            <a href="#" class="nav-link text-sm">Terms of Service</a>
-            <a href="#" class="nav-link text-sm">Cookie Policy</a>
-          </div>
+          <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4 md:mt-0" aria-label="Legal">
+            <router-link to="/impressum" class="nav-link text-sm">Impressum</router-link>
+            <router-link to="/privacy" class="nav-link text-sm">Privacy Policy</router-link>
+            <router-link to="/terms" class="nav-link text-sm">Terms</router-link>
+            <router-link to="/cookie-policy" class="nav-link text-sm">Cookie Policy</router-link>
+          </nav>
         </div>
       </div>
     </div>
@@ -90,9 +93,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useProductStore } from '@/stores/productStore'
+import { business, streetLine, cityLine } from '@/config/business'
 
 const email = ref('')
+const productStore = useProductStore()
+const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
+
+// Only show social icons that have a real URL in src/config/business.js.
+const socialLinks = [
+  { icon: 'instagram', label: 'Instagram', url: business.social.instagram },
+  { icon: 'facebook', label: 'Facebook', url: business.social.facebook },
+  { icon: 'twitter', label: 'Twitter', url: business.social.twitter }
+].filter(link => link.url)
+
+const categories = computed(() => productStore.categories.filter(c => c.is_active !== false))
+
+onMounted(() => {
+  if (!productStore.categories.length) productStore.fetchCategories()
+})
 
 const quickLinks = [
   { name: 'Home', path: '/' },
@@ -100,14 +120,6 @@ const quickLinks = [
   { name: 'About Us', path: '/about' },
   { name: 'Contact', path: '/contact' },
   { name: 'Blog', path: '/blog' }
-]
-
-const categories = [
-  { name: 'Breads', path: '/breads' },
-  { name: 'Pastries', path: '/pastries' },
-  { name: 'Cakes', path: '/cakes' },
-  { name: 'Cookies', path: '/cookies' },
-  { name: 'Seasonal', path: '/seasonal' }
 ]
 
 const subscribeNewsletter = () => {
