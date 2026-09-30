@@ -7,6 +7,9 @@ from rest_framework.test import APIClient
 from apps.accounts.models import Address, Customer
 from apps.orders.models import Order
 from apps.orders.services import OrderService
+from apps.core.testing import make_test_password
+
+PASSWORD = make_test_password()
 
 User = get_user_model()
 
@@ -23,9 +26,9 @@ def make_order(user):
 class OrderPermissionTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.alice = User.objects.create_user(email='alice@example.com', password='Str0ng-Passw0rd!')
-        self.bob = User.objects.create_user(email='bob@example.com', password='Str0ng-Passw0rd!')
-        self.admin = User.objects.create_superuser(email='admin@example.com', password='Str0ng-Passw0rd!')
+        self.alice = User.objects.create_user(email='alice@example.com', password=PASSWORD)
+        self.bob = User.objects.create_user(email='bob@example.com', password=PASSWORD)
+        self.admin = User.objects.create_superuser(email='admin@example.com', password=PASSWORD)
         self.order = make_order(self.alice)
         self.bob_customer = Customer.objects.create(user=self.bob, customer_id=uuid.uuid4().hex)
 
@@ -78,7 +81,7 @@ class OrderPermissionTests(TestCase):
 
 class OrderStatusTransitionTests(TestCase):
     def setUp(self):
-        user = User.objects.create_user(email='carol@example.com', password='Str0ng-Passw0rd!')
+        user = User.objects.create_user(email='carol@example.com', password=PASSWORD)
         self.order = make_order(user)
 
     def test_cannot_reopen_canceled_order(self):
