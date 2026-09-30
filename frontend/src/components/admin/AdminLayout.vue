@@ -67,7 +67,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useI18n } from 'vue-i18n'
 import { business } from '@/config/business'
-import { LOCALES, intlLocale, setLocale } from '@/i18n'
+import { LOCALES, i18n, intlLocale, setLocale } from '@/i18n'
+import adminMessages from '@/i18n/messages/admin'
+
+// Admin texts ship with the admin chunk, not with the storefront.
+for (const [lang, messages] of Object.entries(adminMessages)) {
+  i18n.global.mergeLocaleMessage(lang, { admin: messages })
+}
 
 const router = useRouter()
 const route = useRoute()

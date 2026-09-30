@@ -21,6 +21,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { prefersReducedMotion } from '@/motion'
+import { DRACO_PATH } from '@/three/draco'
 
 const props = defineProps({
   image: { type: String, default: '' },
@@ -37,6 +38,16 @@ const showHint = ref(true)
 let stage = null
 let controls = null
 let object = null
+let isModel = false
+
+// Where the camera starts: a real model is seen a little from above, like a
+// pastry on the counter; a photo silhouette faces the camera.
+function homePosition() {
+  const distance = 6.2
+  const elevation = isModel ? 0.42 : 0
+  return new stage.THREE.Vector3(0, Math.sin(elevation) * distance, Math.cos(elevation) * distance)
+}
+
 let disposed = false
 
 async function build() {
@@ -51,10 +62,16 @@ async function build() {
   stage = createStage(container.value, { fov: 30, cameraZ: 6.2 })
   const { THREE, scene, camera, renderer } = stage
 
-  const isModel = Boolean(props.model)
+  isModel = Boolean(props.model)
   if (isModel) {
-    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js')
-    const gltf = await new GLTFLoader().loadAsync(props.model)
+    // Models optimized with `npm run optimize-model` use Draco compression;
+    // the decoder is served by the shop itself (see vite.config.js).
+    const [{ GLTFLoader }, { DRACOLoader }] = await Promise.all([
+      import('three/addons/loaders/GLTFLoader.js'),
+      import('three/addons/loaders/DRACOLoader.js')
+    ])
+    const draco = new DRACOLoader().setDecoderPath(DRACO_PATH)
+    const gltf = await new GLTFLoader().setDRACOLoader(draco).loadAsync(props.model).finally(() => draco.dispose())
     object = new THREE.Group()
     gltf.scene.traverse((child) => { if (child.isMesh) child.castShadow = true })
     object.add(gltf.scene)
@@ -67,6 +84,7 @@ async function build() {
   }
   if (disposed) return
   scene.add(object)
+  camera.position.copy(homePosition())
 
   controls = new OrbitControls(camera, renderer.domElement)
   controls.enableDamping = true
@@ -111,7 +129,7 @@ async function build() {
 function resetView() {
   if (!controls || !stage) return
   controls.reset()
-  stage.camera.position.set(0, 0, 6.2)
+  stage.camera.position.copy(homePosition())
   object?.rotation.set(0, 0, 0)
 }
 
