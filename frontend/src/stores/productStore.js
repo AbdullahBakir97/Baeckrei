@@ -34,6 +34,34 @@ export const useProductStore = defineStore('products', () => {
   const hasProducts = computed(() => products.value.length > 0)
   const hasNextPage = computed(() => pagination.value.has_next)
   const hasPreviousPage = computed(() => pagination.value.has_previous)
+  const totalItems = computed(() => pagination.value.count)
+
+  // Convert the admin form (camelCase flags, nested category) to the API payload.
+  const toProductPayload = (data) => ({
+    name: data.name,
+    description: data.description,
+    category: typeof data.category === 'object' ? data.category?.id : data.category,
+    price: data.price,
+    stock: data.stock,
+    is_vegan: data.isVegan ?? data.is_vegan ?? false,
+    is_vegetarian: data.isVegetarian ?? data.is_vegetarian ?? false,
+    is_gluten_free: data.isGlutenFree ?? data.is_gluten_free ?? false
+  })
+
+  const createProduct = async (data) => {
+    const response = await axios.post(`${API_PATH}/`, toProductPayload(data))
+    return response.data
+  }
+
+  const updateProduct = async (data) => {
+    const response = await axios.put(`${API_PATH}/${data.id}/`, toProductPayload(data))
+    return response.data
+  }
+
+  const deleteProduct = async (id) => {
+    await axios.delete(`${API_PATH}/${id}/`)
+    products.value = products.value.filter(p => p.id !== id)
+  }
 
   const fetchProducts = async (filters = {}) => {
     try {
@@ -159,7 +187,8 @@ export const useProductStore = defineStore('products', () => {
             } : null,
             is_vegan: product.is_vegan || false,
             is_vegetarian: product.is_vegetarian || false,
-            is_gluten_free: product.is_gluten_free || false
+            is_gluten_free: product.is_gluten_free || false,
+            status: product.status
           }
           console.log('Normalized product:', normalizedProduct)
           return normalizedProduct
@@ -408,9 +437,13 @@ export const useProductStore = defineStore('products', () => {
     hasProducts,
     hasNextPage,
     hasPreviousPage,
+    totalItems,
 
     // Actions
     fetchProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
     fetchCategories,
     fetchProductById,
     fetchIngredients,

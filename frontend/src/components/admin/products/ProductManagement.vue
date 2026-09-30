@@ -1,7 +1,6 @@
 <template>
-  <DashboardLayout>
-    <template #title>Product Management</template>
-    <template #actions>
+  <div>
+    <div class="flex justify-end mb-6">
       <button
         @click="openCreateModal"
         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -9,7 +8,7 @@
         <PlusIcon class="h-5 w-5 mr-2" />
         Add Product
       </button>
-    </template>
+    </div>
 
     <div class="p-6">
       <!-- Stats Section -->
@@ -42,12 +41,15 @@
         <template #name="{ item }">
           <div>
             <div class="font-medium text-gray-900">{{ item.name }}</div>
-            <div class="text-gray-500 text-sm">SKU: {{ item.sku }}</div>
           </div>
         </template>
 
+        <template #category="{ item }">
+          {{ item.category?.name || '—' }}
+        </template>
+
         <template #price="{ item }">
-          ${{ item.price.toFixed(2) }}
+          {{ Number(item.price).toFixed(2) }} €
         </template>
 
         <template #stock="{ item }">
@@ -117,13 +119,12 @@
       :product="selectedProduct"
       @close="closeDetailModal"
     />
-  </DashboardLayout>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useProductStore } from '@/stores/productStore'
-import DashboardLayout from '@/components/admin/dashboard/AdminDashboard.vue'
 import DataTable from '../common/DataTable.vue'
 import ProductStats from './ProductStats.vue'
 import ProductFilters from './ProductFilters.vue'
