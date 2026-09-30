@@ -5,8 +5,8 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div class="col-span-1">
           <div class="brand-logo mb-4">
-            <span class="text-2xl font-bold logo-text">B</span>
-            <span class="text-xl font-semibold logo-text ml-2">eackrei</span>
+            <span class="text-2xl font-bold logo-text">{{ business.name.charAt(0) }}</span>
+            <span class="text-xl font-semibold logo-text">{{ business.name.slice(1) }}</span>
           </div>
           <p class="text-gray-300 text-sm mb-4">
             Your trusted source for quality baked goods and confectionery products.
@@ -56,21 +56,28 @@
           <p class="text-gray-300 text-sm mb-4">
             Subscribe to our newsletter for updates and special offers.
           </p>
-          <div class="flex">
-            <input 
-              type="email" 
-              v-model="email" 
-              placeholder="Enter your email" 
-              class="search-input flex-1 rounded-r-none"
+          <p v-if="newsletterMessage" class="text-sm" :class="newsletterOk ? 'text-green-300' : 'text-red-300'" role="status">
+            {{ newsletterMessage }}
+          </p>
+          <form v-if="!newsletterOk" class="flex" @submit.prevent="subscribeNewsletter">
+            <label for="newsletter-email" class="sr-only">Email address</label>
+            <input
+              id="newsletter-email"
+              type="email"
+              v-model.trim="email"
+              placeholder="Enter your email"
+              required
+              class="search-input flex-1 min-w-0 rounded-r-none"
             >
-            <button 
-              @click="subscribeNewsletter"
-              class="px-4 py-2 bg-amber-500 text-white rounded-r-lg hover:bg-amber-600 
-                     transition duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            <button
+              type="submit"
+              :disabled="subscribing"
+              class="px-4 py-2 bg-amber-500 text-white rounded-r-lg hover:bg-amber-600
+                     transition duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             >
               Subscribe
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -94,6 +101,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import axios from '@/plugins/axios'
 import { useProductStore } from '@/stores/productStore'
 import { business, streetLine, cityLine } from '@/config/business'
 
@@ -122,9 +130,24 @@ const quickLinks = [
   { name: 'Blog', path: '/blog' }
 ]
 
-const subscribeNewsletter = () => {
-  console.log('Subscribing email:', email.value)
-  email.value = ''
+const subscribing = ref(false)
+const newsletterOk = ref(false)
+const newsletterMessage = ref('')
+
+const subscribeNewsletter = async () => {
+  if (!email.value) return
+  subscribing.value = true
+  newsletterMessage.value = ''
+  try {
+    const response = await axios.post('/api/content/newsletter/', { email: email.value })
+    newsletterOk.value = true
+    newsletterMessage.value = response.data.message
+    email.value = ''
+  } catch (err) {
+    newsletterMessage.value = err.response?.data?.email?.[0] || 'Please try again later.'
+  } finally {
+    subscribing.value = false
+  }
 }
 </script>
 
@@ -157,6 +180,8 @@ const subscribeNewsletter = () => {
   );
   opacity: 0;
   transition: opacity 0.3s ease;
+  /* Decoration only; it covers the footer and must not block its form. */
+  pointer-events: none;
 }
 
 .footer-nav:hover::before {
@@ -196,7 +221,7 @@ const subscribeNewsletter = () => {
 }
 
 .brand-logo {
-  @apply flex items-center space-x-2 px-4 py-2 rounded-lg
+  @apply flex items-baseline px-4 py-2 rounded-lg
          transition-all duration-300 w-fit;
   background: linear-gradient(
     135deg,

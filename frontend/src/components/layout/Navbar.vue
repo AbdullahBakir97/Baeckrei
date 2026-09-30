@@ -5,8 +5,8 @@
         <!-- Logo and Brand -->
         <div class="flex items-center">
           <router-link to="/" class="flex-shrink-0 flex items-center brand-logo">
-            <span class="text-2xl font-bold text-amber-400 logo-text">B</span>
-            <span class="text-xl font-semibold text-gray-200 ml-2 logo-text">eackrei</span>
+            <span class="text-2xl font-bold text-amber-400 logo-text">{{ business.name.charAt(0) }}</span>
+            <span class="text-xl font-semibold text-gray-200 logo-text">{{ business.name.slice(1) }}</span>
           </router-link>
           
           <!-- Navigation Links -->
@@ -204,6 +204,7 @@ import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import CartDropdown from '@/components/cart/CartDropdown.vue';
+import { business } from '@/config/business'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { useCompareStore } from '@/stores/compareStore'
 

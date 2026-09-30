@@ -9,6 +9,7 @@ import Settings from '../components/account/Settings.vue'
 import Login from '../components/auth/LoginForm.vue'
 import { adminRoutes } from '@/router/admin.routers.js'
 import { useAuthStore } from '@/stores/authStore'
+import { business } from '@/config/business'
 
 const routes = [
   {
@@ -73,6 +74,18 @@ const routes = [
     name: 'reset-password',
     component: () => import('@/components/auth/ResetPassword.vue'),
     meta: { title: 'Reset Password' }
+  },
+  {
+    path: '/blog/:slug',
+    name: 'blog-post',
+    component: () => import('@/components/pages/BlogPost.vue'),
+    meta: { title: 'Blog' }
+  },
+  {
+    path: '/newsletter/unsubscribe',
+    name: 'newsletter-unsubscribe',
+    component: () => import('@/components/pages/NewsletterUnsubscribe.vue'),
+    meta: { title: 'Newsletter' }
   },
   {
     path: '/privacy',
@@ -230,7 +243,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // Update document title
-    document.title = to.meta.title ? `${to.meta.title} - Beackrei` : 'Beackrei'
+    document.title = to.meta.title ? `${to.meta.title} - ${business.name}` : business.name
     
     next()
   } catch (error) {

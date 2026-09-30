@@ -3,14 +3,14 @@
     <h1 class="text-3xl font-bold mb-8">About Us</h1>
     <div class="prose max-w-none">
       <p class="text-lg mb-6">
-        Welcome to Beackrei, your premier destination for artisanal baked goods and confectionery delights.
+        Welcome to {{ business.name }}, your premier destination for artisanal baked goods and confectionery delights.
         Our passion for quality ingredients and traditional baking methods sets us apart in delivering
         exceptional products that bring joy to your table.
       </p>
       
       <h2 class="text-2xl font-semibold mb-4">Our Story</h2>
       <p class="mb-6">
-        Founded with a vision to create authentic, handcrafted baked goods, Beackrei has grown from
+        Founded with a vision to create authentic, handcrafted baked goods, {{ business.name }} has grown from
         a small family bakery to a beloved brand trusted by customers across the region. Our commitment
         to quality and innovation drives us to continually explore new flavors while honoring
         traditional recipes.
@@ -33,3 +33,7 @@
     </div>
   </div>
 </template>
+
+<script setup>
+import { business } from '@/config/business'
+</script>
