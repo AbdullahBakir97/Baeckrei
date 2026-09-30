@@ -187,10 +187,10 @@ class OrderItem(models.Model):
 
 class Payment(models.Model):
     class PaymentMethod(models.TextChoices):
-        CREDIT_CARD = 'CC', _('Credit Card')
+        # Card and cash are paid on pickup/delivery; PayPal is paid online.
+        CREDIT_CARD = 'CC', _('Card on pickup/delivery')
         PAYPAL = 'PP', _('PayPal')
-        # BANK_TRANSFER = 'BT', _('Bank Transfer')
-        CASH = 'CA', _('Cash')
+        CASH = 'CA', _('Cash on pickup/delivery')
 
     class PaymentStatus(models.TextChoices):
         PENDING = 'Pending', _('Pending')

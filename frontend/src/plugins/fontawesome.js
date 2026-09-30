@@ -40,7 +40,21 @@ import {
   faShoppingBag,
   faTruck,
   faCalendar,
-  faTimes
+  faTimes,
+  faStore,
+  faCreditCard,
+  faMoneyBill,
+  faClock,
+  faCircleCheck,
+  faHeart,
+  faBoxOpen,
+  faUser,
+  faLock,
+  faFileLines,
+  faNewspaper,
+  faHouse,
+  faArrowLeft,
+  faTrainSubway
 } from '@fortawesome/free-solid-svg-icons'
 
 import {
@@ -95,6 +109,8 @@ library.add(
   faTruck,
   faCalendar,
   faTimes,
+  faStore, faCreditCard, faMoneyBill, faClock, faCircleCheck, faHeart, faBoxOpen, faUser,
+  faLock, faFileLines, faNewspaper, faHouse, faArrowLeft, faTrainSubway,
   farHeart,
   faFacebook,
   faTwitter,

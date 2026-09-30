@@ -12,16 +12,8 @@
         </span>
       </div>
       <div class="flex justify-between">
-        <span class="text-gray-400">Shipping</span>
-        <span class="text-gray-400">
-          {{ formatPrice(cartStore.shipping || 0) }} €
-        </span>
-      </div>
-      <div class="flex justify-between">
-        <span class="text-gray-400">Tax</span>
-        <span class="text-gray-400">
-          {{ formatPrice(cartStore.tax) }} €
-        </span>
+        <span class="text-gray-400">Pickup or delivery</span>
+        <span class="text-gray-400">Chosen at checkout</span>
       </div>
       <div class="h-px bg-[rgba(255,255,255,0.1)] my-4"></div>
       <div class="flex justify-between text-lg font-bold">
@@ -29,6 +21,10 @@
         <span class="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
           {{ formatPrice(cartStore.total) }} €
         </span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500">incl. VAT</span>
+        <span class="text-gray-500">{{ formatPrice(cartStore.tax) }} €</span>
       </div>
     </div>
     <button @click="$emit('checkout')"
