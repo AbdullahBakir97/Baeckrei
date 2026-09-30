@@ -1,6 +1,6 @@
 from django.db import models, transaction
 from typing import Dict, Any, Optional, List, Union
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
 from decimal import Decimal
@@ -346,6 +346,11 @@ class Product(TimeStampedModel):
         blank=True
     )
     image = models.ImageField(_('Image'), upload_to='products/')
+    model_3d = models.FileField(
+        _('3D model'), upload_to='products/3d/', blank=True, null=True,
+        validators=[FileExtensionValidator(['glb'])],
+        help_text=_('Optional .glb model shown in the 3D viewer instead of the photo'),
+    )
     is_vegan = models.BooleanField(_('Vegan'), default=False)
     is_vegetarian = models.BooleanField(_('Vegetarian'), default=False)
     is_gluten_free = models.BooleanField(_('Gluten Free'), default=False)

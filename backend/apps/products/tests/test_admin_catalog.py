@@ -133,3 +133,40 @@ def test_low_stock_report(admin_client, breads):
     response = admin_client.get('/api/products/low_stock/')
     assert response.status_code == 200
     assert [p['name'] for p in response.json()] == ['Last loaf']
+
+
+def glb(name='brezel.glb', body=b'glTF\x02\x00\x00\x00' + b'\x00' * 16):
+    return SimpleUploadedFile(name, body, content_type='model/gltf-binary')
+
+
+def test_admin_uploads_and_removes_a_3d_model(admin_client, breads):
+    product = Product.objects.create(
+        name='Brezel', description='x', category=breads, price=Decimal('1.00'), stock=5,
+        status='active', available=True, image=png(),
+    )
+    response = admin_client.patch(f'/api/products/{product.id}/', {'model_3d': glb()}, format='multipart')
+    assert response.status_code == 200, response.content
+    product.refresh_from_db()
+    assert product.model_3d.name.endswith('.glb')
+
+    detail = APIClient().get(f'/api/products/{product.id}/').json()
+    assert detail['model_3d_url'].endswith('.glb')
+
+    response = admin_client.patch(f'/api/products/{product.id}/', {'model_3d': ''}, format='multipart')
+    assert response.status_code == 200, response.content
+    product.refresh_from_db()
+    assert not product.model_3d
+
+
+@pytest.mark.parametrize('upload', [
+    SimpleUploadedFile('model.obj', b'glTF....', content_type='text/plain'),
+    SimpleUploadedFile('fake.glb', b'not a model', content_type='model/gltf-binary'),
+])
+def test_rejects_invalid_3d_models(admin_client, breads, upload):
+    product = Product.objects.create(
+        name='Brezel', description='x', category=breads, price=Decimal('1.00'), stock=5,
+        status='active', available=True, image=png(),
+    )
+    response = admin_client.patch(f'/api/products/{product.id}/', {'model_3d': upload}, format='multipart')
+    assert response.status_code == 400
+    assert 'model_3d' in response.json()
