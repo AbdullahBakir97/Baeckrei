@@ -20,13 +20,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=False, validators=[validate_password])
 
     class Meta:
         model = User
         fields = ('id', 'email', 'password', 'first_name', 'last_name', 
                  'phone', 'date_joined', 'last_login', 'is_active', 'is_admin')
-        read_only_fields = ('id', 'date_joined', 'last_login', 'is_admin')
+        read_only_fields = ('id', 'date_joined', 'last_login', 'is_active', 'is_admin')
+
+    def validate(self, attrs):
+        if self.instance is None and not attrs.get('password'):
+            raise serializers.ValidationError({'password': 'This field is required.'})
+        return attrs
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -39,9 +44,12 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        password = validated_data.pop('password', None)
-        if password:
-            instance.set_password(password)
+        # Passwords may only be changed through `change_password`, which
+        # verifies the old password first.
+        if 'password' in validated_data:
+            raise serializers.ValidationError(
+                {'password': 'Use the change_password endpoint to change your password.'}
+            )
         return super().update(instance, validated_data)
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -60,8 +68,9 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password2')
         password = validated_data.pop('password')
+        email = validated_data.pop('email')
         user = User.objects.create_user(
-            email=validated_data['email'],
+            email=email,
             password=password,
             **validated_data
         )
