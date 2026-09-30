@@ -113,6 +113,18 @@ class ProductFilter(BaseFilter):
             if category_slug:
                 self.queryset = self.queryset.filter(category__slug=category_slug)
 
+            # Admin list filters
+            status = filters.get('status')
+            if status in ('draft', 'active', 'discontinued'):
+                self.queryset = self.queryset.filter(status=status)
+            stock_status = filters.get('stock_status')
+            if stock_status == 'in_stock':
+                self.queryset = self.queryset.filter(stock__gt=10)
+            elif stock_status == 'low_stock':
+                self.queryset = self.queryset.filter(stock__gt=0, stock__lte=10)
+            elif stock_status == 'out_of_stock':
+                self.queryset = self.queryset.filter(stock=0)
+
             if self._is_true(filters.get('seasonal')):
                 self.queryset = self.queryset.filter(is_seasonal=True)
 

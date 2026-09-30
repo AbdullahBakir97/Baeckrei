@@ -11,7 +11,7 @@ export const adminRoutes = {
         name: 'admin-dashboard',
         component: () => import('@/components/admin/dashboard/AdminDashboard.vue'),
         meta: { 
-          title: 'Admin Dashboard',
+          title: 'Dashboard',
           requiresAuth: true,
           requiresAdmin: true 
         }
@@ -21,7 +21,7 @@ export const adminRoutes = {
         name: 'admin-products',
         component: ProductManagement,
         meta: { 
-          title: 'Product Management',
+          title: 'Products',
           requiresAuth: true,
           requiresAdmin: true 
         }
@@ -37,11 +37,31 @@ export const adminRoutes = {
         }
       },
       {
+        path: 'categories',
+        name: 'admin-categories',
+        component: () => import('@/components/admin/categories/CategoryManagement.vue'),
+        meta: {
+          title: 'Categories',
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'users',
+        name: 'admin-users',
+        component: () => import('@/components/admin/users/UserManagement.vue'),
+        meta: {
+          title: 'Users',
+          requiresAuth: true,
+          requiresAdmin: true
+        }
+      },
+      {
         path: 'orders',
         name: 'admin-orders',  // Fixed naming convention
         component: () => import('@/components/admin/orders/OrderManagement.vue'),
         meta: { 
-          title: 'Order Management',
+          title: 'Orders',
           requiresAuth: true,
           requiresAdmin: true 
         }

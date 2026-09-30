@@ -50,8 +50,8 @@ class ProductManagementViewSet(ViewSet):
         public_actions = [
             'list', 'retrieve', 'categories', 'ingredients', 'allergens',
             'product_nutrition', 'similar_products', 'category_nutrition',
-            'product_allergens', 'category_allergens', 'search', 'report',
-            'inventory_report', 'related_products'
+            'product_allergens', 'category_allergens', 'search',
+            'related_products'
         ]
         if self.action in public_actions:
             permission_classes = [AllowAny]
@@ -112,10 +112,15 @@ class ProductManagementViewSet(ViewSet):
             ).prefetch_related(
                 'ingredients',
                 'ingredients__allergens'
-            ).filter(
-                available=True,
-                category__is_active=True
             )
+            # Staff managing the catalog see every product; the shop only
+            # shows active, available products in visible categories.
+            if not (request.query_params.get('include_all') == 'true' and request.user.is_staff):
+                queryset = queryset.filter(
+                    status='active',
+                    available=True,
+                    category__is_active=True
+                )
             
             # Add debug logging for initial query
             logger.debug(f"Total products in database: {Product.objects.count()}")
@@ -360,13 +365,15 @@ class ProductManagementViewSet(ViewSet):
     def dashboard_stats(self, request):
         """Get dashboard statistics."""
         try:
-            total_products = Product.objects.count()
             low_stock_threshold = 10
-            low_stock_count = Product.objects.filter(stock__lte=low_stock_threshold).count()
-            
+            active = Product.objects.filter(status='active')
+            stock_value = active.aggregate(value=Sum(F('price') * F('stock')))['value'] or 0
             return Response({
-                'total_products': total_products,
-                'low_stock_count': low_stock_count
+                'total_products': Product.objects.count(),
+                'active_products': active.count(),
+                'low_stock_count': active.filter(stock__gt=0, stock__lte=low_stock_threshold).count(),
+                'out_of_stock_count': active.filter(stock=0).count(),
+                'stock_value': str(stock_value),
             })
         except Exception as e:
             return Response(

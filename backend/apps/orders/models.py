@@ -102,8 +102,6 @@ class Order(models.Model):
         total = self.total_price or 0
         if total < 0:
             raise ValidationError(_('Total price cannot be negative.'))
-        if self.status == self.StatusChoices.COMPLETED and not self.shipping_tracking_number:
-            raise ValidationError(_('Shipping tracking number is required for completed orders.'))
         if self.fulfillment_method == self.FulfillmentChoices.DELIVERY and not self.address:
             raise ValidationError(_('Delivery orders need an address'))
 

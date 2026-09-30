@@ -77,7 +77,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'category', 'price',
             'image', 'image_url', 'is_vegan', 'is_vegetarian',
-            'is_gluten_free', 'is_seasonal', 'available', 'stock'
+            'is_gluten_free', 'is_seasonal', 'status', 'available', 'stock'
         ]
 
     def get_image_url(self, obj):
@@ -106,7 +106,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'description', 'category',
             'price', 'formatted_price', 'image', 'image_url', 'images',
             'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
-            'available', 'stock', 'stock_status', 'ingredients', 
+            'status', 'available', 'stock', 'stock_status', 'ingredients',
             'allergens', 'nutrition_info', 'created_at', 'modified_at'
         ]
 

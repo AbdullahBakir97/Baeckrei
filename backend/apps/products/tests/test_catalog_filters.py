@@ -52,3 +52,22 @@ def test_seasonal_filter(catalog):
 def test_false_dietary_flag_does_not_filter(catalog):
     assert len(names(APIClient().get('/api/products/', {'is_vegan': 'false'}))) == 3
     assert names(APIClient().get('/api/products/', {'is_vegan': 'true'})) == ['Roggenbrot']
+
+
+def test_shop_hides_drafts_but_staff_can_list_everything(catalog):
+    from apps.accounts.models import User
+    make_product('Secret recipe', Category.objects.get(slug='cakes'), )
+    Product.objects.filter(name='Secret recipe').update(status='draft')
+    assert 'Secret recipe' not in names(APIClient().get('/api/products/'))
+    # include_all is ignored for anonymous users
+    assert 'Secret recipe' not in names(APIClient().get('/api/products/', {'include_all': 'true'}))
+
+    staff = APIClient()
+    staff.force_authenticate(User.objects.create_superuser(email='boss@example.com', password='Str0ng-Passw0rd!'))
+    assert 'Secret recipe' in names(staff.get('/api/products/', {'include_all': 'true'}))
+    assert names(staff.get('/api/products/', {'include_all': 'true', 'status': 'draft'})) == ['Secret recipe']
+
+
+def test_inventory_reports_are_staff_only(catalog):
+    assert APIClient().get('/api/products/report/').status_code in (401, 403)
+    assert APIClient().get('/api/products/inventory_report/').status_code in (401, 403)

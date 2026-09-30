@@ -91,10 +91,15 @@ class OrderStatusTransitionTests(TestCase):
             OrderService.update_order_status(self.order, Order.StatusChoices.COMPLETED)
 
     def test_normal_flow(self):
+        from decimal import Decimal
+        from apps.orders.models import Payment
+        payment = Payment.objects.create(order=self.order, payment_method='CA', amount=Decimal('1.00'))
         OrderService.update_order_status(self.order, Order.StatusChoices.PROCESSING)
-        OrderService.add_tracking_number(self.order, 'DHL123')
         OrderService.update_order_status(self.order, Order.StatusChoices.COMPLETED)
         self.assertEqual(self.order.status, Order.StatusChoices.COMPLETED)
+        # Cash is collected at handover, so completing the order marks it paid.
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, Payment.PaymentStatus.COMPLETED)
 
 
 class CheckoutTests(TestCase):

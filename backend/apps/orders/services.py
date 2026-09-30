@@ -133,9 +133,6 @@ class OrderService:
         if new_status not in OrderService.ALLOWED_STATUS_TRANSITIONS.get(order.status, set()):
             raise ValueError(f"Cannot change order status from {order.status} to {new_status}")
 
-        if new_status == Order.StatusChoices.COMPLETED:
-            if not order.shipping_tracking_number:
-                raise ValueError("Cannot complete order without tracking number")
                 
         with transaction.atomic():
             if new_status == Order.StatusChoices.CANCELED:
@@ -144,6 +141,12 @@ class OrderService:
                     Product.objects.filter(pk=item.product_id).update(stock=F('stock') + item.quantity)
             order.status = new_status
             order.save()
+            # Cash and card are paid when the order is handed over.
+            payment = getattr(order, 'order_payment', None)
+            if (new_status == Order.StatusChoices.COMPLETED and payment
+                    and payment.status == Payment.PaymentStatus.PENDING
+                    and payment.payment_method in (Payment.PaymentMethod.CASH, Payment.PaymentMethod.CREDIT_CARD)):
+                payment.complete_payment()
         return order
 
     @staticmethod

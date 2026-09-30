@@ -1,199 +1,179 @@
 <template>
-  <div class="fixed inset-0 z-10 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="$emit('close')"></div>
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50" role="dialog" aria-modal="true" aria-labelledby="product-form-title" @click.self="$emit('close')">
+    <div class="mx-auto my-8 w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl text-gray-800">
+      <h2 id="product-form-title" class="text-lg font-semibold text-gray-900">{{ product ? 'Edit product' : 'New product' }}</h2>
 
-      <span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
-
-      <div class="relative inline-block transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
-        <div>
-          <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
-            {{ product ? 'Edit Product' : 'Create New Product' }}
-          </h3>
-          <form @submit.prevent="handleSubmit" class="mt-4 space-y-4">
-            <div>
-              <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-              <input
-                type="text"
-                id="name"
-                v-model="formData.name"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                required
-              />
-            </div>
-
-            <div>
-              <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                id="description"
-                v-model="formData.description"
-                rows="3"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              ></textarea>
-            </div>
-
-            <div>
-              <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
-              <select
-                id="category"
-                v-model="formData.category"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                required
-              >
-                <option v-for="category in categories" :key="category.id" :value="category.id">
-                  {{ category.name }}
-                </option>
-              </select>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label for="price" class="block text-sm font-medium text-gray-700">Price</label>
-                <div class="mt-1 relative rounded-md shadow-sm">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span class="text-gray-500 sm:text-sm">$</span>
-                  </div>
-                  <input
-                    type="number"
-                    id="price"
-                    v-model="formData.price"
-                    min="0"
-                    step="0.01"
-                    class="pl-7 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label for="stock" class="block text-sm font-medium text-gray-700">Stock</label>
-                <input
-                  type="number"
-                  id="stock"
-                  v-model="formData.stock"
-                  min="0"
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label for="image" class="block text-sm font-medium text-gray-700">Image URL</label>
-              <input
-                type="url"
-                id="image"
-                v-model="formData.image"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-
-            <div class="mt-4 space-x-3">
-              <label class="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  v-model="formData.isVegan"
-                  class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-                <span class="ml-2 text-sm text-gray-700">Vegan</span>
-              </label>
-
-              <label class="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  v-model="formData.isVegetarian"
-                  class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-                <span class="ml-2 text-sm text-gray-700">Vegetarian</span>
-              </label>
-
-              <label class="inline-flex items-center">
-                <input
-                  type="checkbox"
-                  v-model="formData.isGlutenFree"
-                  class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-                <span class="ml-2 text-sm text-gray-700">Gluten Free</span>
-              </label>
-            </div>
-
-            <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3">
-              <button
-                type="button"
-                class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:text-sm"
-                @click="$emit('close')"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm"
-              >
-                {{ product ? 'Update' : 'Create' }}
-              </button>
-            </div>
-          </form>
+      <form class="mt-4 grid sm:grid-cols-2 gap-4" @submit.prevent="handleSubmit">
+        <div class="sm:col-span-2">
+          <label for="pf-name" class="admin-label">Name</label>
+          <input id="pf-name" v-model.trim="form.name" class="admin-input" required maxlength="200" />
+          <p v-if="errors.name" class="admin-error">{{ errors.name }}</p>
         </div>
-      </div>
+
+        <div class="sm:col-span-2">
+          <label for="pf-description" class="admin-label">Description</label>
+          <textarea id="pf-description" v-model.trim="form.description" rows="3" class="admin-input" required></textarea>
+          <p v-if="errors.description" class="admin-error">{{ errors.description }}</p>
+        </div>
+
+        <div>
+          <label for="pf-category" class="admin-label">Category</label>
+          <select id="pf-category" v-model="form.category" class="admin-input" required>
+            <option disabled value="">Choose a category</option>
+            <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
+          </select>
+          <p v-if="errors.category" class="admin-error">{{ errors.category }}</p>
+        </div>
+
+        <div>
+          <label for="pf-status" class="admin-label">Status</label>
+          <select id="pf-status" v-model="form.status" class="admin-input">
+            <option value="draft">Draft (not in the shop)</option>
+            <option value="active">Active</option>
+            <option value="discontinued">Discontinued</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="pf-price" class="admin-label">Price (€, incl. VAT)</label>
+          <input id="pf-price" v-model="form.price" type="number" min="0.01" step="0.01" class="admin-input" required />
+          <p v-if="errors.price" class="admin-error">{{ errors.price }}</p>
+        </div>
+
+        <div>
+          <label for="pf-stock" class="admin-label">Stock</label>
+          <input id="pf-stock" v-model.number="form.stock" type="number" min="0" step="1" class="admin-input" required />
+          <p v-if="errors.stock" class="admin-error">{{ errors.stock }}</p>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label for="pf-image" class="admin-label">Photo {{ product ? '(leave empty to keep the current one)' : '' }}</label>
+          <div class="mt-1 flex items-center gap-4">
+            <img v-if="previewUrl" :src="previewUrl" alt="" class="h-16 w-16 rounded object-cover bg-gray-100" />
+            <input id="pf-image" type="file" accept="image/jpeg,image/png,image/webp" class="text-sm text-gray-700" @change="onImage" />
+          </div>
+          <p class="mt-1 text-xs text-gray-500">JPG, PNG or WebP, up to 5 MB.</p>
+          <p v-if="errors.image" class="admin-error">{{ errors.image }}</p>
+        </div>
+
+        <fieldset class="sm:col-span-2 flex flex-wrap gap-x-6 gap-y-2">
+          <legend class="admin-label">Details</legend>
+          <label v-for="flag in flags" :key="flag.key" class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input v-model="form[flag.key]" type="checkbox" class="rounded border-gray-300 text-indigo-600" />
+            {{ flag.label }}
+          </label>
+        </fieldset>
+
+        <p v-if="errors.general" class="sm:col-span-2 rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errors.general }}</p>
+
+        <div class="sm:col-span-2 flex justify-end gap-3">
+          <button type="button" class="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200" @click="$emit('close')">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700" :disabled="saving">
+            {{ saving ? 'Saving…' : (product ? 'Save changes' : 'Create product') }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useProductStore } from '@/stores/productStore'
 
 const props = defineProps({
-  product: {
-    type: Object,
-    default: null
-  }
+  product: { type: Object, default: null },
+  // Set by the parent while saving; field errors come back from the API.
+  saving: { type: Boolean, default: false },
+  serverErrors: { type: Object, default: () => ({}) }
 })
 
 const emit = defineEmits(['close', 'save'])
 const productStore = useProductStore()
 const categories = ref([])
+const previewUrl = ref('')
+const errors = reactive({})
 
-const formData = ref({
-  name: '',
-  description: '',
-  category: '',
-  price: 0,
-  stock: 0,
-  image: '',
-  isVegan: false,
-  isVegetarian: false,
-  isGlutenFree: false
+const flags = [
+  { key: 'available', label: 'Available to order' },
+  { key: 'is_seasonal', label: 'Seasonal' },
+  { key: 'is_vegan', label: 'Vegan' },
+  { key: 'is_vegetarian', label: 'Vegetarian' },
+  { key: 'is_gluten_free', label: 'Gluten free' }
+]
+
+const blank = () => ({
+  name: '', description: '', category: '', price: '', stock: 0, status: 'active',
+  available: true, is_seasonal: false, is_vegan: false, is_vegetarian: false, is_gluten_free: false,
+  imageFile: null
 })
+const form = reactive(blank())
 
-const loadCategories = async () => {
-  categories.value = await productStore.fetchCategories()
-}
-
-const handleSubmit = () => {
-  emit('save', {
-    ...formData.value,
-    id: props.product?.id
-  })
-}
-
-watch(() => props.product, (newProduct) => {
-  if (newProduct) {
-    formData.value = { ...newProduct }
-  } else {
-    formData.value = {
-      name: '',
-      description: '',
-      category: '',
-      price: 0,
-      stock: 0,
-      image: '',
-      isVegan: false,
-      isVegetarian: false,
-      isGlutenFree: false
-    }
+watch(() => props.product, (product) => {
+  Object.assign(form, blank())
+  previewUrl.value = ''
+  if (product) {
+    Object.assign(form, {
+      name: product.name,
+      description: product.description,
+      category: typeof product.category === 'object' ? product.category?.id : product.category,
+      price: product.price,
+      stock: product.stock,
+      status: product.status || 'active',
+      available: product.available ?? true,
+      is_seasonal: !!product.is_seasonal,
+      is_vegan: !!product.is_vegan,
+      is_vegetarian: !!product.is_vegetarian,
+      is_gluten_free: !!product.is_gluten_free
+    })
+    previewUrl.value = product.image || product.image_url || ''
   }
 }, { immediate: true })
 
-onMounted(loadCategories)
+watch(() => props.serverErrors, (serverErrors) => {
+  Object.keys(errors).forEach(key => delete errors[key])
+  for (const [key, value] of Object.entries(serverErrors || {})) {
+    const message = [].concat(value)[0]
+    if (['name', 'description', 'category', 'price', 'stock', 'image'].includes(key)) errors[key] = message
+    else errors.general = message
+  }
+})
+
+function onImage(event) {
+  const file = event.target.files?.[0]
+  form.imageFile = file || null
+  if (previewUrl.value.startsWith('blob:')) URL.revokeObjectURL(previewUrl.value)
+  previewUrl.value = file ? URL.createObjectURL(file) : (props.product?.image || '')
+}
+
+function handleSubmit() {
+  Object.keys(errors).forEach(key => delete errors[key])
+  if (!props.product && !form.imageFile) {
+    errors.image = 'Add a photo of the product.'
+    return
+  }
+  emit('save', { ...form, id: props.product?.id })
+}
+
+onMounted(async () => {
+  categories.value = await productStore.fetchCategories()
+})
+
+onBeforeUnmount(() => {
+  if (previewUrl.value.startsWith('blob:')) URL.revokeObjectURL(previewUrl.value)
+})
 </script>
+
+<style scoped>
+.admin-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.admin-input {
+  @apply mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm sm:text-sm text-gray-900 bg-white focus:border-indigo-500 focus:ring-indigo-500;
+}
+
+.admin-error {
+  @apply mt-1 text-sm text-red-600;
+}
+</style>
