@@ -4,28 +4,40 @@
 
 @layer base {
   :root {
-    --color-primary: #F59E0B;
-    --color-primary-dark: #D97706;
-    --color-primary-light: #FCD34D;
-    /* Dark theme colors */
-    --color-bg-primary: #0A0A0A;
-    --color-bg-secondary: #141414;
-    --color-bg-tertiary: #1F1F1F;
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #e0e0e0;
-    --color-text-tertiary: #a0a0a0;
-    --color-border: #2A2A2A;
-    --color-accent: #F59E0B;
-    --color-accent-hover: #D97706;
+    --color-primary: #e6a15a;
+    --color-primary-dark: #b8733a;
+    --color-primary-light: #f2c48d;
+    /* Warm dark theme: a bakery at night */
+    --color-bg-primary: #0e0c0a;
+    --color-bg-secondary: #15120f;
+    --color-bg-tertiary: #1e1914;
+    --color-text-primary: #f4ece1;
+    --color-text-secondary: #d9cfc2;
+    --color-text-tertiary: #b9ab98;
+    --color-border: #2a231c;
+    --color-accent: #e6a15a;
+    --color-accent-hover: #f2c48d;
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     --color-error: #FF4444;
     --color-success: #4CAF50;
     --color-warning: #FFA726;
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply antialiased font-sans;
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgba(230, 161, 90, 0.35);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
   }
 
   h1 {
@@ -60,10 +72,6 @@
     color: var(--color-text-primary);
   }
 
-  button {
-    @apply hover:bg-amber-600 text-white;
-    background-color: var(--color-accent);
-  }
 
   /* Card styles */
   .card {
@@ -102,11 +110,54 @@
 
   /* Shared building blocks for account, checkout and content pages */
   .glass-panel {
-    @apply rounded-2xl p-6 shadow-xl border;
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
+    @apply rounded-3xl p-6 sm:p-8 border;
+    background: linear-gradient(180deg, rgba(30, 25, 20, 0.72), rgba(21, 18, 15, 0.72));
+    border-color: rgba(244, 236, 225, 0.08);
+    box-shadow: 0 1px 0 rgba(244, 236, 225, 0.04) inset, 0 30px 60px -30px rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* Small uppercase label above headings */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase text-crust;
+    letter-spacing: 0.18em;
+  }
+
+  .display-title {
+    @apply font-display font-normal leading-[0.95] text-cream;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .section {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Hairline card with a soft light that follows the pointer (set by v-tilt) */
+  .lux-card {
+    @apply relative rounded-3xl border overflow-hidden;
+    background: rgba(30, 25, 20, 0.6);
+    border-color: rgba(244, 236, 225, 0.08);
+  }
+
+  .lux-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(400px circle at var(--glare-x, 50%) var(--glare-y, 0%), rgba(242, 196, 141, 0.12), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .lux-card:hover::after {
+    opacity: 1;
+  }
+
+  .split-line {
+    padding-bottom: 0.08em;
   }
 
   .field-label {
@@ -114,10 +165,14 @@
   }
 
   .field-input {
-    @apply w-full rounded-lg px-3 py-2 text-gray-100 placeholder-gray-500
-           focus:outline-none focus:ring-2 focus:ring-amber-500/60;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    @apply w-full rounded-xl px-4 py-2.5 text-cream placeholder-cream-faint
+           transition-colors focus:outline-none focus:ring-2 focus:ring-crust/50;
+    background: rgba(244, 236, 225, 0.04);
+    border: 1px solid rgba(244, 236, 225, 0.12);
+  }
+
+  .field-input:hover {
+    border-color: rgba(244, 236, 225, 0.2);
   }
 
   .field-error {
@@ -125,21 +180,23 @@
   }
 
   .btn-amber {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-medium
-           bg-gradient-to-r from-amber-500/90 to-amber-600/90 hover:from-amber-500 hover:to-amber-600
-           shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply relative inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold
+           text-oven-950 bg-crust hover:bg-crust-light transition-colors duration-300
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    box-shadow: 0 10px 30px -10px rgba(230, 161, 90, 0.6);
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium
-           text-gray-300 hover:text-white transition-colors duration-200 border
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-medium
+           text-cream-muted hover:text-cream transition-colors duration-200 border
            disabled:opacity-50 disabled:cursor-not-allowed;
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(244, 236, 225, 0.03);
+    border-color: rgba(244, 236, 225, 0.14);
   }
 
   .btn-ghost:hover {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(244, 236, 225, 0.07);
+    border-color: rgba(244, 236, 225, 0.24);
   }
 
   .choice-card {
@@ -153,8 +210,8 @@
   }
 
   .choice-card.is-selected {
-    @apply border-amber-500/70;
-    background: rgba(245, 158, 11, 0.08);
+    @apply border-crust/70;
+    background: rgba(230, 161, 90, 0.08);
   }
 
   .choice-card.is-disabled {

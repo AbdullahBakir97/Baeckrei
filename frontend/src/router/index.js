@@ -184,14 +184,11 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition
-    }
-    if (to.hash) {
-      return { el: to.hash, behavior: 'smooth' }
-    }
-    return { top: 0, behavior: 'smooth' }
+  // Scrolling to the top happens in the page transition (App.vue), after the
+  // old page has faded out, so it works with the smooth-scroll library.
+  scrollBehavior(to) {
+    if (to.hash) return { el: to.hash }
+    return false
   }
 })
 

@@ -56,6 +56,21 @@
           <p v-if="errors.image" class="admin-error">{{ errors.image }}</p>
         </div>
 
+        <div class="sm:col-span-2">
+          <label for="pf-model" class="admin-label">3D model <span class="font-normal text-gray-500">(optional)</span></label>
+          <p v-if="currentModel && !form.removeModel && !form.modelFile" class="mt-1 flex items-center gap-3 text-sm text-gray-700">
+            <font-awesome-icon icon="cube" class="text-indigo-600" />
+            <a :href="currentModel" target="_blank" rel="noopener" class="underline truncate">{{ currentModel.split('/').pop() }}</a>
+            <button type="button" class="text-red-600 hover:underline" @click="form.removeModel = true">Remove</button>
+          </p>
+          <p v-else-if="form.removeModel" class="mt-1 text-sm text-gray-700">
+            The 3D model will be removed. <button type="button" class="text-indigo-600 hover:underline" @click="form.removeModel = false">Undo</button>
+          </p>
+          <input id="pf-model" type="file" accept=".glb,model/gltf-binary" class="mt-1 text-sm text-gray-700" @change="onModel" />
+          <p class="mt-1 text-xs text-gray-500">A .glb file up to 20 MB. Without one, the storefront builds a 3D view from the photo (works best with a transparent PNG).</p>
+          <p v-if="errors.model_3d" class="admin-error">{{ errors.model_3d }}</p>
+        </div>
+
         <fieldset class="sm:col-span-2 flex flex-wrap gap-x-6 gap-y-2">
           <legend class="admin-label">Details</legend>
           <label v-for="flag in flags" :key="flag.key" class="inline-flex items-center gap-2 text-sm text-gray-700">
@@ -92,6 +107,7 @@ const emit = defineEmits(['close', 'save'])
 const productStore = useProductStore()
 const categories = ref([])
 const previewUrl = ref('')
+const currentModel = ref('')
 const errors = reactive({})
 
 const flags = [
@@ -105,13 +121,16 @@ const flags = [
 const blank = () => ({
   name: '', description: '', category: '', price: '', stock: 0, status: 'active',
   available: true, is_seasonal: false, is_vegan: false, is_vegetarian: false, is_gluten_free: false,
-  imageFile: null
+  imageFile: null,
+  modelFile: null,
+  removeModel: false
 })
 const form = reactive(blank())
 
 watch(() => props.product, (product) => {
   Object.assign(form, blank())
   previewUrl.value = ''
+  currentModel.value = product?.model_3d || product?.model_3d_url || ''
   if (product) {
     Object.assign(form, {
       name: product.name,
@@ -134,7 +153,7 @@ watch(() => props.serverErrors, (serverErrors) => {
   Object.keys(errors).forEach(key => delete errors[key])
   for (const [key, value] of Object.entries(serverErrors || {})) {
     const message = [].concat(value)[0]
-    if (['name', 'description', 'category', 'price', 'stock', 'image'].includes(key)) errors[key] = message
+    if (['name', 'description', 'category', 'price', 'stock', 'image', 'model_3d'].includes(key)) errors[key] = message
     else errors.general = message
   }
 })
@@ -144,6 +163,11 @@ function onImage(event) {
   form.imageFile = file || null
   if (previewUrl.value.startsWith('blob:')) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = file ? URL.createObjectURL(file) : (props.product?.image || '')
+}
+
+function onModel(event) {
+  form.modelFile = event.target.files?.[0] || null
+  if (form.modelFile) form.removeModel = false
 }
 
 function handleSubmit() {

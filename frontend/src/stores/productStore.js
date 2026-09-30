@@ -53,10 +53,13 @@ export const useProductStore = defineStore('products', () => {
       is_seasonal: data.is_seasonal ?? false
     }
     Object.keys(fields).forEach(key => fields[key] === undefined && delete fields[key])
-    if (!data.imageFile) return fields
+    // modelFile: a new .glb to upload; removeModel: clear the current one.
+    if (!data.imageFile && !data.modelFile && !data.removeModel) return fields
     const form = new FormData()
     Object.entries(fields).forEach(([key, value]) => form.append(key, value))
-    form.append('image', data.imageFile)
+    if (data.imageFile) form.append('image', data.imageFile)
+    if (data.modelFile) form.append('model_3d', data.modelFile)
+    else if (data.removeModel) form.append('model_3d', '')
     return form
   }
 
@@ -270,13 +273,11 @@ export const useProductStore = defineStore('products', () => {
     product.value = null
 
     try {
-      console.log('Fetching product details for ID:', id)
       const response = await axios.get(`${API_PATH}/${id}/`, {
         withCredentials: true
       })
       
       if (response.data) {
-        console.log('Product detail data:', response.data)
         product.value = {
           ...response.data,
           // Ensure image URLs are absolute
