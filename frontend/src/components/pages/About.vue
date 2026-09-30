@@ -8,7 +8,7 @@
 
     <!-- Story with layered collage -->
     <section class="section story">
-      <div class="collage" aria-hidden="true">
+      <div v-mask class="collage" aria-hidden="true">
         <span class="collage-glow"></span>
         <img v-parallax="-0.15" :src="croissantImg" alt="" class="collage-a" />
         <img v-parallax="-0.45" :src="pretzelImg" alt="" class="collage-b" />

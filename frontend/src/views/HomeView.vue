@@ -64,7 +64,7 @@
             {{ $t('home.seeEverything') }} <font-awesome-icon icon="arrow-right" />
           </router-link>
         </div>
-        <div ref="track" class="featured-track">
+        <div ref="track" v-skew="4" class="featured-track">
           <div v-for="product in featured" :key="product.id" class="featured-item">
             <ProductCard :product="product" />
           </div>

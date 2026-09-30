@@ -14,7 +14,7 @@
 
     <div v-else v-reveal.stagger class="posts">
       <article v-for="(post, index) in posts" :key="post.id" class="post lux-card" :class="{ 'is-featured': index === 0 }">
-        <router-link :to="{ name: 'blog-post', params: { slug: post.slug } }" class="post-media" tabindex="-1" aria-hidden="true">
+        <router-link :to="{ name: 'blog-post', params: { slug: post.slug } }" v-mask class="post-media" tabindex="-1" aria-hidden="true" data-cursor="read">
           <img v-if="post.cover_image" :src="post.cover_image" alt="" loading="lazy" @error="applyImageFallback" />
           <span v-else class="post-placeholder"><img :src="fallbackImage(index)" alt="" /></span>
         </router-link>

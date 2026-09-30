@@ -1,4 +1,4 @@
-import { gsap, ScrollTrigger, SplitText, prefersReducedMotion, isCoarsePointer } from './index'
+import { gsap, ScrollTrigger, SplitText, prefersReducedMotion, isCoarsePointer, whenIntroDone } from './index'
 
 // Each directive keeps its GSAP objects on the element so they can be
 // cleaned up when the component unmounts (route changes create and destroy
@@ -24,19 +24,28 @@ export const reveal = {
     if (prefersReducedMotion()) return
     const opts = binding.value || {}
     const targets = binding.modifiers.stagger ? Array.from(el.children) : el
-    const tween = gsap.from(targets, {
-      y: opts.y ?? 40,
-      opacity: 0,
-      duration: opts.duration ?? 1,
-      delay: opts.delay ?? 0,
-      ease: 'power3.out',
-      stagger: binding.modifiers.stagger ? (opts.stagger ?? 0.08) : 0,
-      clearProps: 'transform,opacity',
-      scrollTrigger: { trigger: el, start: opts.start ?? 'top 88%', once: true }
+    // Hidden right away (no flash), animated once the intro has finished.
+    gsap.set(targets, { opacity: 0 })
+    whenIntroDone().then(() => {
+      if (!el.isConnected) return
+      gsap.set(targets, { opacity: 1 })
+      store(el, 'tween', createReveal(targets, el, binding, opts))
     })
-    store(el, 'tween', tween)
   },
   unmounted: cleanup
+}
+
+function createReveal(targets, el, binding, opts) {
+  return gsap.from(targets, {
+    y: opts.y ?? 40,
+    opacity: 0,
+    duration: opts.duration ?? 1,
+    delay: opts.delay ?? 0,
+    ease: 'power3.out',
+    stagger: binding.modifiers.stagger ? (opts.stagger ?? 0.08) : 0,
+    clearProps: 'transform,opacity',
+    scrollTrigger: { trigger: el, start: opts.start ?? 'top 88%', once: true }
+  })
 }
 
 /**
@@ -60,8 +69,9 @@ export const split = {
       store(el, 'split', s)
       store(el, 'tween', tween)
     }
-    // Wait for web fonts so lines are measured with the final font.
-    document.fonts?.ready ? document.fonts.ready.then(run) : run()
+    // Wait for web fonts so lines are measured with the final font, and for
+    // the intro so the headline doesn't rise behind it.
+    Promise.all([document.fonts?.ready, whenIntroDone()]).then(() => { if (el.isConnected) run() })
   },
   unmounted: cleanup
 }
@@ -143,7 +153,55 @@ export const magnetic = {
   unmounted: cleanup
 }
 
+/**
+ * v-mask: an image (or block) is unveiled from the bottom as it scrolls in,
+ * while its content settles from a slight zoom.
+ */
+export const mask = {
+  mounted(el, binding) {
+    if (prefersReducedMotion()) return
+    gsap.set(el, { clipPath: 'inset(100% 0% 0% 0%)' })
+    whenIntroDone().then(() => {
+      if (!el.isConnected) return
+      const inner = el.tagName === 'IMG' ? el : el.firstElementChild
+      const tl = gsap.timeline({
+        scrollTrigger: { trigger: el, start: binding.value?.start ?? 'top 85%', once: true },
+        onComplete: () => gsap.set(el, { clearProps: 'clipPath' })
+      })
+      tl.to(el, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.2, ease: 'expo.inOut' })
+      if (inner && inner !== el) tl.from(inner, { scale: 1.25, duration: 1.6, ease: 'expo.out' }, 0)
+      store(el, 'tween', tl)
+    })
+  },
+  unmounted: cleanup
+}
+
+/**
+ * v-skew: leans with the scroll speed and springs back when scrolling stops.
+ */
+export const skew = {
+  mounted(el, binding) {
+    if (prefersReducedMotion()) return
+    const max = binding.value ?? 6
+    const set = gsap.quickTo(el, 'skewX', { duration: 0.6, ease: 'power3.out' })
+    const trigger = ScrollTrigger.create({
+      trigger: el,
+      start: 'top bottom',
+      end: 'bottom top',
+      onUpdate: (self) => {
+        set(gsap.utils.clamp(-max, max, self.getVelocity() / -300))
+        clearTimeout(el.__skewReset)
+        el.__skewReset = setTimeout(() => set(0), 120)
+      }
+    })
+    store(el, 'off', () => { trigger.kill(); clearTimeout(el.__skewReset) })
+  },
+  unmounted: cleanup
+}
+
 export function installMotion(app) {
+  app.directive('mask', mask)
+  app.directive('skew', skew)
   app.directive('reveal', reveal)
   app.directive('split', split)
   app.directive('parallax', parallax)

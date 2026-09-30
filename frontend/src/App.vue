@@ -13,11 +13,13 @@
     </main>
     <Footer v-if="!isAdmin" :key="locale" />
     <Toast />
+    <CursorFollower v-if="!isAdmin" />
+    <IntroOverlay v-if="showIntro" @done="finishIntro" />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
@@ -27,13 +29,28 @@ import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Toast from '@/components/common/Toast.vue'
 import AmbientBackground from '@/components/layout/AmbientBackground.vue'
-import { gsap, ScrollTrigger, initSmoothScroll, scrollToTop, prefersReducedMotion } from '@/motion'
+import CursorFollower from '@/components/layout/CursorFollower.vue'
+import IntroOverlay from '@/components/layout/IntroOverlay.vue'
+import { gsap, ScrollTrigger, initSmoothScroll, scrollToTop, prefersReducedMotion, markIntroDone } from '@/motion'
 
 const route = useRoute()
 // Switching language remounts the page so split headlines rebuild with the new text.
 const { locale } = useI18n()
 // The admin area has its own layout and navigation.
 const isAdmin = computed(() => route.matched.some(record => record.meta.requiresAdmin))
+
+// The intro plays once per browser, on storefront pages, with motion allowed.
+const INTRO_KEY = 'intro-seen'
+const introSeen = () => { try { return localStorage.getItem(INTRO_KEY) === '1' } catch { return true } }
+const showIntro = ref(!prefersReducedMotion() && !introSeen() && !window.location.pathname.startsWith('/admin'))
+function finishIntro() {
+  showIntro.value = false
+  try { localStorage.setItem(INTRO_KEY, '1') } catch { /* ignore */ }
+  markIntroDone()
+}
+if (!showIntro.value) markIntroDone()
+// Never let entrance animations wait forever.
+setTimeout(markIntroDone, 6000)
 
 // Default title, description and share preview for every page; pages with
 // their own content (products, posts, categories) refine it.
