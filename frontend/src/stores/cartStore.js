@@ -1,22 +1,36 @@
 import { defineStore } from 'pinia'
 import axios from '@/plugins/axios'
-import { useAuthStore } from './authStore'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const BASE_URL = `${API_URL}/api/shopping-cart`
 
-// Get CSRF token from cookie
-function getCSRFToken() {
-  const name = 'csrftoken='
-  const decodedCookie = decodeURIComponent(document.cookie)
-  const cookieArray = decodedCookie.split(';')
-  for (let cookie of cookieArray) {
-    cookie = cookie.trim()
-    if (cookie.indexOf(name) === 0) {
-      return cookie.substring(name.length)
-    }
-  }
-  return null
+const mediaUrl = (path) => {
+  if (!path) return null
+  return path.startsWith('http') ? path : `${API_URL}${path}`
+}
+
+// The API returns the product as an id plus flat fields; the components
+// expect a nested product object.
+const normalizeItem = (item) => ({
+  ...item,
+  product: {
+    id: item.product,
+    name: item.product_name,
+    price: parseFloat(item.product_price),
+    stock: item.available_stock,
+    image: mediaUrl(item.product_image)
+  },
+  unitPrice: item.unit_price,
+  totalPrice: item.total_price,
+  subtotal: item.total_price
+})
+
+// Turn an API error into a readable message.
+const errorMessage = (error, fallback) => {
+  const detail = error.response?.data?.detail
+  if (detail?.message) return detail.message
+  if (typeof detail === 'string') return detail
+  return error.message || fallback
 }
 
 export const useCartStore = defineStore('cart', {
@@ -66,10 +80,7 @@ export const useCartStore = defineStore('cart', {
         throw new Error('Product ID is required')
       }
 
-      // Convert to string and clean up any whitespace
       const cleanId = String(productId).trim()
-
-      // UUID regex pattern
       const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
       if (!uuidPattern.test(cleanId)) {
@@ -79,285 +90,65 @@ export const useCartStore = defineStore('cart', {
       return cleanId
     },
 
-    async fetchCart({ silent = false } = {}) {
-      const authStore = useAuthStore()
-      
+    applyCart(data) {
+      this.items = (data?.items || []).map(normalizeItem)
+      this.subtotal = data?.subtotal || '0.00'
+      this.tax = data?.tax || '0.00'
+      this.total = data?.total || '0.00'
+      this.total_items = data?.total_items || 0
+      this.lastFetch = Date.now()
+    },
+
+    // Run a cart request; every endpoint responds with the full cart.
+    async request(method, path, body, fallbackError) {
       try {
-        if (!silent) {
-          this.loading = true
-        }
+        this.loading = true
         this.error = null
+        const response = await axios({ method, url: `${BASE_URL}/${path}`, data: body })
+        this.applyCart(response.data)
+        return response.data
+      } catch (error) {
+        this.error = errorMessage(error, fallbackError)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
 
-        const headers = {
-          'X-CSRFToken': getCSRFToken()
-        }
-        
-        if (authStore.isAuthenticated) {
-          headers['Authorization'] = `Bearer ${authStore.token}`
-        }
-
-        const response = await axios.get(`${BASE_URL}/current/`, {
-          withCredentials: true,
-          headers
-        })
-
-        if (response.data) {
-          // Update cart state
-          this.items = response.data.items || []
-          this.subtotal = response.data.subtotal || '0.00'
-          this.tax = response.data.tax || '0.00'
-          this.total = response.data.total || '0.00'
-          this.total_items = response.data.total_items || 0
-          this.lastFetch = Date.now()
-          
-          console.log('Cart state updated:', {
-            items: this.items,
-            total_items: this.total_items,
-            total: this.total
-          })
-        }
+    async fetchCart({ silent = false } = {}) {
+      try {
+        if (!silent) this.loading = true
+        this.error = null
+        const response = await axios.get(`${BASE_URL}/`)
+        this.applyCart(response.data)
       } catch (error) {
         if (!silent) {
           console.error('Error fetching cart:', error)
-          this.error = error.response?.data?.detail || 'Error fetching cart'
+          this.error = errorMessage(error, 'Error fetching cart')
         }
       } finally {
-        if (!silent) {
-          this.loading = false
-        }
+        if (!silent) this.loading = false
       }
     },
 
     async addItem(productId, quantity = 1) {
-      const authStore = useAuthStore()
-      
-      try {
-        this.loading = true
-        this.error = null
-        
-        const validProductId = this.validateUUID(productId)
-        
-        const headers = {
-          'X-CSRFToken': getCSRFToken()
-        }
-        
-        if (authStore.isAuthenticated) {
-          headers['Authorization'] = `Bearer ${authStore.token}`
-        }
-
-        // First check if item is already in cart
-        const existingItem = this.items.find(item => item.product.id === validProductId)
-        if (existingItem) {
-          console.log('Item already in cart, updating quantity:', {
-            productId: validProductId,
-            currentQuantity: existingItem.quantity,
-            addQuantity: quantity
-          })
-        }
-
-        const response = await axios.post(`${BASE_URL}/add_item/`, {
-          product_id: validProductId,
-          quantity: quantity
-        }, {
-          withCredentials: true,
-          headers
-        })
-        
-        if (response.data) {
-          // Check if it's an error response from backend
-          if (response.data.status === 'error') {
-            const errorDetail = response.data.detail
-            let errorMessage = ''
-            
-            if (response.data.code === 'insufficient_stock') {
-              errorMessage = `Not enough stock. Available: ${errorDetail.available_stock}`
-            } else if (typeof errorDetail === 'object') {
-              errorMessage = errorDetail.message || Object.entries(errorDetail)
-                .map(([key, value]) => `${key}: ${value}`)
-                .join(', ')
-            } else {
-              errorMessage = errorDetail
-            }
-            
-            this.error = errorMessage
-            throw new Error(errorMessage)
-          }
-          
-          // Update cart state with response data
-          const cartData = response.data.data || response.data
-          this.items = cartData.items || []
-          this.subtotal = cartData.subtotal || '0.00'
-          this.tax = cartData.tax || '0.00'
-          this.total = cartData.total || '0.00'
-          this.total_items = cartData.total_items || 0
-          
-          console.log('Cart updated after adding item:', {
-            items: this.items,
-            total_items: this.total_items,
-            total: this.total
-          })
-        }
-        
-        return response.data
-      } catch (error) {
-        console.error('Error adding item to cart:', {
-          error: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        })
-        
-        // Handle different types of errors
-        let errorMessage = ''
-        if (error.response?.data?.detail) {
-          const detail = error.response.data.detail
-          if (detail.message) {
-            errorMessage = detail.message
-          } else if (typeof detail === 'object') {
-            errorMessage = Object.entries(detail)
-              .map(([key, value]) => `${key}: ${value}`)
-              .join(', ')
-          } else {
-            errorMessage = detail
-          }
-        } else {
-          errorMessage = error.message || 'Error adding item to cart'
-        }
-        
-        this.error = errorMessage
-        throw error
-      } finally {
-        this.loading = false
-      }
+      const id = this.validateUUID(productId)
+      return this.request('post', 'add/', { product_id: id, quantity }, 'Error adding item to cart')
     },
 
     async removeItem(productId) {
-      const authStore = useAuthStore()
-      
-      try {
-        this.loading = true
-        this.error = null
-        
-        const validProductId = this.validateUUID(productId)
-        const headers = {
-          'X-CSRFToken': getCSRFToken()
-        }
-        
-        if (authStore.isAuthenticated) {
-          headers['Authorization'] = `Bearer ${authStore.token}`
-        }
-
-        const response = await axios.post(`${BASE_URL}/remove_item/`, {
-          product_id: validProductId
-        }, {
-          withCredentials: true,
-          headers
-        })
-        
-        if (response.data) {
-          this.items = response.data.items || []
-          this.subtotal = response.data.subtotal || '0.00'
-          this.tax = response.data.tax || '0.00'
-          this.total = response.data.total || '0.00'
-          this.total_items = response.data.total_items || 0
-        }
-        
-        return response.data
-      } catch (error) {
-        console.error('Error removing item from cart:', error)
-        this.error = error.response?.data?.detail || 
-                    error.response?.data?.error ||
-                    error.message || 
-                    'Error removing item from cart'
-        throw error
-      } finally {
-        this.loading = false
-      }
+      const id = this.validateUUID(productId)
+      return this.request('delete', `remove/${id}/`, undefined, 'Error removing item from cart')
     },
 
     async updateQuantity(productId, quantity) {
-      const authStore = useAuthStore()
-      
-      try {
-        this.loading = true
-        this.error = null
-        
-        const validProductId = this.validateUUID(productId)
-        const headers = {
-          'X-CSRFToken': getCSRFToken()
-        }
-        
-        if (authStore.isAuthenticated) {
-          headers['Authorization'] = `Bearer ${authStore.token}`
-        }
-
-        const response = await axios.post(`${BASE_URL}/update_item/`, {
-          product_id: validProductId,
-          quantity: quantity
-        }, {
-          withCredentials: true,
-          headers
-        })
-        
-        if (response.data) {
-          this.items = response.data.items || []
-          this.subtotal = response.data.subtotal || '0.00'
-          this.tax = response.data.tax || '0.00'
-          this.total = response.data.total || '0.00'
-          this.total_items = response.data.total_items || 0
-        }
-        
-        return response.data
-      } catch (error) {
-        console.error('Error updating cart item:', error)
-        this.error = error.response?.data?.detail || 
-                    error.response?.data?.error ||
-                    error.message || 
-                    'Error updating cart item'
-        throw error
-      } finally {
-        this.loading = false
-      }
+      const id = this.validateUUID(productId)
+      if (quantity < 1) return this.removeItem(id)
+      return this.request('put', `update/${id}/`, { quantity }, 'Error updating cart item')
     },
 
     async clearCart() {
-      const authStore = useAuthStore()
-      
-      try {
-        this.loading = true
-        this.error = null
-        
-        const headers = {
-          'X-CSRFToken': getCSRFToken()
-        }
-        
-        if (authStore.isAuthenticated) {
-          headers['Authorization'] = `Bearer ${authStore.token}`
-        }
-
-        const response = await axios.post(`${BASE_URL}/clear/`, {}, {
-          withCredentials: true,
-          headers
-        })
-        
-        if (response.data) {
-          this.items = []
-          this.subtotal = '0.00'
-          this.tax = '0.00'
-          this.total = '0.00'
-          this.total_items = 0
-        }
-        
-        return response.data
-      } catch (error) {
-        console.error('Error clearing cart:', error)
-        this.error = error.response?.data?.detail || 
-                    error.response?.data?.error ||
-                    error.message || 
-                    'Error clearing cart'
-        throw error
-      } finally {
-        this.loading = false
-      }
+      return this.request('post', 'clear/', {}, 'Error clearing cart')
     }
   }
 })
