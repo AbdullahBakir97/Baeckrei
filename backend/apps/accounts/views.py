@@ -25,9 +25,19 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        if self.action in ['create', 'register']:
+        if self.action == 'register':
             return [AllowAny()]
+        # Creating or deleting arbitrary accounts is reserved for staff;
+        # customers sign up through `register`.
+        if self.action in ['create', 'destroy']:
+            return [IsAuthenticated(), IsAdminUser()]
         return super().get_permissions()
+
+    def get_queryset(self):
+        # Non-staff users can only ever see or modify their own account.
+        if self.request.user.is_staff:
+            return User.objects.all()
+        return User.objects.filter(pk=self.request.user.pk)
 
     def get_serializer_class(self):
         if self.action == 'register':
@@ -36,8 +46,13 @@ class UserViewSet(viewsets.ModelViewSet):
             return ChangePasswordSerializer
         return UserSerializer
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
+        if request.method == 'PATCH':
+            serializer = self.get_serializer(request.user, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 

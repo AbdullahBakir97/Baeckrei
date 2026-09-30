@@ -112,6 +112,7 @@
 </template>
   
   <script setup>
+    import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
     import { ref, computed } from 'vue'
     import { useProductStore } from '@/stores/productStore'
     import { useModalStore } from '@/stores/modalStore'
@@ -162,7 +163,7 @@
 
     // Updated getImageUrl function
     const getImageUrl = (image) => {
-        if (!image) return '/images/placeholder.png'
+        if (!image) return PLACEHOLDER_IMAGE
         
         // If image is a string (direct URL or path)
         if (typeof image === 'string') {
@@ -180,7 +181,7 @@
         }
         
         // Fallback to placeholder
-        return '/images/placeholder.png'
+        return PLACEHOLDER_IMAGE
     }
     
     // Computed property for all images
@@ -191,7 +192,7 @@
         if (props.product.images?.length) {
         images.push(...props.product.images.map(img => getImageUrl(img)))
         }
-        return images.filter(img => img !== '/images/placeholder.png') // Filter out placeholders
+        return images.filter(img => img !== PLACEHOLDER_IMAGE) // Filter out placeholders
     })
     
     // Get current image index
@@ -200,9 +201,7 @@
         return allImages.value.findIndex(img => img === getImageUrl(selectedImage.value))
     })
     
-    const handleImageError = (event) => {
-        event.target.src = '/images/placeholder.png'
-    }
+    const handleImageError = applyImageFallback
     
     const shareProduct = () => {
         emit('shareProduct')

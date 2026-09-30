@@ -3,7 +3,31 @@ import axios from '@/plugins/axios'
 import { ref, computed } from 'vue'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const API_PATH = `${API_BASE}/api/orders`
+const API_PATH = `${API_BASE}/api/orders/orders`
+
+const mediaUrl = (path) => {
+  if (!path) return null
+  return path.startsWith('http') ? path : `${API_BASE}${path.startsWith('/') ? '' : '/media/'}${path}`
+}
+
+// Map the backend's order shape onto what the views render.
+const normalizeOrder = (order) => ({
+  ...order,
+  created_at: new Date(order.created_at),
+  updated_at: new Date(order.updated_at),
+  estimated_delivery_date: order.estimated_delivery_date ?
+    new Date(order.estimated_delivery_date) : null,
+  total_price: parseFloat(order.total_price),
+  order_items: (order.items || []).map(item => ({
+    ...item,
+    price_per_item: parseFloat(item.price_per_item),
+    product: {
+      id: item.product,
+      name: item.product_name,
+      image: mediaUrl(item.product_image)
+    }
+  }))
+})
 
 export const useOrderStore = defineStore('orders', () => {
   // State
@@ -59,46 +83,28 @@ export const useOrderStore = defineStore('orders', () => {
       // Ordering
       if (params.ordering) queryParams.append('ordering', params.ordering)
 
-      const response = await axios.get(API_PATH, {
+      const response = await axios.get(`${API_PATH}/`, {
         params: queryParams,
         withCredentials: true
       })
 
       if (response.data) {
-        // Update pagination
+        // The endpoint may return a plain list or a paginated object.
+        const data = Array.isArray(response.data)
+          ? { results: response.data, count: response.data.length }
+          : response.data
+
         pagination.value = {
-          count: response.data.count || 0,
-          current_page: response.data.current_page || 1,
-          total_pages: response.data.total_pages || 1,
-          page_size: response.data.page_size || 10,
-          has_next: response.data.has_next || false,
-          has_previous: response.data.has_previous || false,
-          page_range: response.data.page_range || [],
+          count: data.count || 0,
+          current_page: data.current_page || 1,
+          total_pages: data.total_pages || 1,
+          page_size: data.page_size || 10,
+          has_next: data.has_next || false,
+          has_previous: data.has_previous || false,
+          page_range: data.page_range || [],
         }
 
-        // Update orders with normalized data
-        orders.value = (response.data.results || []).map(order => ({
-          ...order,
-          created_at: new Date(order.created_at),
-          updated_at: new Date(order.updated_at),
-          estimated_delivery_date: order.estimated_delivery_date ? 
-            new Date(order.estimated_delivery_date) : null,
-          total_price: parseFloat(order.total_price),
-          order_items: (order.order_items || []).map(item => ({
-            ...item,
-            price_per_item: parseFloat(item.price_per_item),
-            product: item.product ? {
-              ...item.product,
-              price: parseFloat(item.product.price),
-              image: item.product.image_url || 
-                    (item.product.image ? 
-                      (item.product.image.startsWith('http') ? 
-                        item.product.image : 
-                        `${API_BASE}/media/${item.product.image}`)
-                      : null)
-            } : null
-          }))
-        }))
+        orders.value = (data.results || []).map(normalizeOrder)
 
         return {
           results: orders.value,
@@ -137,28 +143,7 @@ export const useOrderStore = defineStore('orders', () => {
       })
       
       if (response.data) {
-        currentOrder.value = {
-          ...response.data,
-          created_at: new Date(response.data.created_at),
-          updated_at: new Date(response.data.updated_at),
-          estimated_delivery_date: response.data.estimated_delivery_date ? 
-            new Date(response.data.estimated_delivery_date) : null,
-          total_price: parseFloat(response.data.total_price),
-          order_items: (response.data.order_items || []).map(item => ({
-            ...item,
-            price_per_item: parseFloat(item.price_per_item),
-            product: item.product ? {
-              ...item.product,
-              price: parseFloat(item.product.price),
-              image: item.product.image_url || 
-                    (item.product.image ? 
-                      (item.product.image.startsWith('http') ? 
-                        item.product.image : 
-                        `${API_BASE}/media/${item.product.image}`)
-                      : null)
-            } : null
-          }))
-        }
+        currentOrder.value = normalizeOrder(response.data)
         return currentOrder.value
       }
       return null
@@ -177,8 +162,8 @@ export const useOrderStore = defineStore('orders', () => {
       error.value = null
       
       const response = await axios.post(
-        `${API_PATH}/${orderId}/update_status/`,
-        { status: 'Canceled' },
+        `${API_PATH}/${orderId}/cancel/`,
+        {},
         { withCredentials: true }
       )
       
@@ -186,20 +171,12 @@ export const useOrderStore = defineStore('orders', () => {
         // Update the order in the list
         const index = orders.value.findIndex(o => o.id === orderId)
         if (index !== -1) {
-          orders.value[index] = {
-            ...response.data,
-            created_at: new Date(response.data.created_at),
-            updated_at: new Date(response.data.updated_at)
-          }
+          orders.value[index] = normalizeOrder(response.data)
         }
         
         // Update current order if it's the same
         if (currentOrder.value?.id === orderId) {
-          currentOrder.value = {
-            ...response.data,
-            created_at: new Date(response.data.created_at),
-            updated_at: new Date(response.data.updated_at)
-          }
+          currentOrder.value = normalizeOrder(response.data)
         }
         
         return response.data
@@ -249,20 +226,12 @@ export const useOrderStore = defineStore('orders', () => {
         // Update the order in the list
         const index = orders.value.findIndex(o => o.id === orderId)
         if (index !== -1) {
-          orders.value[index] = {
-            ...response.data,
-            created_at: new Date(response.data.created_at),
-            updated_at: new Date(response.data.updated_at)
-          }
+          orders.value[index] = normalizeOrder(response.data)
         }
         
         // Update current order if it's the same
         if (currentOrder.value?.id === orderId) {
-          currentOrder.value = {
-            ...response.data,
-            created_at: new Date(response.data.created_at),
-            updated_at: new Date(response.data.updated_at)
-          }
+          currentOrder.value = normalizeOrder(response.data)
         }
         
         return response.data
@@ -292,20 +261,12 @@ export const useOrderStore = defineStore('orders', () => {
         // Update the order in the list
         const index = orders.value.findIndex(o => o.id === orderId)
         if (index !== -1) {
-          orders.value[index] = {
-            ...response.data,
-            created_at: new Date(response.data.created_at),
-            updated_at: new Date(response.data.updated_at)
-          }
+          orders.value[index] = normalizeOrder(response.data)
         }
         
         // Update current order if it's the same
         if (currentOrder.value?.id === orderId) {
-          currentOrder.value = {
-            ...response.data,
-            created_at: new Date(response.data.created_at),
-            updated_at: new Date(response.data.updated_at)
-          }
+          currentOrder.value = normalizeOrder(response.data)
         }
         
         return response.data

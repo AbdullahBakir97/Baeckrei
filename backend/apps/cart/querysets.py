@@ -18,7 +18,7 @@ class CartQuerySet(models.QuerySet):
         """Get all expired carts (not modified for expiry_hours and not completed)."""
         expiry_time = timezone.now() - timezone.timedelta(hours=expiry_hours)
         return self.filter(
-            modified_at__lt=expiry_time,
+            updated_at__lt=expiry_time,
             completed=False
         )
     

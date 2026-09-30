@@ -112,7 +112,7 @@ const routes = [
   },
   {
     path: '/login',
-    name: 'Login',
+    name: 'login',
     component: Login,
     meta: { title: 'Login' }
   },
@@ -144,6 +144,9 @@ router.beforeEach(async (to, from, next) => {
   
   try {
     const authStore = useAuthStore()
+    // Wait for the current user to load so role checks don't run against
+    // an empty store (e.g. when an admin opens /admin directly).
+    await authStore.initializeAuth()
     const isAuthenticated = authStore.isAuthenticated
     const isAdmin = authStore.isAdmin
 

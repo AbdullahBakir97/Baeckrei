@@ -148,6 +148,7 @@
 </template>
 
 <script setup>
+import { applyImageFallback } from '@/utils/imageFallback'
 import { ref, computed } from 'vue'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -204,9 +205,7 @@ const cartItem = computed(() => {
   return cartStore.items.find(item => item.product.id === props.product.id)
 })
 
-const handleImageError = (e) => {
-  e.target.src = '/images/placeholder.png'
-}
+const handleImageError = applyImageFallback
 
 const formatPrice = (price) => {
   return Number(price).toFixed(2)

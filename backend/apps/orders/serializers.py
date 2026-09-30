@@ -63,9 +63,12 @@ class OrderSerializer(serializers.ModelSerializer):
             'updated_at', 'total_items', 'payments',
             'is_cancelable', 'is_overdue'
         ]
+        # Ownership, status and fulfilment fields are managed server-side
+        # (status/tracking via the staff-only actions), never by the client.
         read_only_fields = [
-            'order_number', 'total_price', 'created_at',
-            'updated_at', 'total_items', 'is_cancelable',
+            'order_number', 'customer', 'status', 'total_price',
+            'shipping_tracking_number', 'estimated_delivery_date',
+            'created_at', 'updated_at', 'total_items', 'is_cancelable',
             'is_overdue'
         ]
 

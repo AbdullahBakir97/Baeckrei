@@ -61,13 +61,9 @@ class AddItemCommand(BaseCommand[CartItem]):
                     raise VersionConflictError(obj_type="Cart", obj_id=self.cart.pk)
                 
                 if cart_item:
-                    new_quantity = cart_item.quantity + self.quantity
-                    # Check if total quantity exceeds stock
-                    if new_quantity > product.stock:
-                        raise InsufficientStockError(
-                            f"Insufficient stock. Total requested: {new_quantity}, Available: {product.stock}"
-                        )
-                    cart_item.quantity = new_quantity
+                    # Stock already excludes what this cart holds, so only the
+                    # increment (checked above) needs to be available.
+                    cart_item.quantity = cart_item.quantity + self.quantity
                     cart_item.unit_price = product.price
                     cart_item.save()
                 else:

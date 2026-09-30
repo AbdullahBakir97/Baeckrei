@@ -140,12 +140,7 @@ class CartViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
-            request._full_data = {
-                'product_id': product_id,
-                'quantity': request.data.get('quantity')
-            }
-            
-            response = self.controller.update_item(request)
+            response = self.controller.update_item(request, product_id)
             return response
         except CartException as e:
             logger.error(f"Cart error: {str(e)}", exc_info=True)
@@ -183,9 +178,7 @@ class CartViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
-            request._full_data = {'product_id': product_id}
-            
-            response = self.controller.remove_item(request)
+            response = self.controller.remove_item(request, product_id)
             return response
         except CartException as e:
             logger.error(f"Cart error: {str(e)}", exc_info=True)

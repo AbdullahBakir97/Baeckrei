@@ -130,13 +130,14 @@
 </template>
 
 <script setup>
+import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { ref, computed } from 'vue'
 import QuickViewModal from './QuickViewModal.vue'
 import { useCartStore } from '@/stores/cartStore' 
 
 const cartStore = useCartStore()
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const defaultImage = ref('/assets/images/placeholder.jpg')
+const defaultImage = ref(PLACEHOLDER_IMAGE)
 
 const props = defineProps({
   product: {
@@ -212,7 +213,7 @@ const handleImageError = (event) => {
     product: props.product?.id,
     fallback: defaultImage.value
   })
-  event.target.src = defaultImage.value
+  applyImageFallback(event)
 }
 </script>
 

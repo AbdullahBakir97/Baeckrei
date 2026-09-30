@@ -24,17 +24,18 @@ class CartItemSerializer(serializers.ModelSerializer):
     )
     version = serializers.IntegerField(read_only=True)
     available_stock = serializers.IntegerField(source='product.stock', read_only=True)
+    product_image = serializers.ImageField(source='product.image', read_only=True)
 
     class Meta:
         model = CartItem
         fields = [
-            'id', 'cart', 'product', 'product_name', 'product_price',
+            'id', 'cart', 'product', 'product_name', 'product_price', 'product_image',
             'quantity', 'unit_price', 'total_price', 'version',
-            'available_stock', 'created_at', 'modified_at'
+            'available_stock', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'cart', 'unit_price', 'total_price', 'version',
-            'created_at', 'modified_at'
+            'created_at', 'updated_at'
         ]
 
     def validate_quantity(self, value):

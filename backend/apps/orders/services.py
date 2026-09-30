@@ -5,6 +5,13 @@ from apps.products.models import Product
 from apps.accounts.models import Customer, Address
 
 class OrderService:
+    ALLOWED_STATUS_TRANSITIONS = {
+        Order.StatusChoices.PENDING: {Order.StatusChoices.PROCESSING, Order.StatusChoices.CANCELED},
+        Order.StatusChoices.PROCESSING: {Order.StatusChoices.COMPLETED, Order.StatusChoices.CANCELED},
+        Order.StatusChoices.COMPLETED: set(),
+        Order.StatusChoices.CANCELED: set(),
+    }
+
     @staticmethod
     @transaction.atomic
     def create_order(customer: Customer, items: list, address_data: dict, notes: str = None) -> Order:
@@ -36,7 +43,10 @@ class OrderService:
         """Update order status with validation"""
         if new_status not in Order.StatusChoices.values:
             raise ValueError(f"Invalid status: {new_status}")
-            
+
+        if new_status not in OrderService.ALLOWED_STATUS_TRANSITIONS.get(order.status, set()):
+            raise ValueError(f"Cannot change order status from {order.status} to {new_status}")
+
         if new_status == Order.StatusChoices.COMPLETED:
             if not order.shipping_tracking_number:
                 raise ValueError("Cannot complete order without tracking number")
