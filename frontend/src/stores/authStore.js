@@ -122,18 +122,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Initialize auth state
-  const initializeAuth = async () => {
-    if (initialized.value) return
-    if (token.value) {
-      try {
-        await fetchCurrentUser()
-      } catch (error) {
-        console.error('Error initializing auth:', error)
-        setAuthToken(null)
-      }
+  // Initialize auth state once; concurrent callers share the same request.
+  let initPromise = null
+  const initializeAuth = () => {
+    if (!initPromise) {
+      initPromise = (async () => {
+        if (token.value) {
+          try {
+            await fetchCurrentUser()
+          } catch (error) {
+            console.error('Error initializing auth:', error)
+            setAuthToken(null)
+          }
+        }
+        initialized.value = true
+      })()
     }
-    initialized.value = true
+    return initPromise
   }
 
   return {
