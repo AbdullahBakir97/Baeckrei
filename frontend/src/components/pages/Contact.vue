@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen py-12 px-4">
     <div class="max-w-5xl mx-auto">
-      <PageHeader title="Contact us" subtitle="Questions, special orders or feedback: we're happy to hear from you." icon="envelope" />
+      <PageHeader eyebrow="Say hello" title="Contact us" subtitle="Questions, special orders or feedback: we're happy to hear from you." icon="envelope" />
 
       <div class="grid lg:grid-cols-5 gap-6">
         <section class="glass-panel lg:col-span-3">

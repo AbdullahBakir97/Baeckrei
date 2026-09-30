@@ -151,26 +151,6 @@ export const useProductStore = defineStore('products', () => {
         throw err
       })
 
-      // Debug log for API request
-      console.log('API Request:', {
-        url: `${API_PATH}/`,
-        params: Object.fromEntries(params.entries())
-      })
-
-      console.log('API Response:', {
-        status: response.status,
-        data: response.data,
-        count: response.data?.count,
-        results: response.data?.results?.length,
-        pagination: {
-          current_page: response.data?.current_page,
-          total_pages: response.data?.total_pages,
-          page_size: response.data?.page_size,
-          has_next: response.data?.has_next,
-          has_previous: response.data?.has_previous,
-        }
-      })
-
       if (response.data) {
         // Update pagination state
         pagination.value = {
@@ -183,11 +163,8 @@ export const useProductStore = defineStore('products', () => {
           page_range: response.data.page_range || [],
         }
 
-        console.log('Products before mapping:', response.data.results)
-
         // Update products with normalized image URLs
         products.value = (response.data.results || []).map(product => {
-          console.log('Processing product:', product)
           const normalizedProduct = {
             ...product,
             id: product.id,
@@ -215,11 +192,9 @@ export const useProductStore = defineStore('products', () => {
             is_gluten_free: product.is_gluten_free || false,
             status: product.status
           }
-          console.log('Normalized product:', normalizedProduct)
           return normalizedProduct
         })
 
-        console.log('Final products array:', products.value)
 
         return {
           results: products.value,

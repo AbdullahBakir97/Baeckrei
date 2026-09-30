@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen py-12 px-4">
     <div class="max-w-6xl mx-auto">
-      <PageHeader title="Checkout" subtitle="Choose how you get your order and how you pay" icon="shopping-bag" />
+      <PageHeader eyebrow="Almost there" title="Checkout" subtitle="Choose how you get your order and how you pay" icon="shopping-bag" />
 
       <div v-if="loadingPage" class="flex justify-center py-12">
         <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white/20"></div>

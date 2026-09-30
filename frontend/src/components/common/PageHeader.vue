@@ -1,12 +1,10 @@
 <template>
-  <header class="mb-10">
-    <p v-if="eyebrow" v-reveal class="eyebrow mb-3">
+  <header class="mb-12">
+    <p v-if="eyebrow || icon" v-reveal class="eyebrow mb-4">
       <font-awesome-icon v-if="icon" :icon="icon" />{{ eyebrow }}
     </p>
-    <h1 v-split class="display-title text-5xl sm:text-6xl">
-      <font-awesome-icon v-if="icon && !eyebrow" :icon="icon" class="mr-2 align-[-0.05em] text-[0.7em] text-crust" />{{ title }}
-    </h1>
-    <p v-if="subtitle" v-reveal="{ delay: 0.15 }" class="mt-4 max-w-2xl text-lg text-cream-muted">{{ subtitle }}</p>
+    <h1 v-split.load class="display-title text-6xl sm:text-8xl">{{ title }}</h1>
+    <p v-if="subtitle" v-reveal="{ delay: 0.2 }" class="mt-5 max-w-2xl text-lg text-cream-muted">{{ subtitle }}</p>
   </header>
 </template>
 

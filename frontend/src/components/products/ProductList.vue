@@ -1,280 +1,134 @@
 <template>
-  <div class="container py-8">
-    <!-- Header Section -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-200">{{ heading.title }}</h1>
-        <p v-if="heading.subtitle" class="mt-1 text-gray-400">{{ heading.subtitle }}</p>
+  <div class="section pb-10">
+    <!-- Header -->
+    <header class="pt-6">
+      <p v-reveal class="eyebrow">{{ heading.kicker }}</p>
+      <div class="mt-3 flex flex-wrap items-end justify-between gap-6">
+        <h1 :key="heading.title" v-split.load class="display-title text-6xl sm:text-8xl">{{ heading.title }}</h1>
+        <p v-if="!productStore.loading" class="text-cream-faint tabular-nums">
+          {{ productStore.pagination.count }} {{ productStore.pagination.count === 1 ? 'product' : 'products' }}
+        </p>
       </div>
-      
-    </div>
+      <p v-if="heading.subtitle" v-reveal="{ delay: 0.15 }" class="mt-4 max-w-xl text-lg text-cream-muted">{{ heading.subtitle }}</p>
+    </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-      <!-- Filters Sidebar -->
-      <div class="lg:col-span-1">
-        <div class="bg-[rgba(255,255,255,0.02)] backdrop-blur-[8px] border border-white/5 
-                    hover:border-white/20 hover:shadow-red-500/10 transition-all duration-300
-                    rounded-lg p-6 space-y-6">
-          <div class="sticky top-4">
-            <div class="glass-panel p-6 space-y-6 rounded-lg">
-              <!-- Category Filter -->
-              <div>
-                <h3 class="text-gray-200 font-semibold mb-3">Categories</h3>
-                <div v-if="productStore.categoriesLoading" class="flex justify-center py-4">
-                  <font-awesome-icon icon="spinner" class="animate-spin text-amber-500" />
-                </div>
-                <div v-else-if="categories?.length > 0" class="space-y-2">
-                  <label
-                    v-for="category in categories"
-                    :key="category?.id"
-                    class="flex items-center gap-2 cursor-pointer filter-item"
-                  >
-                    <input
-                      type="checkbox"
-                      :value="category?.id"
-                      v-model="selectedCategories"
-                      class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
-                    >
-                    <span class="text-gray-300">{{ category?.name }}</span>
-                  </label>
-                </div>
-                <div v-else class="text-gray-400 text-sm py-2">
-                  No categories available
-                </div>
-              </div>
+    <!-- Categories -->
+    <nav class="pills mt-10" aria-label="Categories">
+      <router-link to="/products" class="pill" :class="{ 'is-active': !routeCategory && !isSeasonal }">All</router-link>
+      <router-link v-for="category in categories" :key="category.slug"
+                   :to="{ name: 'category', params: { category: category.slug } }"
+                   class="pill" :class="{ 'is-active': routeCategory === category.slug }">
+        {{ category.name }}
+      </router-link>
+      <router-link :to="{ name: 'seasonal' }" class="pill" :class="{ 'is-active': isSeasonal }">
+        <font-awesome-icon icon="fire" class="text-ember" /> Seasonal
+      </router-link>
+    </nav>
 
-              <!-- Price Range Filter -->
-              <div>
-                <h3 class="text-gray-200 font-semibold mb-3">Price Range</h3>
-                <div class="space-y-4">
-                  <div class="flex gap-4">
-                    <div class="flex-1">
-                      <input
-                        type="number"
-                        v-model="priceRange[0]"
-                        placeholder="Min"
-                        class="search-input w-full rounded-lg"
-                      >
-                    </div>
-                    <div class="flex-1">
-                      <input
-                        type="number"
-                        v-model="priceRange[1]"
-                        placeholder="Max"
-                        class="search-input w-full rounded-lg"
-                      >
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Dietary Preferences -->
-              <div>
-                <h3 class="text-gray-200 font-semibold mb-3">Dietary Preferences</h3>
-                <div class="space-y-2">
-                  <label class="flex items-center gap-2 cursor-pointer filter-item">
-                    <input
-                      type="checkbox"
-                      v-model="filters.dietary.isVegan"
-                      class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
-                    >
-                    <span class="text-gray-300">Vegan</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer filter-item">
-                    <input
-                      type="checkbox"
-                      v-model="filters.dietary.isVegetarian"
-                      class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
-                    >
-                    <span class="text-gray-300">Vegetarian</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer filter-item">
-                    <input
-                      type="checkbox"
-                      v-model="filters.dietary.isGlutenFree"
-                      class="form-checkbox rounded text-red-500 focus:ring-red-500 bg-gray-800 border-gray-700"
-                    >
-                    <span class="text-gray-300">Gluten Free</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Clear Filters Button -->
-              <button
-                @click="clearFilters"
-                class="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 
-                       transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                Clear Filters
-              </button>
-            </div>
-          </div>
-        </div>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="flex flex-wrap gap-2" role="group" aria-label="Dietary">
+        <button v-for="option in dietaryOptions" :key="option.key" type="button" class="chip"
+                :class="{ 'is-on': dietary[option.key] }" :aria-pressed="dietary[option.key]"
+                @click="dietary[option.key] = !dietary[option.key]">
+          <font-awesome-icon :icon="option.icon" /> {{ option.label }}
+        </button>
+        <button type="button" class="chip" :class="{ 'is-on': showPrice }" :aria-expanded="showPrice" @click="showPrice = !showPrice">
+          <font-awesome-icon icon="euro-sign" /> Price
+        </button>
       </div>
-
-      <!-- Product Grid -->
-      <div class="lg:col-span-3">
-        <div class="bg-[rgba(255,255,255,0.02)] backdrop-blur-[8px] border border-white/5 rounded-lg p-6">
-          <!-- View Toggle and Sort -->
-          <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <!-- View Toggle -->
-            <div class="flex items-center glass-panel rounded-lg p-1">
-              <button
-                @click="viewMode = 'grid'"
-                class="p-2 rounded-md transition-all duration-300"
-                :class="viewMode === 'grid' ? 'active-view' : 'hover:bg-opacity-20 hover:bg-red-500'"
-              >
-                <font-awesome-icon icon="fa-solid fa-th-large" class="text-lg" />
-              </button>
-              <button
-                @click="viewMode = 'list'"
-                class="p-2 rounded-md transition-all duration-300"
-                :class="viewMode === 'list' ? 'active-view' : 'hover:bg-opacity-20 hover:bg-red-500'"
-              >
-                <font-awesome-icon icon="fa-solid fa-list" class="text-lg" />
-              </button>
-            </div>
-            <!-- Sort Dropdown -->
-            <select
-              v-model="sortBy"
-              class="search-input min-w-[160px] rounded-lg bg-[rgba(255,255,255,0.03)] backdrop-blur-sm 
-                     border border-white/5 text-white px-4 py-2
-                     focus:border-red-500/30 focus:ring-1 focus:ring-red-500/30"
-              @change="handleSort"
-            >
-              <option value="name">Name</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="newest">Newest</option>
-            </select>
-          </div>
-
-          <!-- Loading State -->
-          <div v-if="productStore.loading" class="flex justify-center items-center p-8">
-            <font-awesome-icon icon="spinner" spin class="text-4xl text-gray-400" />
-          </div>
-
-          <!-- Products Grid/List View -->
-          <template v-else>
-            <div class="products-container" ref="container" @mousemove="handleMouseMove">
-              <div v-if="!productStore.error && productStore.products && productStore.products.length > 0" 
-                :class="[viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4']"
-              >
-                <template v-if="viewMode === 'grid'">
-                  <ProductCard 
-                    v-for="product in productStore.products"
-                    :key="product.id"
-                    :product="product"
-                    cardColor="#313131"
-                    stripColor="#35AFFB"
-                    buttonColor="#35AFFB"
-                    textColor="#ffffff"
-                    @add-to-cart="addToCart"
-                  />
-                </template>
-                <template v-else>
-                  <ProductListItem 
-                    v-for="product in productStore.products"
-                    :key="product.id"
-                    :product="product"
-                    @add-to-cart="addToCart"
-                  />
-                </template>
-              </div>
-
-              <div v-else class="card p-8 text-center">
-                <template v-if="productStore.error">
-                  <p class="text-red-600">{{ productStore.error }}</p>
-                </template>
-                <template v-else>
-                  <font-awesome-icon icon="fa-solid fa-box-open" class="text-4xl text-gray-400 mb-4" />
-                  <h3 class="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
-                  <p class="text-gray-600">Try adjusting your filters or search criteria</p>
-                </template>
-              </div>
-
-              <!-- Pagination -->
-              <div v-if="productStore.products && productStore.products.length > 0" class="mt-8 flex justify-center gap-4">
-                <button
-                  @click="previousPage"
-                  :disabled="!productStore.hasPreviousPage"
-                  class="btn btn-secondary"
-                >
-                  Previous
-                </button>
-                <button
-                  @click="nextPage"
-                  :disabled="!productStore.hasNextPage"
-                  class="btn btn-secondary"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </template>
-        </div>
+      <div class="flex items-center gap-3">
+        <button v-if="hasFilters" type="button" class="text-sm text-cream-muted underline-offset-4 hover:text-cream hover:underline" @click="clearFilters">
+          Clear filters
+        </button>
+        <label class="sr-only" for="sort">Sort by</label>
+        <select id="sort" v-model="sortBy" class="sort">
+          <option value="name">Name</option>
+          <option value="price_asc">Price: low to high</option>
+          <option value="price_desc">Price: high to low</option>
+          <option value="newest">Newest</option>
+        </select>
       </div>
     </div>
+
+    <transition name="expand">
+      <div v-if="showPrice" class="price-row">
+        <label>
+          <span>Min €</span>
+          <input v-model.number="priceMin" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0" />
+        </label>
+        <span class="text-cream-faint">–</span>
+        <label>
+          <span>Max €</span>
+          <input v-model.number="priceMax" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Any" />
+        </label>
+      </div>
+    </transition>
+
+    <!-- Grid -->
+    <div v-if="productStore.loading && !productStore.products.length" class="grid-products" aria-busy="true">
+      <div v-for="n in 8" :key="n" class="skeleton-card">
+        <div class="skeleton aspect-square rounded-2xl"></div>
+        <div class="skeleton mt-4 h-3 w-16 rounded-full"></div>
+        <div class="skeleton mt-3 h-6 w-2/3 rounded-full"></div>
+      </div>
+    </div>
+
+    <p v-else-if="productStore.error" class="empty">
+      <span class="display-title text-4xl">The shelves didn't load.</span>
+      <button type="button" class="btn-ghost mt-6" @click="loadProducts">Try again</button>
+    </p>
+
+    <div v-else-if="!productStore.products.length" class="empty">
+      <font-awesome-icon icon="box-open" class="text-4xl text-crust" />
+      <span class="display-title text-4xl mt-4">Nothing on this shelf yet.</span>
+      <p class="mt-2 text-cream-muted">Try another category or clear the filters.</p>
+      <button v-if="hasFilters" type="button" class="btn-ghost mt-6" @click="clearFilters">Clear filters</button>
+    </div>
+
+    <div v-else ref="grid" class="grid-products" :class="{ 'is-refreshing': productStore.loading }">
+      <ProductCard v-for="product in productStore.products" :key="product.id" :product="product" />
+    </div>
+
+    <!-- Pagination -->
+    <nav v-if="totalPages > 1" class="pager" aria-label="Pages">
+      <button type="button" class="btn-ghost" :disabled="!productStore.hasPreviousPage" @click="goTo(currentPage - 1)">
+        <font-awesome-icon icon="arrow-right" class="rotate-180" /> Previous
+      </button>
+      <span class="tabular-nums text-cream-muted">{{ currentPage }} / {{ totalPages }}</span>
+      <button type="button" class="btn-ghost" :disabled="!productStore.hasNextPage" @click="goTo(currentPage + 1)">
+        Next <font-awesome-icon icon="arrow-right" />
+      </button>
+    </nav>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { useProductStore } from '@/stores/productStore'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useProductStore } from '@/stores/productStore'
+import { gsap, ScrollTrigger, prefersReducedMotion, scrollToTop } from '@/motion'
+import { business } from '@/config/business'
 import ProductCard from './ProductCard.vue'
-import ProductListItem from './ProductListItem.vue'
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { 
-  faThLarge,
-  faList,
-  faBoxOpen
-} from '@fortawesome/free-solid-svg-icons'
-
-library.add(faThLarge, faList, faBoxOpen)
 
 const productStore = useProductStore()
 const route = useRoute()
 
-// State
-const viewMode = ref('grid')
+const grid = ref(null)
 const sortBy = ref('name')
-const selectedCategories = ref([])
-const maxPriceLimit = 1000
-const priceRange = ref([0, maxPriceLimit])
-const filters = ref({
-  dietary: {
-    isVegan: false,
-    isVegetarian: false,
-    isGlutenFree: false
-  },
-  category: ''
-})
-
-// Categories from store
-const categories = computed(() => productStore.categories)
-
-// Mouse tracking for gradient effect
-const container = ref(null)
-
-const handleMouseMove = (e) => {
-  if (container.value) {
-    const rect = container.value.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-    container.value.style.setProperty('--mouse-x', `${x}px`)
-    container.value.style.setProperty('--mouse-y', `${y}px`)
-  }
-}
-
-// Computed
-const maxPrice = computed(() => {
-  if (!productStore.products.length) return 1000
-  return Math.max(...productStore.products.map(p => p.price))
-})
-
 const currentPage = ref(1)
+const showPrice = ref(false)
+const priceMin = ref('')
+const priceMax = ref('')
+const dietary = reactive({ vegan: false, vegetarian: false, glutenFree: false })
+
+const dietaryOptions = [
+  { key: 'vegan', label: 'Vegan', icon: 'leaf' },
+  { key: 'vegetarian', label: 'Vegetarian', icon: 'seedling' },
+  { key: 'glutenFree', label: 'Gluten free', icon: 'wheat-awn' }
+]
+
+const categories = computed(() => productStore.categories.filter(c => c.is_active !== false))
 const totalPages = computed(() => productStore.pagination.total_pages || 1)
 
 // Category pages (/categories/:category), the seasonal page and search
@@ -286,168 +140,231 @@ const searchQuery = computed(() => (route.query.search || '').toString().trim())
 const heading = computed(() => {
   if (routeCategory.value) {
     const category = categories.value.find(c => c.slug === routeCategory.value)
-    return { title: category?.name || 'Category', subtitle: category?.description || '' }
+    return { kicker: 'Category', title: category?.name || 'Category', subtitle: category?.description || '' }
   }
-  if (isSeasonal.value) return { title: 'Seasonal specials', subtitle: 'Bakes available for a limited time' }
-  if (searchQuery.value) return { title: `Results for "${searchQuery.value}"`, subtitle: '' }
-  return { title: 'Our Products', subtitle: '' }
+  if (isSeasonal.value) return { kicker: 'For a short while', title: 'Seasonal', subtitle: 'Bakes that are only around for a few weeks of the year.' }
+  if (searchQuery.value) return { kicker: 'Search', title: `“${searchQuery.value}”`, subtitle: '' }
+  return { kicker: 'The shop', title: 'Fresh from the oven', subtitle: `Order for pickup on ${business.street} or delivery across ${business.city}.` }
 })
 
-// Methods
-const loadProducts = async () => {
-  try {
-    await productStore.fetchProducts({
-      page: currentPage.value,
-      ordering: sortBy.value,
-      category: routeCategory.value,
-      seasonal: isSeasonal.value,
-      search: searchQuery.value,
-      categories: selectedCategories.value,
-      price_min: priceRange.value[0] > 0 ? priceRange.value[0] : null,
-      price_max: priceRange.value[1] < maxPriceLimit ? priceRange.value[1] : null,
-      is_vegan: filters.value.dietary.isVegan,
-      is_vegetarian: filters.value.dietary.isVegetarian,
-      is_gluten_free: filters.value.dietary.isGlutenFree
-    })
-  } catch (error) {
-    console.error('Error loading products:', error)
-  }
+const hasFilters = computed(() =>
+  Object.values(dietary).some(Boolean) || priceMin.value !== '' || priceMax.value !== ''
+)
+
+async function loadProducts() {
+  await productStore.fetchProducts({
+    page: currentPage.value,
+    ordering: sortBy.value,
+    category: routeCategory.value,
+    seasonal: isSeasonal.value,
+    search: searchQuery.value,
+    price_min: priceMin.value !== '' && priceMin.value > 0 ? priceMin.value : null,
+    price_max: priceMax.value !== '' && priceMax.value > 0 ? priceMax.value : null,
+    is_vegan: dietary.vegan,
+    is_vegetarian: dietary.vegetarian,
+    is_gluten_free: dietary.glutenFree
+  }).catch(() => {})
+  await nextTick()
+  animateGrid()
 }
 
-const handleSort = () => {
+// Cards rise in one after another whenever a new set arrives.
+function animateGrid() {
+  ScrollTrigger.refresh()
+  if (!grid.value || prefersReducedMotion()) return
+  gsap.fromTo(grid.value.children,
+    { y: 40, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', stagger: 0.05, clearProps: 'transform,opacity' })
+}
+
+function reload() {
   currentPage.value = 1
   loadProducts()
 }
 
-const clearFilters = () => {
-  selectedCategories.value = []
-  priceRange.value = [0, maxPriceLimit]
-  filters.value.dietary = {
-    isVegan: false,
-    isVegetarian: false,
-    isGlutenFree: false
-  }
+function goTo(page) {
+  currentPage.value = page
+  scrollToTop()
   loadProducts()
 }
 
-const addToCart = async (product) => {
-  try {
-    // TODO: Implement cart functionality
-    console.log('Add to cart:', product)
-  } catch (error) {
-    console.error('Error adding to cart:', error)
-  }
+function clearFilters() {
+  Object.keys(dietary).forEach(key => { dietary[key] = false })
+  priceMin.value = ''
+  priceMax.value = ''
 }
 
-const previousPage = () => {
-  if (productStore.hasPreviousPage) {
-    currentPage.value -= 1
-    loadProducts()
-  }
-}
-
-const nextPage = () => {
-  if (productStore.hasNextPage) {
-    currentPage.value += 1
-    loadProducts()
-  }
-}
-
-// Watchers
-watch([selectedCategories, priceRange, filters], () => {
-  currentPage.value = 1 // Back to the first page when filters change
-  loadProducts()
-}, { deep: true })
-
-watch(() => [route.params.category, route.meta.seasonal, route.query.search], () => {
-  currentPage.value = 1
-  loadProducts()
+let priceTimer = null
+watch([priceMin, priceMax], () => {
+  clearTimeout(priceTimer)
+  priceTimer = setTimeout(reload, 400)
 })
+watch([sortBy, () => ({ ...dietary })], reload, { deep: true })
+watch(() => [route.params.category, route.meta.seasonal, route.query.search], reload)
+watch(() => heading.value.title, (title) => { document.title = `${title} - ${business.name}` }, { immediate: true })
 
-// Lifecycle
-onMounted(async () => {
-  try {
-    await productStore.fetchCategories()
-    loadProducts()
-  } catch (error) {
-    console.error('Error initializing product list:', error)
-  }
+onMounted(() => {
+  if (!productStore.categories.length) productStore.fetchCategories()
+  loadProducts()
 })
 </script>
 
 <style scoped>
-.container {
-  position: relative;
-  z-index: 1;
+.pills {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
 }
 
-.glass-panel {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  padding: 0.6rem 1.2rem;
+  border-radius: 9999px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #d9cfc2;
+  border: 1px solid rgba(244, 236, 225, 0.12);
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
 
-.product-container {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  border-radius: 1rem;
-  padding: 2rem;
+.pill:hover {
+  color: #f4ece1;
+  border-color: rgba(244, 236, 225, 0.3);
 }
 
-.product-grid {
+.pill.is-active {
+  color: #0e0c0a;
+  background: #f4ece1;
+  border-color: transparent;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1.25rem 0;
+  border-block: 1px solid rgba(244, 236, 225, 0.07);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #b9ab98;
+  background: rgba(244, 236, 225, 0.04);
+  transition: background 0.3s, color 0.3s;
+}
+
+.chip:hover {
+  color: #f4ece1;
+}
+
+.chip.is-on {
+  color: #0e0c0a;
+  background: #e6a15a;
+}
+
+.sort {
+  padding: 0.55rem 2.25rem 0.55rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  color: #f4ece1;
+  background: rgba(244, 236, 225, 0.04);
+  border: 1px solid rgba(244, 236, 225, 0.12);
+}
+
+.price-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 1.25rem 0 0.25rem;
+}
+
+.price-row label {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 2rem;
-  padding: 1rem;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #7d7061;
 }
 
-.search-input {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
-  padding: 0.5rem 1rem;
+.price-row input {
+  width: 8rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.9rem;
+  background: rgba(244, 236, 225, 0.04);
+  border: 1px solid rgba(244, 236, 225, 0.12);
+  color: #f4ece1;
 }
 
-.search-input option {
-  background: rgba(45, 45, 45, 0.95);
-  color: #fff;
+.grid-products {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16.5rem), 1fr));
+  transition: opacity 0.3s;
 }
 
-.active-view {
-  background: rgba(239, 68, 68, 0.2);
-  color: rgb(239, 68, 68);
+.grid-products.is-refreshing {
+  opacity: 0.5;
 }
 
-.product-list-enter-active,
-.product-list-leave-active {
-  transition: all 0.3s ease;
+.skeleton-card {
+  padding: 0.75rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(244, 236, 225, 0.06);
 }
 
-.product-list-enter-from,
-.product-list-leave-to {
+.skeleton {
+  background: linear-gradient(100deg, rgba(244, 236, 225, 0.04) 30%, rgba(244, 236, 225, 0.09) 50%, rgba(244, 236, 225, 0.04) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6rem 1rem;
+  text-align: center;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 4rem;
+}
+
+.pager button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.expand-enter-active,
+.expand-leave-active {
+  transition: opacity 0.3s, transform 0.4s var(--ease-out-expo);
+}
+
+.expand-enter-from,
+.expand-leave-to {
   opacity: 0;
-  transform: translateY(30px);
-}
-
-@supports not (backdrop-filter: blur(10px)) {
-  .glass-panel,
-  .product-container,
-  .search-input {
-    background: rgba(23, 23, 23, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  transform: translateY(-8px);
 }
 </style>

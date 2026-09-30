@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen py-12 px-4">
     <div class="max-w-6xl mx-auto">
-      <PageHeader title="Wishlist" subtitle="Products you saved for later" icon="heart" />
+      <PageHeader eyebrow="Saved for later" title="Wishlist" subtitle="Products you saved for later" icon="heart" />
 
       <div v-if="loading" class="flex justify-center py-12">
         <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white/20"></div>

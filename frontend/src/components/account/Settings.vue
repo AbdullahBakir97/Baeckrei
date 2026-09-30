@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen py-12 px-4">
     <div class="max-w-3xl mx-auto space-y-6">
-      <PageHeader title="Account Settings" subtitle="Password and saved delivery addresses" icon="lock" />
+      <PageHeader eyebrow="Account" title="Settings" subtitle="Password and saved delivery addresses" icon="lock" />
 
       <!-- Password -->
       <section class="glass-panel">

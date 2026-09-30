@@ -1,6 +1,6 @@
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faCube, faArrowRight, faArrowDown, faImage, faHandPointer, faFire, faWheatAwn } from '@fortawesome/free-solid-svg-icons'
+import { faCube, faArrowRight, faArrowDown, faImage, faHandPointer, faFire, faWheatAwn, faEuroSign } from '@fortawesome/free-solid-svg-icons'
 import {
   faShoppingCart,
   faSearch,
@@ -119,7 +119,7 @@ library.add(
 )
 
 // Icons used by the redesigned storefront.
-library.add(faCube, faArrowRight, faArrowDown, faImage, faHandPointer, faFire, faWheatAwn)
+library.add(faCube, faArrowRight, faArrowDown, faImage, faHandPointer, faFire, faWheatAwn, faEuroSign)
 
 export default function installFontAwesome(app) {
   app.component('font-awesome-icon', FontAwesomeIcon)
