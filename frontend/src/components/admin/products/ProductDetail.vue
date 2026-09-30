@@ -7,12 +7,12 @@
         <div class="absolute inset-[4px] rounded-full border-t-2 border-red-500/50 animate-spin-slow"></div>
         <div class="absolute inset-[8px] rounded-full border-t-2 border-red-500/70 animate-spin-slower"></div>
       </div>
-      <p class="mt-4 text-cream-faint">Loading product details...</p>
+      <p class="mt-4 text-cream-faint">{{ $t('admin.productDetail.loading') }}</p>
     </div>
 
     <div v-else-if="loadError" class="rounded-lg bg-red-400/10 p-6 text-red-300" role="alert">
       {{ loadError }}
-      <router-link to="/admin/products" class="ml-2 underline">Back to products</router-link>
+      <router-link to="/admin/products" class="ml-2 underline">{{ $t('admin.productDetail.back') }}</router-link>
     </div>
 
     <template v-else>
@@ -28,13 +28,13 @@
             class="px-4 py-2 text-sm font-medium text-cream-faint hover:text-white bg-[#2a231c] hover:bg-[#342b22] rounded-lg transition-colors"
           >
             <font-awesome-icon icon="arrow-left" class="mr-2" />
-            Back to Products
+            {{ $t('admin.productDetail.back') }}
           </button>
           <button
             @click="handleEdit"
             class="px-4 py-2 text-sm font-medium text-oven-950 bg-crust hover:bg-crust-light rounded-full transition-colors"
           >
-            Edit Product
+            {{ $t('admin.productForm.editTitle') }}
           </button>
         </div>
       </div>
@@ -46,7 +46,7 @@
           <!-- Basic Information -->
           <div class="bg-[#1e1914] rounded-xl border border-cream/[0.07] overflow-hidden">
             <div class="p-6 border-b border-cream/[0.07]">
-              <h2 class="text-lg font-bold text-white">Basic Information</h2>
+              <h2 class="text-lg font-bold text-white">{{ $t('admin.productDetail.basicInfo') }}</h2>
             </div>
             <div class="p-6 space-y-6">
               <!-- Image -->
@@ -65,26 +65,26 @@
               <!-- Details -->
               <div class="grid grid-cols-2 gap-6">
                 <div>
-                  <label class="block text-sm font-medium text-cream-faint">Category</label>
-                  <p class="mt-1 text-white">{{ product.category?.name || '—' }}</p>
+                  <label class="block text-sm font-medium text-cream-faint">{{ $t('admin.fields.category') }}</label>
+                  <p class="mt-1 text-white">{{ categoryName(product.category) || '—' }}</p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-cream-faint">Price</label>
-                  <p class="mt-1 text-white">{{ formatPrice(product.price) }} €</p>
+                  <label class="block text-sm font-medium text-cream-faint">{{ $t('admin.fields.price') }}</label>
+                  <p class="mt-1 text-white">{{ formatEuro(product.price) }}</p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-cream-faint">Stock</label>
-                  <p class="mt-1" :class="getStockColor">{{ product.stock }} units</p>
+                  <label class="block text-sm font-medium text-cream-faint">{{ $t('admin.fields.stock') }}</label>
+                  <p class="mt-1" :class="getStockColor">{{ $t('admin.units', product.stock) }}</p>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-cream-faint">Status</label>
-                  <p class="mt-1" :class="getStatusColor">{{ product.status }}</p>
+                  <label class="block text-sm font-medium text-cream-faint">{{ $t('admin.fields.status') }}</label>
+                  <p class="mt-1" :class="getStatusColor">{{ statusLabel }}</p>
                 </div>
               </div>
 
               <!-- Description -->
               <div>
-                <label class="block text-sm font-medium text-cream-faint">Description</label>
+                <label class="block text-sm font-medium text-cream-faint">{{ $t('admin.fields.description') }}</label>
                 <p class="mt-1 text-white">{{ product.description }}</p>
               </div>
 
@@ -95,21 +95,21 @@
                   class="px-3 py-1 text-sm font-medium text-green-500 bg-green-500/10 rounded-full"
                 >
                   <font-awesome-icon icon="leaf" class="mr-1" />
-                  Vegan
+                  {{ $t('common.vegan') }}
                 </span>
                 <span
                   v-if="product.is_vegetarian"
                   class="px-3 py-1 text-sm font-medium text-green-500 bg-green-500/10 rounded-full"
                 >
                   <font-awesome-icon icon="seedling" class="mr-1" />
-                  Vegetarian
+                  {{ $t('common.vegetarian') }}
                 </span>
                 <span
                   v-if="product.is_gluten_free"
                   class="px-3 py-1 text-sm font-medium text-yellow-500 bg-yellow-500/10 rounded-full"
                 >
                   <font-awesome-icon icon="wheat-alt" class="mr-1" />
-                  Gluten Free
+                  {{ $t('common.glutenFree') }}
                 </span>
               </div>
             </div>
@@ -118,7 +118,7 @@
           <!-- Ingredients -->
           <div class="bg-[#1e1914] rounded-xl border border-cream/[0.07] overflow-hidden">
             <div class="p-6 border-b border-cream/[0.07]">
-              <h2 class="text-lg font-bold text-white">Ingredients</h2>
+              <h2 class="text-lg font-bold text-white">{{ $t('admin.productDetail.ingredients') }}</h2>
             </div>
             <div class="p-6">
               <div class="grid grid-cols-2 gap-4">
@@ -149,37 +149,37 @@
           <!-- Nutrition Information -->
           <div class="bg-[#1e1914] rounded-xl border border-cream/[0.07] overflow-hidden">
             <div class="p-6 border-b border-cream/[0.07]">
-              <h2 class="text-lg font-bold text-white">Nutrition Information</h2>
-              <p class="mt-1 text-sm text-cream-faint">Per 100g serving</p>
+              <h2 class="text-lg font-bold text-white">{{ $t('admin.productDetail.nutrition') }}</h2>
+              <p class="mt-1 text-sm text-cream-faint">{{ $t('admin.productDetail.per100g') }}</p>
             </div>
             <div class="p-6">
               <div class="space-y-4">
                 <div class="flex justify-between items-center p-3 bg-[#2a231c] rounded-lg">
-                  <span class="text-cream-faint">Calories</span>
+                  <span class="text-cream-faint">{{ $t('admin.nutrition.calories') }}</span>
                   <span class="text-white font-medium">
                     {{ product.nutrition_info?.calories || 0 }} kcal
                   </span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-[#2a231c] rounded-lg">
-                  <span class="text-cream-faint">Proteins</span>
+                  <span class="text-cream-faint">{{ $t('admin.nutrition.proteins') }}</span>
                   <span class="text-white font-medium">
                     {{ product.nutrition_info?.proteins || 0 }}g
                   </span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-[#2a231c] rounded-lg">
-                  <span class="text-cream-faint">Carbohydrates</span>
+                  <span class="text-cream-faint">{{ $t('admin.nutrition.carbohydrates') }}</span>
                   <span class="text-white font-medium">
                     {{ product.nutrition_info?.carbohydrates || 0 }}g
                   </span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-[#2a231c] rounded-lg">
-                  <span class="text-cream-faint">Fats</span>
+                  <span class="text-cream-faint">{{ $t('admin.nutrition.fats') }}</span>
                   <span class="text-white font-medium">
                     {{ product.nutrition_info?.fats || 0 }}g
                   </span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-[#2a231c] rounded-lg">
-                  <span class="text-cream-faint">Fiber</span>
+                  <span class="text-cream-faint">{{ $t('admin.nutrition.fiber') }}</span>
                   <span class="text-white font-medium">
                     {{ product.nutrition_info?.fiber || 0 }}g
                   </span>
@@ -191,41 +191,41 @@
           <!-- Stock Management -->
           <div class="bg-[#1e1914] rounded-xl border border-cream/[0.07] overflow-hidden">
             <div class="p-6 border-b border-cream/[0.07]">
-              <h2 class="text-lg font-bold text-white">Stock Management</h2>
+              <h2 class="text-lg font-bold text-white">{{ $t('admin.productDetail.stockManagement') }}</h2>
             </div>
             <div class="p-6">
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-cream-faint">Update Stock</label>
+                  <label class="block text-sm font-medium text-cream-faint">{{ $t('admin.productDetail.updateStock') }}</label>
                   <div class="mt-2 flex gap-2">
                     <input
                       v-model="stockQuantity"
                       type="number"
                       min="0"
                       class="flex-1 px-4 py-2 bg-[#2a231c] border border-cream/[0.07] rounded-lg text-white focus:outline-none focus:border-red-500"
-                      placeholder="Enter quantity"
+                      :placeholder="$t('admin.productDetail.enterQuantity')"
                     />
                     <button
                       @click="updateStock"
                       :disabled="!stockQuantity"
                       class="px-4 py-2 text-sm font-medium text-white bg-ember hover:bg-ember/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
                     >
-                      Update
+                      {{ $t('admin.productDetail.update') }}
                     </button>
                   </div>
                 </div>
                 
                 <div class="flex justify-between items-center p-3 bg-[#2a231c] rounded-lg">
-                  <span class="text-cream-faint">Current Stock</span>
+                  <span class="text-cream-faint">{{ $t('admin.productDetail.currentStock') }}</span>
                   <span :class="getStockColor" class="font-medium">
-                    {{ product.stock }} units
+                    {{ $t('admin.units', product.stock) }}
                   </span>
                 </div>
                 
                 <div class="flex justify-between items-center p-3 bg-[#2a231c] rounded-lg">
-                  <span class="text-cream-faint">Status</span>
+                  <span class="text-cream-faint">{{ $t('admin.fields.status') }}</span>
                   <span :class="getStatusColor" class="font-medium">
-                    {{ product.status }}
+                    {{ statusLabel }}
                   </span>
                 </div>
               </div>
@@ -248,13 +248,17 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
+import { formatEuro } from '@/utils/money'
+import { categoryName } from '@/i18n/catalog'
 import ProductFormModal from './ProductFormModal.vue'
 import { useProductStore } from '@/stores/productStore'
 import { useToast } from '@/composables/useToast'
 
 const productStore = useProductStore()
 const { showToast } = useToast()
+const { t, te } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -262,9 +266,10 @@ const loading = ref(true)
 const product = ref(null)
 const stockQuantity = ref(null)
 
-const formatPrice = (price) => {
-  return Number(price).toFixed(2)
-}
+const statusLabel = computed(() => {
+  const status = product.value?.status
+  return te(`admin.productStatus.${status}`) ? t(`admin.productStatus.${status}`) : status
+})
 
 const getStockColor = computed(() => {
   const stock = product.value?.stock || 0
@@ -296,8 +301,8 @@ const fetchProduct = async () => {
     product.value = response.data
   } catch (error) {
     loadError.value = error.response?.status === 404
-      ? 'This product does not exist.'
-      : 'The product could not be loaded.'
+      ? t('admin.productDetail.notFound')
+      : t('admin.productDetail.loadError')
   } finally {
     loading.value = false
   }
@@ -310,9 +315,9 @@ const updateStock = async () => {
     })
     product.value = response.data
     stockQuantity.value = null
-    showToast('Stock updated')
+    showToast(t('admin.productDetail.stockUpdated'))
   } catch (error) {
-    showToast('The stock could not be updated', 'error')
+    showToast(t('admin.productDetail.stockError'), 'error')
   }
 }
 
@@ -327,9 +332,9 @@ const saveProduct = async (data) => {
   try {
     product.value = await productStore.updateProduct(data)
     showForm.value = false
-    showToast('Product saved')
+    showToast(t('admin.products.saved'))
   } catch (error) {
-    formErrors.value = error.response?.data || { general: 'The product could not be saved.' }
+    formErrors.value = error.response?.data || { general: t('admin.products.saveError') }
   } finally {
     saving.value = false
   }

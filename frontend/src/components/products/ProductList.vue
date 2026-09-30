@@ -6,47 +6,47 @@
       <div class="mt-3 flex flex-wrap items-end justify-between gap-6">
         <h1 :key="heading.title" v-split.load class="display-title text-6xl sm:text-8xl">{{ heading.title }}</h1>
         <p v-if="!productStore.loading" class="text-cream-faint tabular-nums">
-          {{ productStore.pagination.count }} {{ productStore.pagination.count === 1 ? 'product' : 'products' }}
+          {{ $t('common.products', productStore.pagination.count) }}
         </p>
       </div>
       <p v-if="heading.subtitle" v-reveal="{ delay: 0.15 }" class="mt-4 max-w-xl text-lg text-cream-muted">{{ heading.subtitle }}</p>
     </header>
 
     <!-- Categories -->
-    <nav class="pills mt-10" aria-label="Categories">
-      <router-link to="/products" class="pill" :class="{ 'is-active': !routeCategory && !isSeasonal }">All</router-link>
+    <nav class="pills mt-10" :aria-label="$t('shop.categories')">
+      <router-link to="/products" class="pill" :class="{ 'is-active': !routeCategory && !isSeasonal }">{{ $t('shop.all') }}</router-link>
       <router-link v-for="category in categories" :key="category.slug"
                    :to="{ name: 'category', params: { category: category.slug } }"
                    class="pill" :class="{ 'is-active': routeCategory === category.slug }">
-        {{ category.name }}
+        {{ categoryName(category) }}
       </router-link>
       <router-link :to="{ name: 'seasonal' }" class="pill" :class="{ 'is-active': isSeasonal }">
-        <font-awesome-icon icon="fire" class="text-ember" /> Seasonal
+        <font-awesome-icon icon="fire" class="text-ember" /> {{ $t('common.seasonal') }}
       </router-link>
     </nav>
 
     <!-- Toolbar -->
     <div class="toolbar">
-      <div class="flex flex-wrap gap-2" role="group" aria-label="Dietary">
+      <div class="flex flex-wrap gap-2" role="group" :aria-label="$t('shop.dietary')">
         <button v-for="option in dietaryOptions" :key="option.key" type="button" class="chip"
                 :class="{ 'is-on': dietary[option.key] }" :aria-pressed="dietary[option.key]"
                 @click="dietary[option.key] = !dietary[option.key]">
-          <font-awesome-icon :icon="option.icon" /> {{ option.label }}
+          <font-awesome-icon :icon="option.icon" /> {{ $t(option.label) }}
         </button>
         <button type="button" class="chip" :class="{ 'is-on': showPrice }" :aria-expanded="showPrice" @click="showPrice = !showPrice">
-          <font-awesome-icon icon="euro-sign" /> Price
+          <font-awesome-icon icon="euro-sign" /> {{ $t('shop.price') }}
         </button>
       </div>
       <div class="flex items-center gap-3">
         <button v-if="hasFilters" type="button" class="text-sm text-cream-muted underline-offset-4 hover:text-cream hover:underline" @click="clearFilters">
-          Clear filters
+          {{ $t('shop.clearFilters') }}
         </button>
-        <label class="sr-only" for="sort">Sort by</label>
+        <label class="sr-only" for="sort">{{ $t('shop.sortBy') }}</label>
         <select id="sort" v-model="sortBy" class="sort">
-          <option value="name">Name</option>
-          <option value="price_asc">Price: low to high</option>
-          <option value="price_desc">Price: high to low</option>
-          <option value="newest">Newest</option>
+          <option value="name">{{ $t('shop.sortName') }}</option>
+          <option value="price_asc">{{ $t('shop.sortPriceAsc') }}</option>
+          <option value="price_desc">{{ $t('shop.sortPriceDesc') }}</option>
+          <option value="newest">{{ $t('shop.sortNewest') }}</option>
         </select>
       </div>
     </div>
@@ -54,13 +54,13 @@
     <transition name="expand">
       <div v-if="showPrice" class="price-row">
         <label>
-          <span>Min €</span>
+          <span>{{ $t('shop.min') }}</span>
           <input v-model.number="priceMin" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0" />
         </label>
         <span class="text-cream-faint">–</span>
         <label>
-          <span>Max €</span>
-          <input v-model.number="priceMax" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Any" />
+          <span>{{ $t('shop.max') }}</span>
+          <input v-model.number="priceMax" type="number" min="0" step="0.5" inputmode="decimal" :placeholder="$t('shop.any')" />
         </label>
       </div>
     </transition>
@@ -75,15 +75,15 @@
     </div>
 
     <p v-else-if="productStore.error" class="empty">
-      <span class="display-title text-4xl">The shelves didn't load.</span>
-      <button type="button" class="btn-ghost mt-6" @click="loadProducts">Try again</button>
+      <span class="display-title text-4xl">{{ $t('shop.loadError') }}</span>
+      <button type="button" class="btn-ghost mt-6" @click="loadProducts">{{ $t('common.tryAgain') }}</button>
     </p>
 
     <div v-else-if="!productStore.products.length" class="empty">
       <font-awesome-icon icon="box-open" class="text-4xl text-crust" />
-      <span class="display-title text-4xl mt-4">Nothing on this shelf yet.</span>
-      <p class="mt-2 text-cream-muted">Try another category or clear the filters.</p>
-      <button v-if="hasFilters" type="button" class="btn-ghost mt-6" @click="clearFilters">Clear filters</button>
+      <span class="display-title text-4xl mt-4">{{ $t('shop.emptyTitle') }}</span>
+      <p class="mt-2 text-cream-muted">{{ $t('shop.emptyText') }}</p>
+      <button v-if="hasFilters" type="button" class="btn-ghost mt-6" @click="clearFilters">{{ $t('shop.clearFilters') }}</button>
     </div>
 
     <div v-else ref="grid" class="grid-products" :class="{ 'is-refreshing': productStore.loading }">
@@ -91,13 +91,13 @@
     </div>
 
     <!-- Pagination -->
-    <nav v-if="totalPages > 1" class="pager" aria-label="Pages">
+    <nav v-if="totalPages > 1" class="pager" :aria-label="$t('shop.pages')">
       <button type="button" class="btn-ghost" :disabled="!productStore.hasPreviousPage" @click="goTo(currentPage - 1)">
-        <font-awesome-icon icon="arrow-right" class="rotate-180" /> Previous
+        <font-awesome-icon icon="arrow-right" class="rotate-180" /> {{ $t('common.previous') }}
       </button>
       <span class="tabular-nums text-cream-muted">{{ currentPage }} / {{ totalPages }}</span>
       <button type="button" class="btn-ghost" :disabled="!productStore.hasNextPage" @click="goTo(currentPage + 1)">
-        Next <font-awesome-icon icon="arrow-right" />
+        {{ $t('common.next') }} <font-awesome-icon icon="arrow-right" />
       </button>
     </nav>
   </div>
@@ -109,11 +109,15 @@ import { useRoute } from 'vue-router'
 import { useProductStore } from '@/stores/productStore'
 import { gsap, ScrollTrigger, prefersReducedMotion, scrollToTop } from '@/motion'
 import { business } from '@/config/business'
+import { usePageMeta } from '@/seo'
+import { useI18n } from 'vue-i18n'
+import { categoryName, categoryDescription } from '@/i18n/catalog'
 import ProductCard from './ProductCard.vue'
 
 const productStore = useProductStore()
 const route = useRoute()
 
+const { t } = useI18n()
 const grid = ref(null)
 const sortBy = ref('name')
 const currentPage = ref(1)
@@ -123,9 +127,9 @@ const priceMax = ref('')
 const dietary = reactive({ vegan: false, vegetarian: false, glutenFree: false })
 
 const dietaryOptions = [
-  { key: 'vegan', label: 'Vegan', icon: 'leaf' },
-  { key: 'vegetarian', label: 'Vegetarian', icon: 'seedling' },
-  { key: 'glutenFree', label: 'Gluten free', icon: 'wheat-awn' }
+  { key: 'vegan', label: 'common.vegan', icon: 'leaf' },
+  { key: 'vegetarian', label: 'common.vegetarian', icon: 'seedling' },
+  { key: 'glutenFree', label: 'common.glutenFree', icon: 'wheat-awn' }
 ]
 
 const categories = computed(() => productStore.categories.filter(c => c.is_active !== false))
@@ -140,11 +144,11 @@ const searchQuery = computed(() => (route.query.search || '').toString().trim())
 const heading = computed(() => {
   if (routeCategory.value) {
     const category = categories.value.find(c => c.slug === routeCategory.value)
-    return { kicker: 'Category', title: category?.name || 'Category', subtitle: category?.description || '' }
+    return { kicker: t('shop.category'), title: categoryName(category) || t('shop.category'), subtitle: categoryDescription(category) }
   }
-  if (isSeasonal.value) return { kicker: 'For a short while', title: 'Seasonal', subtitle: 'Bakes that are only around for a few weeks of the year.' }
-  if (searchQuery.value) return { kicker: 'Search', title: `“${searchQuery.value}”`, subtitle: '' }
-  return { kicker: 'The shop', title: 'Fresh from the oven', subtitle: `Order for pickup on ${business.street} or delivery across ${business.city}.` }
+  if (isSeasonal.value) return { kicker: t('shop.seasonalKicker'), title: t('common.seasonal'), subtitle: t('shop.seasonalText') }
+  if (searchQuery.value) return { kicker: t('common.search'), title: t('shop.searchTitle', { query: searchQuery.value }), subtitle: '' }
+  return { kicker: t('shop.kicker'), title: t('shop.title'), subtitle: t('shop.subtitle', { street: business.street, city: business.city }) }
 })
 
 const hasFilters = computed(() =>
@@ -201,7 +205,12 @@ watch([priceMin, priceMax], () => {
 })
 watch([sortBy, () => ({ ...dietary })], reload, { deep: true })
 watch(() => [route.params.category, route.meta.seasonal, route.query.search], reload)
-watch(() => heading.value.title, (title) => { document.title = `${title} - ${business.name}` }, { immediate: true })
+usePageMeta(() => ({
+  title: heading.value.title,
+  description: heading.value.subtitle || undefined,
+  // Filtered result lists (search) should not be indexed.
+  noindex: Boolean(searchQuery.value) || undefined
+}))
 
 onMounted(() => {
   if (!productStore.categories.length) productStore.fetchCategories()

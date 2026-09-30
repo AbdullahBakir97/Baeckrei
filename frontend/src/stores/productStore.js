@@ -41,7 +41,9 @@ export const useProductStore = defineStore('products', () => {
   const toProductPayload = (data) => {
     const fields = {
       name: data.name,
+      name_en: data.name_en,
       description: data.description,
+      description_en: data.description_en,
       category: typeof data.category === 'object' ? data.category?.id : data.category,
       price: data.price,
       stock: data.stock,

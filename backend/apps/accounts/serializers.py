@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -69,7 +70,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and self.instance == request.user:
             if attrs.get('is_active') is False or attrs.get('is_staff') is False:
-                raise serializers.ValidationError('You cannot deactivate or demote your own account.')
+                raise serializers.ValidationError(_('You cannot deactivate or demote your own account.'))
         return attrs
 
     def update(self, instance, validated_data):
@@ -89,7 +90,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Password fields didn't match."})
+            raise serializers.ValidationError({"password": _("Password fields didn't match.")})
         return attrs
 
     def create(self, validated_data):

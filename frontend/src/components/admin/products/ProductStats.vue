@@ -30,7 +30,7 @@
                     aria-hidden="true"
                   />
                   <span class="sr-only">
-                    {{ stat.changeType === 'increase' ? 'Increased' : 'Decreased' }} by
+                    {{ stat.changeType === 'increase' ? $t('admin.stats.increased') : $t('admin.stats.decreased') }}
                   </span>
                   {{ stat.change }}
                 </div>
@@ -46,7 +46,7 @@
             class="font-medium text-primary-700 hover:text-primary-900"
             @click.prevent="$emit('view-details', stat.type)"
           >
-            View details
+            {{ $t('admin.products.viewDetails') }}
           </a>
         </div>
       </div>
@@ -56,7 +56,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
+import { formatEuro } from '@/utils/money'
 import {
   CurrencyDollarIcon,
   ShoppingBagIcon,
@@ -67,33 +69,34 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const emit = defineEmits(['view-details'])
+const { t } = useI18n()
 
 const stats = ref([
   {
     type: 'total',
-    name: 'Total Products',
+    name: t('admin.stats.total'),
     value: 0,
     icon: ShoppingBagIcon,
     iconColor: 'text-crust'
   },
   {
     type: 'active',
-    name: 'Active Products',
+    name: t('admin.stats.active'),
     value: 0,
     icon: CheckCircleIcon,
     iconColor: 'text-emerald-300'
   },
   {
     type: 'low_stock',
-    name: 'Low Stock Items',
+    name: t('admin.stats.lowStock'),
     value: 0,
     icon: ExclamationCircleIcon,
     iconColor: 'text-crust-light'
   },
   {
     type: 'stock_value',
-    name: 'Stock value',
-    value: '0.00 €',
+    name: t('admin.stats.stockValue'),
+    value: formatEuro(0),
     icon: CurrencyDollarIcon,
     iconColor: 'text-crust'
   }
@@ -106,7 +109,7 @@ const loadStats = async () => {
       total: data.total_products,
       active: data.active_products,
       low_stock: data.low_stock_count,
-      stock_value: `${Number(data.stock_value).toFixed(2)} €`
+      stock_value: formatEuro(data.stock_value)
     }
     stats.value = stats.value.map(stat => ({ ...stat, value: values[stat.type] ?? stat.value }))
   } catch (error) {

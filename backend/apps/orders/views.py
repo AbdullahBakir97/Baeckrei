@@ -1,5 +1,6 @@
 import uuid
 
+from django.utils.translation import gettext as _
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -53,7 +54,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer.save(customer=self._customer())
 
     def _customer(self):
-        customer, _ = Customer.objects.get_or_create(
+        customer, _created = Customer.objects.get_or_create(
             user=self.request.user,
             defaults={'customer_id': uuid.uuid4().hex},
         )
@@ -82,7 +83,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         serializer = CheckoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        cart, _ = CartManagementController().get_or_create_cart(request)
+        cart, _created = CartManagementController().get_or_create_cart(request)
         try:
             order = OrderService.checkout(self._customer(), cart, serializer.validated_data)
         except CheckoutError as e:
@@ -98,7 +99,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
         if not order.is_cancelable:
             return Response(
-                {'error': 'This order can no longer be canceled'},
+                {'error': _('This order can no longer be canceled')},
                 status=status.HTTP_400_BAD_REQUEST
             )
         order = OrderService.update_order_status(order, Order.StatusChoices.CANCELED)

@@ -1,0 +1,90 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Backlover\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "This cart has already been checked out."
+msgstr "Dieser Warenkorb wurde bereits bestellt."
+
+msgid "Your cart is empty."
+msgstr "Dein Warenkorb ist leer."
+
+msgid "That address could not be found."
+msgstr "Diese Adresse wurde nicht gefunden."
+
+msgid "{name} is no longer available."
+msgstr "{name} ist leider nicht mehr verfügbar."
+
+msgid "Only {count} × {name} left in stock."
+msgstr "Nur noch {count} × {name} vorrätig."
+
+msgid "A delivery address is required."
+msgstr "Bitte gib eine Lieferadresse an."
+
+msgid "PayPal is not available yet."
+msgstr "PayPal ist noch nicht verfügbar."
+
+msgid "Choose a time in the future."
+msgstr "Bitte wähle eine Zeit in der Zukunft."
+
+msgid "This order can no longer be canceled"
+msgstr "Diese Bestellung kann nicht mehr storniert werden"
+
+msgid "Invalid old password"
+msgstr "Das bisherige Passwort ist falsch"
+
+msgid "Password updated successfully"
+msgstr "Passwort erfolgreich geändert"
+
+msgid "Successfully logged out"
+msgstr "Erfolgreich abgemeldet"
+
+msgid "If an account exists for this email, we sent a reset link."
+msgstr ""
+"Falls ein Konto mit dieser E-Mail-Adresse existiert, haben wir einen Link "
+"zum Zurücksetzen gesendet."
+
+msgid "This reset link is invalid or has expired. Please request a new one."
+msgstr ""
+"Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an."
+
+msgid "Your password has been changed. You can now sign in."
+msgstr "Dein Passwort wurde geändert. Du kannst dich jetzt anmelden."
+
+msgid "You cannot deactivate or demote your own account."
+msgstr "Du kannst dein eigenes Konto nicht deaktivieren oder herabstufen."
+
+msgid "Password fields didn't match."
+msgstr "Die Passwörter stimmen nicht überein."
+
+msgid "Thanks! We will get back to you soon."
+msgstr "Danke! Wir melden uns bald bei dir."
+
+msgid "You're subscribed. Thanks!"
+msgstr "Danke, du bist angemeldet!"
+
+msgid "This unsubscribe link is not valid."
+msgstr "Dieser Abmeldelink ist ungültig."
+
+msgid "You've been unsubscribed from the newsletter."
+msgstr "Du wurdest vom Newsletter abgemeldet."
+
+msgid "Quantity must be at least 1"
+msgstr "Die Menge muss mindestens 1 sein"
+
+msgid "Product is not available"
+msgstr "Das Produkt ist nicht verfügbar"
+
+msgid "Product is out of stock"
+msgstr "Das Produkt ist ausverkauft"
+
+msgid "Product not found"
+msgstr "Produkt nicht gefunden"
+
+msgid "Product not found or inactive"
+msgstr "Produkt nicht gefunden oder nicht aktiv"

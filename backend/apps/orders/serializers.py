@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from django.conf import settings
 from django.utils import timezone
 from rest_framework import serializers
@@ -135,11 +136,11 @@ class CheckoutSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs['fulfillment_method'] == Order.FulfillmentChoices.DELIVERY:
             if not attrs.get('address') and not attrs.get('address_id'):
-                raise serializers.ValidationError({'address': 'A delivery address is required.'})
+                raise serializers.ValidationError({'address': _('A delivery address is required.')})
         if attrs['payment_method'] == Payment.PaymentMethod.PAYPAL and not settings.PAYPAL_ENABLED:
-            raise serializers.ValidationError({'payment_method': 'PayPal is not available yet.'})
+            raise serializers.ValidationError({'payment_method': _('PayPal is not available yet.')})
         requested_time = attrs.get('requested_time')
         if requested_time and requested_time < timezone.now():
-            raise serializers.ValidationError({'requested_time': 'Choose a time in the future.'})
+            raise serializers.ValidationError({'requested_time': _('Choose a time in the future.')})
         return attrs
 

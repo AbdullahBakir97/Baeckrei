@@ -1,38 +1,38 @@
 <template>
   <article v-tilt="{ max: 7 }" class="pcard lux-card" :class="{ 'is-soldout': soldOut }">
-    <router-link :to="detailLink" class="pcard-media" :aria-label="product.name">
+    <router-link :to="detailLink" class="pcard-media" :aria-label="name">
       <span class="pcard-halo" aria-hidden="true"></span>
-      <img :src="product.image_url || product.image || PLACEHOLDER_IMAGE" :alt="product.name"
+      <img :src="product.image_url || product.image || PLACEHOLDER_IMAGE" :alt="name"
            class="pcard-img" data-depth="60" loading="lazy" @error="applyImageFallback" />
       <span class="pcard-badges" data-depth="35">
-        <span v-if="product.is_seasonal" class="pcard-badge is-seasonal">Seasonal</span>
-        <span v-if="product.is_vegan" class="pcard-badge">Vegan</span>
-        <span v-else-if="product.is_vegetarian" class="pcard-badge">Vegetarian</span>
-        <span v-if="product.is_gluten_free" class="pcard-badge">Gluten free</span>
+        <span v-if="product.is_seasonal" class="pcard-badge is-seasonal">{{ $t('common.seasonal') }}</span>
+        <span v-if="product.is_vegan" class="pcard-badge">{{ $t('common.vegan') }}</span>
+        <span v-else-if="product.is_vegetarian" class="pcard-badge">{{ $t('common.vegetarian') }}</span>
+        <span v-if="product.is_gluten_free" class="pcard-badge">{{ $t('common.glutenFree') }}</span>
       </span>
-      <span v-if="soldOut" class="pcard-stock" data-depth="35">Sold out today</span>
-      <span v-else-if="product.stock <= 5" class="pcard-stock is-low" data-depth="35">Only {{ product.stock }} left</span>
+      <span v-if="soldOut" class="pcard-stock" data-depth="35">{{ $t('common.soldOut') }}</span>
+      <span v-else-if="product.stock <= 5" class="pcard-stock is-low" data-depth="35">{{ $t('common.onlyLeft', { count: product.stock }) }}</span>
     </router-link>
 
     <div class="pcard-body" data-depth="25">
-      <p class="eyebrow !text-[0.65rem]">{{ product.category?.name || 'Backlover' }}</p>
+      <p class="eyebrow !text-[0.65rem]">{{ categoryName(product.category) || business.name }}</p>
       <h3 class="pcard-title">
-        <router-link :to="detailLink">{{ product.name }}</router-link>
+        <router-link :to="detailLink">{{ name }}</router-link>
       </h3>
       <div class="pcard-row">
         <span class="pcard-price">{{ price }}</span>
 
-        <div v-if="cartItem" class="pcard-stepper" role="group" :aria-label="`${product.name} in your cart`">
-          <button type="button" :disabled="busy" aria-label="One less" @click="setQuantity(cartItem.quantity - 1)">
+        <div v-if="cartItem" class="pcard-stepper" role="group" :aria-label="$t('card.inCart', { name })">
+          <button type="button" :disabled="busy" :aria-label="$t('common.oneLess')" @click="setQuantity(cartItem.quantity - 1)">
             <font-awesome-icon icon="minus" />
           </button>
           <span class="tabular-nums" aria-live="polite">{{ cartItem.quantity }}</span>
-          <button type="button" :disabled="busy || cartItem.quantity >= product.stock" aria-label="One more" @click="setQuantity(cartItem.quantity + 1)">
+          <button type="button" :disabled="busy || cartItem.quantity >= product.stock" :aria-label="$t('common.oneMore')" @click="setQuantity(cartItem.quantity + 1)">
             <font-awesome-icon icon="plus" />
           </button>
         </div>
         <button v-else type="button" class="pcard-add" :disabled="busy || soldOut"
-                :aria-label="`Add ${product.name} to cart`" @click="add">
+                :aria-label="$t('card.add', { name })" @click="add">
           <font-awesome-icon :icon="busy ? 'spinner' : 'plus'" :spin="busy" />
         </button>
       </div>
@@ -46,6 +46,9 @@ import { useCartStore } from '@/stores/cartStore'
 import { useToast } from '@/composables/useToast'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { formatEuro } from '@/utils/money'
+import { useI18n } from 'vue-i18n'
+import { business } from '@/config/business'
+import { categoryName, localized } from '@/i18n/catalog'
 
 const props = defineProps({
   product: { type: Object, required: true }
@@ -55,6 +58,8 @@ const emit = defineEmits(['add-to-cart'])
 const cartStore = useCartStore()
 const { showToast } = useToast()
 const busy = ref(false)
+const { t } = useI18n()
+const name = computed(() => localized(props.product, 'name'))
 
 const detailLink = computed(() => ({ name: 'product-detail', params: { id: props.product.id } }))
 const soldOut = computed(() => !props.product.available || props.product.stock <= 0)
@@ -67,7 +72,7 @@ async function run(action, success) {
     await action()
     if (success) showToast(success)
   } catch (error) {
-    showToast(cartStore.error || 'The cart could not be updated.', 'error')
+    showToast(t('common.cartError'), 'error')
   } finally {
     busy.value = false
   }
@@ -76,7 +81,7 @@ async function run(action, success) {
 const add = () => run(async () => {
   await cartStore.addItem(props.product.id, 1)
   emit('add-to-cart', props.product)
-}, `${props.product.name} added to your cart`)
+}, t('common.addedToCart', { name: name.value }))
 
 const setQuantity = (quantity) => run(() => cartStore.updateQuantity(props.product.id, quantity))
 </script>

@@ -1,7 +1,7 @@
 <template>
   <span v-if="value">{{ value }}</span>
-  <span v-else class="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-300 text-sm" :title="`Add ${label} in src/config/business.js`">
-    {{ label }} (to be added)
+  <span v-else class="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-300 text-sm" :title="$t('legal.fillHint', { label })">
+    {{ $t('legal.missing', { label }) }}
   </span>
 </template>
 

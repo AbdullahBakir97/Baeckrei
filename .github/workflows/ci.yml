@@ -48,6 +48,7 @@ jobs:
           apps/products/tests/test_catalog_filters.py
           apps/products/tests/test_admin_catalog.py
           apps/content/tests.py
+          apps/core/test_seo.py
 
   frontend:
     runs-on: ubuntu-latest

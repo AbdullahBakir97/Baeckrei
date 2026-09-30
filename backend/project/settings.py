@@ -84,6 +84,8 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    # Answers in the language the shop sends (Accept-Language: de or en).
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -148,7 +150,14 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en'
+
+LANGUAGES = [
+    ('de', 'Deutsch'),
+    ('en', 'English'),
+]
+
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 TIME_ZONE = 'UTC'
 
@@ -227,6 +236,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
+    'accept-language',
     'authorization',
     'content-type',
     'dnt',
@@ -298,6 +308,18 @@ DELIVERY_FEE = Decimal(os.environ.get('SHOP_DELIVERY_FEE', '3.50'))
 # Online payment providers need credentials; until configured, only cash
 # and card on pickup/delivery are offered.
 PAYPAL_ENABLED = _env_bool('SHOP_PAYPAL_ENABLED', False)
+
+# Shown in page titles, share previews and structured data (apps/core/seo.py).
+SHOP_NAME = os.environ.get('SHOP_NAME', 'Backlover')
+SHOP_STREET = os.environ.get('SHOP_STREET', 'Friedrichstraße')
+SHOP_CITY = os.environ.get('SHOP_CITY', 'Berlin')
+
+# Path to the built storefront (frontend/dist/index.html). When set, Django
+# serves it for storefront URLs with each page's meta tags filled in.
+FRONTEND_INDEX_FILE = os.environ.get('FRONTEND_INDEX_FILE', '')
+
+# The storefront has its own /admin, so Django's admin lives elsewhere.
+DJANGO_ADMIN_PATH = os.environ.get('DJANGO_ADMIN_PATH', 'django-admin/').strip('/') + '/'
 
 # Email (password reset, contact form). Printed to the console unless an
 # SMTP server is configured.

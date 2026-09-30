@@ -1,10 +1,10 @@
 <template>
   <div class="min-h-[60vh] flex items-center justify-center py-16 px-4">
     <div class="glass-panel max-w-md w-full text-center space-y-4">
-      <h1 class="text-2xl font-bold text-white">Newsletter</h1>
-      <p v-if="loading" class="text-gray-400">Unsubscribing…</p>
+      <h1 class="display-title text-4xl">{{ $t('footer.newsletter') }}</h1>
+      <p v-if="loading" class="text-gray-400">{{ $t('newsletter.unsubscribing') }}</p>
       <p v-else :class="ok ? 'text-green-300' : 'text-red-300'" role="status">{{ message }}</p>
-      <router-link to="/products" class="btn-ghost">Back to the shop</router-link>
+      <router-link to="/products" class="btn-ghost">{{ $t('newsletter.backToShop') }}</router-link>
     </div>
   </div>
 </template>
@@ -13,6 +13,9 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '@/plugins/axios'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const loading = ref(true)
@@ -25,7 +28,7 @@ onMounted(async () => {
     ok.value = true
     message.value = response.data.message
   } catch (err) {
-    message.value = err.response?.data?.detail || 'This unsubscribe link is not valid.'
+    message.value = err.response?.data?.detail || t('newsletter.invalid')
   } finally {
     loading.value = false
   }

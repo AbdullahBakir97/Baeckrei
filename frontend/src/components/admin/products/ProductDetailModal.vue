@@ -1,4 +1,4 @@
-`<template>
+<template>
   <TransitionRoot appear :show="true" as="template">
     <Dialog as="div" class="relative z-10" @close="$emit('close')">
       <TransitionChild
@@ -26,7 +26,7 @@
           >
             <DialogPanel class="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-oven-800 p-6 text-left align-middle shadow-xl transition-all">
               <DialogTitle as="h3" class="text-lg font-medium leading-6 text-cream mb-4">
-                Product Details
+                {{ $t('admin.productDetail.title') }}
               </DialogTitle>
 
               <div v-if="loading" class="flex justify-center items-center py-8">
@@ -46,27 +46,27 @@
                 <!-- Product Information -->
                 <div class="space-y-4">
                   <div>
-                    <h4 class="text-sm font-medium text-cream-muted">Product Name</h4>
+                    <h4 class="text-sm font-medium text-cream-muted">{{ $t('admin.productDetail.productName') }}</h4>
                     <p class="mt-1 text-lg font-semibold text-cream">{{ product.name }}</p>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-cream-muted">SKU</h4>
+                    <h4 class="text-sm font-medium text-cream-muted">{{ $t('admin.fields.sku') }}</h4>
                     <p class="mt-1 text-cream">{{ product.sku }}</p>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-cream-muted">Category</h4>
-                    <p class="mt-1 text-cream">{{ product.category }}</p>
+                    <h4 class="text-sm font-medium text-cream-muted">{{ $t('admin.fields.category') }}</h4>
+                    <p class="mt-1 text-cream">{{ typeof product.category === 'object' ? categoryName(product.category) : product.category }}</p>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-cream-muted">Price</h4>
-                    <p class="mt-1 text-cream">${{ product.price.toFixed(2) }}</p>
+                    <h4 class="text-sm font-medium text-cream-muted">{{ $t('admin.fields.price') }}</h4>
+                    <p class="mt-1 text-cream">{{ formatEuro(product.price) }}</p>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-cream-muted">Stock</h4>
+                    <h4 class="text-sm font-medium text-cream-muted">{{ $t('admin.fields.stock') }}</h4>
                     <div class="mt-1 flex items-center">
                       <span
                         :class="[
@@ -76,22 +76,22 @@
                           'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
                         ]"
                       >
-                        {{ product.stock }} in stock
+                        {{ $t('admin.inStock', { n: product.stock }) }}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-cream-muted">Status</h4>
+                    <h4 class="text-sm font-medium text-cream-muted">{{ $t('admin.fields.status') }}</h4>
                     <span
                       :class="[ product.status === 'active' ? 'bg-emerald-400/10 text-emerald-300' : 'bg-red-400/10 text-red-300', 'mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full' ]"
                     >
-                      {{ product.status }}
+                      {{ $te(`admin.productStatus.${product.status}`) ? $t(`admin.productStatus.${product.status}`) : product.status }}
                     </span>
                   </div>
 
                   <div v-if="product.description">
-                    <h4 class="text-sm font-medium text-cream-muted">Description</h4>
+                    <h4 class="text-sm font-medium text-cream-muted">{{ $t('admin.fields.description') }}</h4>
                     <p class="mt-1 text-cream">{{ product.description }}</p>
                   </div>
                 </div>
@@ -100,10 +100,10 @@
                 <div class="col-span-1 md:col-span-2 space-y-4">
                   <!-- Nutrition Information -->
                   <div v-if="nutritionInfo" class="border-t pt-4">
-                    <h4 class="text-sm font-medium text-cream-muted mb-2">Nutrition Information</h4>
+                    <h4 class="text-sm font-medium text-cream-muted mb-2">{{ $t('admin.productDetail.nutrition') }}</h4>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div v-for="(value, key) in nutritionInfo" :key="key" class="bg-cream/[0.03] p-3 rounded-lg">
-                        <div class="text-xs text-cream-muted">{{ key }}</div>
+                        <div class="text-xs text-cream-muted">{{ $te(`admin.nutrition.${key}`) ? $t(`admin.nutrition.${key}`) : key }}</div>
                         <div class="text-sm font-medium text-cream">{{ value }}</div>
                       </div>
                     </div>
@@ -111,7 +111,7 @@
 
                   <!-- Allergens -->
                   <div v-if="allergens.length" class="border-t pt-4">
-                    <h4 class="text-sm font-medium text-cream-muted mb-2">Allergens</h4>
+                    <h4 class="text-sm font-medium text-cream-muted mb-2">{{ $t('admin.productDetail.allergens') }}</h4>
                     <div class="flex flex-wrap gap-2">
                       <span
                         v-for="allergen in allergens"
@@ -125,7 +125,7 @@
 
                   <!-- Similar Products -->
                   <div v-if="similarProducts.length" class="border-t pt-4">
-                    <h4 class="text-sm font-medium text-cream-muted mb-2">Similar Products</h4>
+                    <h4 class="text-sm font-medium text-cream-muted mb-2">{{ $t('admin.productDetail.similar') }}</h4>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div
                         v-for="similar in similarProducts"
@@ -140,7 +140,7 @@
                           />
                         </div>
                         <p class="mt-2 text-sm font-medium text-cream">{{ similar.name }}</p>
-                        <p class="text-sm text-cream-muted">${{ similar.price.toFixed(2) }}</p>
+                        <p class="text-sm text-cream-muted">{{ formatEuro(similar.price) }}</p>
                       </div>
                     </div>
                   </div>
@@ -152,7 +152,7 @@
                   @click="$emit('close')"
                   class="admin-panel inline-flex justify-center border border-cream/15 px-4 py-2 text-sm font-medium text-cream/80 hover:bg-cream/[0.03] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 >
-                  Close
+                  {{ $t('common.close') }}
                 </button>
               </div>
             </DialogPanel>
@@ -167,6 +167,8 @@
 import { ref, onMounted } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { useProductStore } from '@/stores/productStore'
+import { formatEuro } from '@/utils/money'
+import { categoryName } from '@/i18n/catalog'
 
 const props = defineProps({
   product: {
@@ -201,4 +203,4 @@ const loadProductDetails = async () => {
 }
 
 onMounted(loadProductDetails)
-</script>`
+</script>

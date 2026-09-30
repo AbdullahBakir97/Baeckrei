@@ -1,40 +1,37 @@
 <template>
   <LegalPage title="Impressum">
-    <p>Information according to § 5 DDG (Digitale-Dienste-Gesetz).</p>
+    <p>{{ $t('legal.impressum.basis') }}</p>
 
-    <h2>Provider</h2>
+    <h2>{{ $t('legal.impressum.provider') }}</h2>
     <p>
-      <Fill :value="business.legalName || business.name" label="legal name" /><br>
-      <Fill :value="streetLine()" label="street" /> <Fill v-if="!business.houseNumber" value="" label="house number" /><br>
-      <Fill :value="business.postalCode" label="postal code" /> {{ business.city }}<br>
+      <Fill :value="business.legalName || business.name" :label="$t('legal.fields.legalName')" /><br>
+      <Fill :value="streetLine()" :label="$t('legal.fields.street')" /> <Fill v-if="!business.houseNumber" value="" :label="$t('legal.fields.houseNumber')" /><br>
+      <Fill :value="business.postalCode" :label="$t('legal.fields.postalCode')" /> {{ business.city }}<br>
       {{ business.country }}
     </p>
 
-    <h2>Represented by</h2>
-    <p><Fill :value="business.owner" label="owner or managing director" /></p>
+    <h2>{{ $t('legal.impressum.represented') }}</h2>
+    <p><Fill :value="business.owner" :label="$t('legal.fields.owner')" /></p>
 
-    <h2>Contact</h2>
+    <h2>{{ $t('legal.impressum.contact') }}</h2>
     <p>
-      Phone: <Fill :value="business.phone" label="phone number" /><br>
-      Email: <Fill :value="business.email" label="email address" />
+      {{ $t('common.phone') }}: <Fill :value="business.phone" :label="$t('legal.fields.phone')" /><br>
+      {{ $t('common.email') }}: <Fill :value="business.email" :label="$t('legal.fields.email')" />
     </p>
 
     <template v-if="business.register">
-      <h2>Commercial register</h2>
+      <h2>{{ $t('legal.impressum.register') }}</h2>
       <p>{{ business.register }}</p>
     </template>
 
-    <h2>VAT ID</h2>
+    <h2>{{ $t('legal.impressum.vat') }}</h2>
     <p>
-      VAT identification number according to § 27a UStG:
-      <Fill :value="business.vatId" label="VAT ID (if you have one)" />
+      {{ $t('legal.impressum.vatText') }}
+      <Fill :value="business.vatId" :label="$t('legal.fields.vatId')" />
     </p>
 
-    <h2>Consumer dispute resolution</h2>
-    <p>
-      We are neither willing nor obliged to take part in dispute resolution proceedings before a consumer
-      arbitration board.
-    </p>
+    <h2>{{ $t('legal.impressum.dispute') }}</h2>
+    <p>{{ $t('legal.impressum.disputeText') }}</p>
   </LegalPage>
 </template>
 

@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { adminRoutes } from '@/router/admin.routers.js'
 import { useAuthStore } from '@/stores/authStore'
-import { business } from '@/config/business'
 
 // Pages load on demand so the first visit only downloads what it shows.
 const ProductList = () => import('@/components/products/ProductList.vue')
@@ -244,9 +243,6 @@ router.beforeEach(async (to, from, next) => {
       return
     }
 
-    // Update document title
-    document.title = to.meta.title ? `${to.meta.title} - ${business.name}` : business.name
-    
     next()
   } catch (error) {
     console.error('Navigation error:', error)

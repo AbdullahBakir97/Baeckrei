@@ -1,25 +1,25 @@
 <template>
-  <AuthCard title="Sign in to your account">
+  <AuthCard :title="$t('auth.signInTitle')">
     <form class="space-y-4" @submit.prevent="handleSubmit">
       <div>
-        <label for="email" class="field-label">Email address</label>
+        <label for="email" class="field-label">{{ $t('auth.email') }}</label>
         <input id="email" v-model.trim="form.email" type="email" class="field-input" autocomplete="email" required />
       </div>
       <div>
         <div class="flex items-center justify-between">
-          <label for="password" class="field-label">Password</label>
-          <router-link to="/forgot-password" class="text-sm text-amber-400 hover:text-amber-300">Forgot password?</router-link>
+          <label for="password" class="field-label">{{ $t('common.password') }}</label>
+          <router-link to="/forgot-password" class="text-sm text-amber-400 hover:text-amber-300">{{ $t('auth.forgot') }}</router-link>
         </div>
         <input id="password" v-model="form.password" type="password" class="field-input" autocomplete="current-password" required />
       </div>
       <p v-if="authStore.error" class="field-error" role="alert">{{ authStore.error }}</p>
       <button type="submit" class="btn-amber w-full" :disabled="authStore.loading">
-        {{ authStore.loading ? 'Signing in…' : 'Sign in' }}
+        {{ authStore.loading ? $t('auth.signingIn') : $t('nav.signIn') }}
       </button>
     </form>
     <p class="text-center text-sm text-gray-400">
-      New here?
-      <router-link :to="{ name: 'register', query: route.query }" class="text-amber-400 hover:text-amber-300">Create an account</router-link>
+      {{ $t('auth.newHere') }}
+      <router-link :to="{ name: 'register', query: route.query }" class="text-amber-400 hover:text-amber-300">{{ $t('auth.createAccount') }}</router-link>
     </p>
   </AuthCard>
 </template>

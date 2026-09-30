@@ -77,7 +77,7 @@ class ProductFilter(BaseFilter):
         
     def get_search_fields(self):
         """Get fields to search in."""
-        return ['name', 'description', 'category__name']
+        return ['name', 'name_en', 'description', 'description_en', 'category__name', 'category__name_en']
     
     def add_error(self, field: str, message: str):
         """Add an error message for a field."""
@@ -208,7 +208,7 @@ class CategoryFilter(BaseFilter):
 
     def get_search_fields(self) -> List[str]:
         """Get list of searchable fields."""
-        return ['name', 'description', 'slug']
+        return ['name', 'name_en', 'description', 'slug']
 
     def apply_filters(self, filters: Dict[str, Any]) -> QuerySet:
         """Apply all filters to queryset."""

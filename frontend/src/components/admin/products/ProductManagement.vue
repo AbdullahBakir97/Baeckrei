@@ -6,7 +6,7 @@
         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
       >
         <PlusIcon class="h-5 w-5 mr-2" />
-        Add Product
+        {{ $t('admin.products.add') }}
       </button>
     </div>
 
@@ -45,11 +45,11 @@
         </template>
 
         <template #category="{ item }">
-          {{ item.category?.name || '—' }}
+          {{ categoryName(item.category) || '—' }}
         </template>
 
         <template #price="{ item }">
-          {{ Number(item.price).toFixed(2) }} €
+          {{ formatEuro(item.price) }}
         </template>
 
         <template #stock="{ item }">
@@ -62,7 +62,7 @@
                 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
               ]"
             >
-              {{ item.stock }} in stock
+              {{ $t('admin.inStock', { n: item.stock }) }}
             </span>
           </div>
         </template>
@@ -71,7 +71,7 @@
           <span
             :class="[ item.status === 'active' ? 'bg-emerald-400/10 text-emerald-300' : 'bg-red-400/10 text-red-300', 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full' ]"
           >
-            {{ item.status }}
+            {{ $te(`admin.productStatus.${item.status}`) ? $t(`admin.productStatus.${item.status}`) : item.status }}
           </span>
         </template>
 
@@ -80,21 +80,21 @@
             <button
               @click="viewProduct(item)"
               class="text-cream-faint hover:text-cream-muted bg-transparent p-1"
-              title="View Details"
+              :title="$t('admin.products.viewDetails')"
             >
               <EyeIcon class="h-5 w-5" />
             </button>
             <button
               @click="editProduct(item)"
               class="text-blue-400 hover:text-blue-500 bg-transparent p-1"
-              title="Edit"
+              :title="$t('common.edit')"
             >
               <PencilIcon class="h-5 w-5" />
             </button>
             <button
               @click="deleteProduct(item)"
               class="text-red-400 hover:text-red-500 bg-transparent p-1"
-              title="Delete"
+              :title="$t('common.delete')"
             >
               <TrashIcon class="h-5 w-5" />
             </button>
@@ -126,6 +126,9 @@ import { ref, onMounted } from 'vue'
 import { useProductStore } from '@/stores/productStore'
 import { useToast } from '@/composables/useToast'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { formatEuro } from '@/utils/money'
+import { categoryName } from '@/i18n/catalog'
 import DataTable from '../common/DataTable.vue'
 import ProductStats from './ProductStats.vue'
 import ProductFilters from './ProductFilters.vue'
@@ -141,6 +144,7 @@ import {
 const productStore = useProductStore()
 const { showToast } = useToast()
 const router = useRouter()
+const { t } = useI18n()
 const products = ref([])
 const totalItems = ref(0)
 const loading = ref(false)
@@ -150,11 +154,11 @@ const selectedProduct = ref(null)
 
 const columns = [
   { key: 'image', label: '' },
-  { key: 'name', label: 'Product' },
-  { key: 'category', label: 'Category' },
-  { key: 'price', label: 'Price' },
-  { key: 'stock', label: 'Stock' },
-  { key: 'status', label: 'Status' }
+  { key: 'name', label: t('admin.fields.product') },
+  { key: 'category', label: t('admin.fields.category') },
+  { key: 'price', label: t('admin.fields.price') },
+  { key: 'stock', label: t('admin.fields.stock') },
+  { key: 'status', label: t('admin.fields.status') }
 ]
 
 const currentFilters = ref({
@@ -195,7 +199,7 @@ const loadProducts = async () => {
     products.value = productStore.products
     totalItems.value = productStore.totalItems
   } catch (error) {
-    showToast('Products could not be loaded', 'error')
+    showToast(t('admin.products.loadError'), 'error')
   } finally {
     loading.value = false
   }
@@ -263,7 +267,7 @@ const editProduct = async (product) => {
   formErrors.value = {}
   const full = await productStore.fetchProductById(product.id)
   if (!full) {
-    showToast('The product could not be loaded', 'error')
+    showToast(t('admin.products.loadOneError'), 'error')
     return
   }
   selectedProduct.value = full
@@ -289,28 +293,28 @@ const saveProduct = async (productData) => {
   try {
     if (selectedProduct.value) {
       await productStore.updateProduct(productData)
-      showToast('Product saved')
+      showToast(t('admin.products.saved'))
     } else {
       await productStore.createProduct(productData)
-      showToast('Product created')
+      showToast(t('admin.products.created'))
     }
     await loadProducts()
     closeModal()
   } catch (error) {
-    formErrors.value = error.response?.data || { general: 'The product could not be saved.' }
+    formErrors.value = error.response?.data || { general: t('admin.products.saveError') }
   } finally {
     saving.value = false
   }
 }
 
 const deleteProduct = async (product) => {
-  if (!confirm(`Delete ${product.name}?`)) return
+  if (!confirm(t('admin.products.confirmDelete', { name: product.name }))) return
   try {
     const result = await productStore.deleteProduct(product.id)
-    showToast(result?.discontinued ? 'Used in past orders, so it was marked discontinued' : 'Product deleted')
+    showToast(result?.discontinued ? t('admin.products.discontinued') : t('admin.products.deleted'))
     await loadProducts()
   } catch (error) {
-    showToast('The product could not be deleted', 'error')
+    showToast(t('admin.products.deleteError'), 'error')
   }
 }
 

@@ -1,35 +1,63 @@
 <template>
   <div class="app">
     <AmbientBackground v-if="!isAdmin" />
-    <a href="#main" class="skip-link">Skip to content</a>
+    <a href="#main" class="skip-link">{{ $t('common.skipToContent') }}</a>
     <Navbar v-if="!isAdmin" />
     <main id="main" class="main-container" :class="{ 'is-full-bleed': route.meta.fullBleed || isAdmin }">
       <router-view v-slot="{ Component, route }">
         <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
           <!-- The admin area keeps its layout mounted while its pages change. -->
-          <component :is="Component" :key="isAdmin ? 'admin' : route.path" />
+          <component :is="Component" :key="`${isAdmin ? 'admin' : route.path}:${locale}`" />
         </transition>
       </router-view>
     </main>
-    <Footer v-if="!isAdmin" />
+    <Footer v-if="!isAdmin" :key="locale" />
     <Toast />
-    <ModalWrapper />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
+import { business } from '@/config/business'
+import { SHARE_IMAGE, bakeryJsonLd, usePageMeta } from '@/seo'
 import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Toast from '@/components/common/Toast.vue'
 import AmbientBackground from '@/components/layout/AmbientBackground.vue'
-import ModalWrapper from '@/components/common/ModalWrapper.vue'
 import { gsap, ScrollTrigger, initSmoothScroll, scrollToTop, prefersReducedMotion } from '@/motion'
 
 const route = useRoute()
+// Switching language remounts the page so split headlines rebuild with the new text.
+const { locale } = useI18n()
 // The admin area has its own layout and navigation.
 const isAdmin = computed(() => route.matched.some(record => record.meta.requiresAdmin))
+
+// Default title, description and share preview for every page; pages with
+// their own content (products, posts, categories) refine it.
+const { t, te } = useI18n()
+const place = computed(() => ({ street: business.street, city: business.city }))
+const PRIVATE = ['cart', 'checkout', 'order-detail', 'profile', 'orders', 'settings', 'login', 'register',
+  'forgot-password', 'reset-password', 'newsletter-unsubscribe', 'wishlist', 'compare', 'not-found']
+useHead(() => ({
+  htmlAttrs: { lang: locale.value },
+  titleTemplate: (title) => (title ? `${title} · ${business.name}` : `${business.name} · ${t('seo.tagline', place.value)}`)
+}))
+usePageMeta(() => {
+  const name = String(route.name || '')
+  const key = `seo.descriptions.${name}`
+  return {
+    title: route.name === 'home' ? '' : (te(`seo.titles.${name}`) ? t(`seo.titles.${name}`) : route.meta.title),
+    description: te(key) ? t(key, place.value) : t('seo.defaultDescription', place.value),
+    image: SHARE_IMAGE,
+    type: 'website',
+    path: route.path,
+    noindex: isAdmin.value || PRIVATE.includes(name),
+    jsonLd: bakeryJsonLd()
+  }
+})
 
 // Page transitions: the old page lifts away, the new one settles in.
 // With reduced motion there is no animation, but finishing on the next

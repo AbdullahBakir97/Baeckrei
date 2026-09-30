@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.utils.translation import gettext as _
 from django.conf import settings
 from django.db import transaction
 from django.db.models import F
@@ -63,17 +64,17 @@ class OrderService:
         with transaction.atomic():
             cart = Cart.objects.select_for_update().get(pk=cart.pk)
             if cart.completed:
-                raise CheckoutError('This cart has already been checked out.', 'cart_completed')
+                raise CheckoutError(_('This cart has already been checked out.'), 'cart_completed')
 
             items = [item for item in cart.items.select_related('product') if item.product_id]
             if not items:
-                raise CheckoutError('Your cart is empty.', 'empty_cart')
+                raise CheckoutError(_('Your cart is empty.'), 'empty_cart')
 
             for item in items:
                 product = item.product
                 if not product.available or product.status != 'active':
                     raise CheckoutError(
-                        f'{product.name} is no longer available.', 'unavailable',
+                        _('{name} is no longer available.').format(name=product.name), 'unavailable',
                         {'product_id': str(product.pk)},
                     )
                 updated = Product.objects.filter(pk=product.pk, stock__gte=item.quantity).update(
@@ -82,7 +83,7 @@ class OrderService:
                 if not updated:
                     available = Product.objects.filter(pk=product.pk).values_list('stock', flat=True).first() or 0
                     raise CheckoutError(
-                        f'Only {available} × {product.name} left in stock.', 'insufficient_stock',
+                        _('Only {count} × {name} left in stock.').format(count=available, name=product.name), 'insufficient_stock',
                         {'product_id': str(product.pk), 'available_stock': available},
                     )
 
@@ -92,7 +93,7 @@ class OrderService:
                 if data.get('address_id'):
                     address = Address.objects.filter(pk=data['address_id'], customer=customer).first()
                     if address is None:
-                        raise CheckoutError('That address could not be found.', 'invalid_address')
+                        raise CheckoutError(_('That address could not be found.'), 'invalid_address')
                 else:
                     address = Address.objects.create(
                         customer=customer, saved=data.get('save_address', False), **data['address']
