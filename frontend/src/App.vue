@@ -32,8 +32,12 @@ const route = useRoute()
 const isAdmin = computed(() => route.matched.some(record => record.meta.requiresAdmin))
 
 // Page transitions: the old page lifts away, the new one settles in.
+// With reduced motion there is no animation, but finishing on the next
+// frame (not synchronously) keeps back-to-back navigations safe.
+const nextFrame = (done) => requestAnimationFrame(() => done())
+
 const onLeave = (el, done) => {
-  if (prefersReducedMotion()) return done()
+  if (prefersReducedMotion()) return nextFrame(done)
   gsap.to(el, { opacity: 0, y: -16, duration: 0.3, ease: 'power2.in', onComplete: done })
 }
 
@@ -41,7 +45,7 @@ const onEnter = (el, done) => {
   scrollToTop()
   if (prefersReducedMotion()) {
     ScrollTrigger.refresh()
-    return done()
+    return nextFrame(done)
   }
   gsap.fromTo(el, { opacity: 0, y: 24 }, {
     opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', clearProps: 'transform,opacity',
