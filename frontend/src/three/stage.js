@@ -5,9 +5,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 
 export { webglAvailable } from './webgl'
 
-export function createStage(container, { fov = 32, cameraZ = 6, shadow = true, exposure = 1 } = {}) {
+export function createStage(container, { fov = 32, cameraZ = 6, shadow = true, exposure = 1, pixelRatio = 2 } = {}) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatio))
   renderer.outputColorSpace = THREE.SRGBColorSpace
   // Neutral tone mapping keeps the photo colours true (ACES washes them out).
   renderer.toneMapping = THREE.NeutralToneMapping
