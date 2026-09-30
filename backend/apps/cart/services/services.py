@@ -103,6 +103,16 @@ class CartService:
             self._handle_cart_exception(e)
 
     @with_cart_lock
+    def clear(self, cart: Cart) -> Dict[str, Any]:
+        """Remove all items from the cart."""
+        try:
+            cart.clear()
+            return self.format_cart_data(cart)
+
+        except Exception as e:
+            self._handle_cart_exception(e)
+
+    @with_cart_lock
     def batch_add_items(self, cart: Cart, items: List[Tuple[ProductId, Quantity]]) -> Dict[str, Any]:
         """Add multiple items to cart in a single transaction."""
         try:

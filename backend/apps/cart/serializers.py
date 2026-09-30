@@ -30,11 +30,11 @@ class CartItemSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'cart', 'product', 'product_name', 'product_price',
             'quantity', 'unit_price', 'total_price', 'version',
-            'available_stock', 'created_at', 'modified_at'
+            'available_stock', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'cart', 'unit_price', 'total_price', 'version',
-            'created_at', 'modified_at'
+            'created_at', 'updated_at'
         ]
 
     def validate_quantity(self, value):
