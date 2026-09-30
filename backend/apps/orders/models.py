@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator
@@ -8,6 +8,15 @@ from django.utils import timezone
 import uuid
 from django.core.exceptions import ValidationError
 from django.db.models import Sum
+from django.conf import settings
+
+
+def vat_included(gross: Decimal) -> Decimal:
+    """VAT contained in a gross (VAT-inclusive) amount."""
+    rate = Decimal(str(getattr(settings, 'VAT_RATE', '0.19')))
+    gross = Decimal(gross or 0)
+    return (gross - gross / (1 + rate)).quantize(Decimal('0.01'))
+
 
 class Order(models.Model):
     class StatusChoices(models.TextChoices):
@@ -15,6 +24,10 @@ class Order(models.Model):
         PROCESSING = 'Processing', _('Processing')
         COMPLETED = 'Completed', _('Completed')
         CANCELED = 'Canceled', _('Canceled')
+
+    class FulfillmentChoices(models.TextChoices):
+        PICKUP = 'pickup', _('Pickup')
+        DELIVERY = 'delivery', _('Delivery')
 
     order_number = models.CharField(max_length=32, unique=True, editable=False)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='customer_orders')
@@ -31,7 +44,18 @@ class Order(models.Model):
         validators=[MinValueValidator(Decimal('0.01'))],
         editable=False
     )
-    address = models.ForeignKey(Address, on_delete=models.PROTECT, related_name='order_addresses')
+    fulfillment_method = models.CharField(
+        max_length=10,
+        choices=FulfillmentChoices.choices,
+        default=FulfillmentChoices.PICKUP,
+    )
+    # Only delivery orders have an address; pickup orders are collected in the shop.
+    address = models.ForeignKey(
+        Address, on_delete=models.PROTECT, related_name='order_addresses', null=True, blank=True
+    )
+    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    contact_phone = models.CharField(max_length=30, blank=True, default='')
+    requested_time = models.DateTimeField(null=True, blank=True)
     shipping_tracking_number = models.CharField(max_length=100, blank=True, null=True)
     estimated_delivery_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
@@ -46,12 +70,17 @@ class Order(models.Model):
             self.estimated_delivery_date = timezone.now().date() + timezone.timedelta(days=5)
         
         if self.pk:
-            total = sum(item.subtotal for item in self.order_items.all())
-            self.total_price = total if total is not None else Decimal('0.00')
+            items_total = sum((item.subtotal for item in self.order_items.all()), Decimal('0.00'))
+            self.total_price = items_total + (self.delivery_fee or Decimal('0.00'))
         else:
             self.total_price = Decimal('0.00')
             
         super().save(*args, **kwargs)
+
+    @property
+    def vat_amount(self):
+        """VAT included in the total (prices are gross)."""
+        return vat_included(self.total_price)
 
     @property
     def total_items(self):
@@ -75,9 +104,8 @@ class Order(models.Model):
             raise ValidationError(_('Total price cannot be negative.'))
         if self.status == self.StatusChoices.COMPLETED and not self.shipping_tracking_number:
             raise ValidationError(_('Shipping tracking number is required for completed orders.'))
-        # Fix the address validation - it was comparing address to itself
-        if not self.address:
-            raise ValidationError(_('Shipping address must be set'))
+        if self.fulfillment_method == self.FulfillmentChoices.DELIVERY and not self.address:
+            raise ValidationError(_('Delivery orders need an address'))
 
     def update_shipping_address(self, address_data):
         """Update or set shipping address for the order"""

@@ -29,16 +29,15 @@ class TestCartModel:
 
     def test_cart_tax(self, test_cart_with_item):
         """Test cart tax calculation."""
+        # Prices include 19% VAT; tax is the VAT contained in the subtotal.
         subtotal = Decimal('20.00')  # 10.00 * 2
-        expected_tax = (subtotal * Decimal('0.19')).quantize(Decimal('0.01'))  # 19% VAT
-        assert test_cart_with_item.tax == expected_tax
+        expected_tax = (subtotal - subtotal / Decimal('1.19')).quantize(Decimal('0.01'))
+        assert test_cart_with_item.tax == expected_tax == Decimal('3.19')
 
     def test_cart_total(self, test_cart_with_item):
         """Test cart total calculation."""
-        subtotal = Decimal('20.00')  # 10.00 * 2
-        tax = (subtotal * Decimal('0.19')).quantize(Decimal('0.01'))  # 19% VAT
-        expected_total = (subtotal + tax).quantize(Decimal('0.01'))
-        assert test_cart_with_item.total == expected_total
+        # Prices include VAT, so the total equals the subtotal.
+        assert test_cart_with_item.total == Decimal('20.00')
 
     @pytest.mark.parametrize("quantity,should_raise", [
         (5, False),    # Valid quantity

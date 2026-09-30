@@ -4,9 +4,10 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from .models import Order
-from .serializers import OrderSerializer
-from .services import OrderService
+from .models import Order, Payment
+from django.conf import settings
+from .serializers import OrderSerializer, CheckoutSerializer
+from .services import OrderService, CheckoutError
 from apps.accounts.models import Customer
 from django.db.models import Count, Sum
 from django.utils import timezone
@@ -22,18 +23,55 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Order.objects.filter(customer__user=user)
 
     def get_permissions(self):
-        # Customers may view and place orders; deleting them is staff-only.
-        if self.action == 'destroy':
+        # Customers place orders through `checkout`; creating orders directly
+        # and deleting them is staff-only.
+        if self.action in ('create', 'destroy'):
             return [IsAuthenticated(), IsAdminUser()]
         return super().get_permissions()
 
     def perform_create(self, serializer):
         # The owner always comes from the authenticated user, never the payload.
+        serializer.save(customer=self._customer())
+
+    def _customer(self):
         customer, _ = Customer.objects.get_or_create(
             user=self.request.user,
             defaults={'customer_id': uuid.uuid4().hex},
         )
-        serializer.save(customer=customer)
+        return customer
+
+    @action(detail=False, methods=['get'])
+    def checkout_options(self, request):
+        """Fulfilment and payment choices for the checkout page."""
+        return Response({
+            'vat_rate': str(settings.VAT_RATE),
+            'fulfillment_methods': [
+                {'code': Order.FulfillmentChoices.PICKUP, 'label': 'Pickup in store', 'fee': '0.00'},
+                {'code': Order.FulfillmentChoices.DELIVERY, 'label': 'Delivery', 'fee': str(settings.DELIVERY_FEE)},
+            ],
+            'payment_methods': [
+                {'code': Payment.PaymentMethod.CASH, 'label': 'Cash on pickup or delivery', 'available': True},
+                {'code': Payment.PaymentMethod.CREDIT_CARD, 'label': 'Card on pickup or delivery', 'available': True},
+                {'code': Payment.PaymentMethod.PAYPAL, 'label': 'PayPal', 'available': settings.PAYPAL_ENABLED},
+            ],
+        })
+
+    @action(detail=False, methods=['post'])
+    def checkout(self, request):
+        """Place an order from the current user's cart."""
+        from apps.cart.controllers.CMC import CartManagementController
+
+        serializer = CheckoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        cart, _ = CartManagementController().get_or_create_cart(request)
+        try:
+            order = OrderService.checkout(self._customer(), cart, serializer.validated_data)
+        except CheckoutError as e:
+            return Response(
+                {'status': 'error', 'error_type': e.code, 'detail': {'message': e.message, **e.extra}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(OrderSerializer(order, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):

@@ -284,6 +284,14 @@ LOGGING = {
     },
 }
 
+# Shop settings. Prices are stored and shown including VAT (gross).
+from decimal import Decimal  # noqa: E402
+VAT_RATE = Decimal(os.environ.get('SHOP_VAT_RATE', '0.19'))
+DELIVERY_FEE = Decimal(os.environ.get('SHOP_DELIVERY_FEE', '3.50'))
+# Online payment providers need credentials; until configured, only cash
+# and card on pickup/delivery are offered.
+PAYPAL_ENABLED = _env_bool('SHOP_PAYPAL_ENABLED', False)
+
 # HTTPS hardening outside local development
 if not DEBUG:
     SECURE_SSL_REDIRECT = _env_bool('DJANGO_SECURE_SSL_REDIRECT', True)

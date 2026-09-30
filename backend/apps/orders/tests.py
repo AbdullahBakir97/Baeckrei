@@ -95,3 +95,114 @@ class OrderStatusTransitionTests(TestCase):
         OrderService.add_tracking_number(self.order, 'DHL123')
         OrderService.update_order_status(self.order, Order.StatusChoices.COMPLETED)
         self.assertEqual(self.order.status, Order.StatusChoices.COMPLETED)
+
+
+class CheckoutTests(TestCase):
+    def setUp(self):
+        from decimal import Decimal
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from apps.products.models import Category, Product
+
+        self.client = APIClient()
+        self.user = User.objects.create_user(email='dana@example.com', password='Str0ng-Passw0rd!')
+        self.client.force_authenticate(self.user)
+        category = Category.objects.create(name='Brot', description='Bread')
+        self.bread = Product.objects.create(
+            name='Roggenbrot', description='Rye', category=category, price=Decimal('3.50'),
+            stock=5, status='active', available=True,
+            image=SimpleUploadedFile('rye.png', b'\x89PNG', content_type='image/png'),
+        )
+
+    def _add(self, quantity):
+        return self.client.post('/api/shopping-cart/add/', {'product_id': str(self.bread.id), 'quantity': quantity}, format='json')
+
+    def _checkout(self, **overrides):
+        payload = {'fulfillment_method': 'pickup', 'payment_method': 'CA'}
+        payload.update(overrides)
+        return self.client.post('/api/orders/orders/checkout/', payload, format='json')
+
+    @classmethod
+    def setUpClass(cls):
+        import tempfile
+        from django.test import override_settings
+        cls._media_root = tempfile.mkdtemp()
+        cls._media_override = override_settings(MEDIA_ROOT=cls._media_root)
+        cls._media_override.enable()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        super().tearDownClass()
+        cls._media_override.disable()
+        shutil.rmtree(cls._media_root, ignore_errors=True)
+
+    def test_pickup_checkout_creates_order_deducts_stock_and_closes_cart(self):
+        from decimal import Decimal
+        self.assertEqual(self._add(2).status_code, 200)
+        response = self._checkout(notes='Please slice')
+        self.assertEqual(response.status_code, 201, response.content)
+        data = response.json()
+        self.assertEqual(data['fulfillment_method'], 'pickup')
+        self.assertIsNone(data['address'])
+        self.assertEqual(Decimal(data['total_price']), Decimal('7.00'))
+        self.assertEqual(Decimal(data['vat_amount']), Decimal('1.12'))
+        self.assertEqual(data['payment']['payment_method'], 'CA')
+        self.assertEqual(data['items'][0]['quantity'], 2)
+        self.bread.refresh_from_db()
+        self.assertEqual(self.bread.stock, 3)
+        # The cart is closed; the next cart is empty.
+        self.assertEqual(self.client.get('/api/shopping-cart/').json()['items'], [])
+
+    def test_delivery_requires_address_and_adds_fee(self):
+        from decimal import Decimal
+        self._add(1)
+        self.assertEqual(self._checkout(fulfillment_method='delivery').status_code, 400)
+        response = self._checkout(fulfillment_method='delivery', payment_method='CC', address={
+            'address_line_1': 'Friedrichstraße 1', 'city': 'Berlin', 'postal_code': '10117',
+        })
+        self.assertEqual(response.status_code, 201, response.content)
+        data = response.json()
+        self.assertEqual(data['address']['city'], 'Berlin')
+        self.assertEqual(Decimal(data['delivery_fee']), Decimal('3.50'))
+        self.assertEqual(Decimal(data['total_price']), Decimal('7.00'))
+
+    def test_paypal_is_rejected_until_configured(self):
+        self._add(1)
+        response = self._checkout(payment_method='PP')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('payment_method', response.json())
+
+    def test_empty_cart_cannot_be_checked_out(self):
+        response = self._checkout()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error_type'], 'empty_cart')
+
+    def test_checkout_fails_when_stock_ran_out_and_changes_nothing(self):
+        self._add(3)
+        self.bread.stock = 2  # someone else bought some in the meantime
+        self.bread.save()
+        response = self._checkout()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['error_type'], 'insufficient_stock')
+        self.bread.refresh_from_db()
+        self.assertEqual(self.bread.stock, 2)
+        self.assertFalse(Order.objects.filter(customer__user=self.user).exists())
+        self.assertEqual(len(self.client.get('/api/shopping-cart/').json()['items']), 1)
+
+    def test_canceling_returns_stock(self):
+        self._add(2)
+        order_id = self._checkout().json()['id']
+        self.assertEqual(self.client.post(f'/api/orders/orders/{order_id}/cancel/').status_code, 200)
+        self.bread.refresh_from_db()
+        self.assertEqual(self.bread.stock, 5)
+
+    def test_checkout_options(self):
+        data = self.client.get('/api/orders/orders/checkout_options/').json()
+        self.assertEqual([m['code'] for m in data['fulfillment_methods']], ['pickup', 'delivery'])
+        paypal = next(m for m in data['payment_methods'] if m['code'] == 'PP')
+        self.assertFalse(paypal['available'])
+
+    def test_customers_cannot_create_orders_directly(self):
+        response = self.client.post('/api/orders/orders/', {}, format='json')
+        self.assertEqual(response.status_code, 403)

@@ -154,15 +154,14 @@ class Cart(VersionMixin, TimeStampedModel):
 
     @property
     def tax(self):
-        """Calculate tax for cart."""
-        from django.conf import settings
-        tax_rate = Decimal(str(getattr(settings, 'CART_TAX_RATE', '0.19')))  # Default 19% tax rate
-        return (self.subtotal * tax_rate).quantize(Decimal('0.01'))
+        """VAT included in the subtotal (prices are gross)."""
+        from apps.orders.models import vat_included
+        return vat_included(self.subtotal)
 
     @property
     def total(self):
-        """Calculate total for cart including tax."""
-        return (self.subtotal + self.tax).quantize(Decimal('0.01'))
+        """Cart total; VAT is already included in the item prices."""
+        return self.subtotal.quantize(Decimal('0.01'))
 
     def recalculate(self):
         """Recalculate cart totals."""
@@ -179,7 +178,8 @@ class Cart(VersionMixin, TimeStampedModel):
         # Update fields
         self._total_items = total_items
         self._subtotal = total_amount
-        self._tax = (self._subtotal * Decimal(str(getattr(settings, 'CART_TAX_RATE', '0.19')))).quantize(Decimal('0.01'))
+        from apps.orders.models import vat_included
+        self._tax = vat_included(self._subtotal)
 
     def add_item(self, product: 'Product', quantity: int) -> 'CartItem':
         """Add item to cart using command pattern."""
