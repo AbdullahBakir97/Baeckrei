@@ -56,6 +56,18 @@ class OrderPermissionTests(TestCase):
         self.client.force_authenticate(self.bob)
         self.assertEqual(self.client.get(self.url()).status_code, 404)
 
+    def test_owner_can_cancel_pending_order(self):
+        self.client.force_authenticate(self.alice)
+        response = self.client.post(self.url('cancel/'))
+        self.assertEqual(response.status_code, 200, response.content)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.StatusChoices.CANCELED)
+        self.assertEqual(self.client.post(self.url('cancel/')).status_code, 400)
+
+    def test_other_customer_cannot_cancel_order(self):
+        self.client.force_authenticate(self.bob)
+        self.assertEqual(self.client.post(self.url('cancel/')).status_code, 404)
+
     def test_staff_can_update_status(self):
         self.client.force_authenticate(self.admin)
         response = self.client.post(self.url('update_status/'), {'status': 'Processing'})

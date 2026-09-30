@@ -35,6 +35,18 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
         serializer.save(customer=customer)
 
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Let the order's owner (or staff) cancel an order that is still cancelable."""
+        order = self.get_object()
+        if not order.is_cancelable:
+            return Response(
+                {'error': 'This order can no longer be canceled'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        order = OrderService.update_order_status(order, Order.StatusChoices.CANCELED)
+        return Response(OrderSerializer(order).data)
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsAdminUser])
     def add_tracking(self, request, pk=None):
         order = self.get_object()
