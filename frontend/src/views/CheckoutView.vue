@@ -39,7 +39,33 @@
               </button>
             </div>
 
-            <div v-if="isDelivery" class="grid sm:grid-cols-6 gap-4 pt-2">
+            <div v-if="isDelivery && addressStore.addresses.length" class="grid gap-3 pt-2">
+              <p class="field-label">Deliver to</p>
+              <button
+                v-for="address in addressStore.addresses"
+                :key="address.id"
+                type="button"
+                class="choice-card"
+                :class="{ 'is-selected': selectedAddressId === address.id }"
+                :aria-pressed="selectedAddressId === address.id"
+                @click="selectedAddressId = address.id"
+              >
+                <font-awesome-icon icon="location-dot" class="mt-1 text-amber-400" />
+                <span class="text-gray-200">{{ address.address_line_1 }}, {{ address.postal_code }} {{ address.city }}</span>
+              </button>
+              <button
+                type="button"
+                class="choice-card"
+                :class="{ 'is-selected': selectedAddressId === null }"
+                :aria-pressed="selectedAddressId === null"
+                @click="selectedAddressId = null"
+              >
+                <font-awesome-icon icon="plus" class="mt-1 text-amber-400" />
+                <span class="text-gray-200">A new address</span>
+              </button>
+            </div>
+
+            <div v-if="isDelivery && selectedAddressId === null" class="grid sm:grid-cols-6 gap-4 pt-2">
               <div class="sm:col-span-6">
                 <label for="address_line_1" class="field-label">Street and house number</label>
                 <input id="address_line_1" v-model.trim="form.address.address_line_1" class="field-input" autocomplete="address-line1" required />
@@ -59,6 +85,10 @@
                 <input id="city" v-model.trim="form.address.city" class="field-input" autocomplete="address-level2" required />
                 <p v-if="errors.city" class="field-error">{{ errors.city }}</p>
               </div>
+              <label class="sm:col-span-6 flex items-center gap-2 text-gray-300">
+                <input v-model="form.save_address" type="checkbox" class="rounded border-white/20 bg-white/5 text-amber-500" />
+                Save this address for next time
+              </label>
             </div>
           </section>
 
@@ -167,12 +197,15 @@ import { useRouter } from 'vue-router'
 import PageHeader from '@/components/common/PageHeader.vue'
 import { useCartStore } from '@/stores/cartStore'
 import { useOrderStore } from '@/stores/orderStore'
+import { useAddressStore } from '@/stores/addressStore'
 import { business, streetLine, cityLine } from '@/config/business'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 
 const router = useRouter()
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
+const addressStore = useAddressStore()
+const selectedAddressId = ref(null)
 
 const loadingPage = ref(true)
 const submitting = ref(false)
@@ -185,7 +218,8 @@ const form = reactive({
   address: { address_line_1: '', address_line_2: '', postal_code: '', city: 'Berlin' },
   requested_time: '',
   contact_phone: '',
-  notes: ''
+  notes: '',
+  save_address: true
 })
 
 const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
@@ -230,7 +264,7 @@ watch(() => form.requested_time, () => delete errors.requested_time)
 
 function validate() {
   Object.keys(errors).forEach(key => delete errors[key])
-  if (isDelivery.value) {
+  if (isDelivery.value && selectedAddressId.value === null) {
     if (!form.address.address_line_1) errors.address_line_1 = 'Enter your street and house number.'
     if (!form.address.postal_code) errors.postal_code = 'Enter your postal code.'
     if (!form.address.city) errors.city = 'Enter your city.'
@@ -250,7 +284,14 @@ async function submit() {
     notes: form.notes,
     requested_time: form.requested_time ? new Date(form.requested_time).toISOString() : null
   }
-  if (isDelivery.value) payload.address = { ...form.address, country: 'DE' }
+  if (isDelivery.value) {
+    if (selectedAddressId.value !== null) {
+      payload.address_id = selectedAddressId.value
+    } else {
+      payload.address = { ...form.address, country: 'DE' }
+      payload.save_address = form.save_address
+    }
+  }
   try {
     const order = await orderStore.placeOrder(payload)
     await cartStore.fetchCart({ silent: true })
@@ -275,7 +316,12 @@ async function submit() {
 onMounted(async () => {
   orderStore.error = null
   try {
-    const [opts] = await Promise.all([orderStore.fetchCheckoutOptions(), cartStore.fetchCart({ silent: true })])
+    const [opts, addresses] = await Promise.all([
+      orderStore.fetchCheckoutOptions(),
+      addressStore.fetchAddresses().catch(() => []),
+      cartStore.fetchCart({ silent: true })
+    ])
+    if (addresses.length) selectedAddressId.value = addresses[0].id
     options.value = opts
     const firstAvailable = opts.payment_methods.find(m => m.available)
     if (firstAvailable) form.payment_method = firstAvailable.code

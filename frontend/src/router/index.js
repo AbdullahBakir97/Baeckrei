@@ -51,6 +51,30 @@ const routes = [
     meta: { title: 'Seasonal Specials', requiresAuth: false, seasonal: true }
   },
   {
+    path: '/wishlist',
+    name: 'wishlist',
+    component: () => import('@/views/WishlistView.vue'),
+    meta: { title: 'Wishlist' }
+  },
+  {
+    path: '/compare',
+    name: 'compare',
+    component: () => import('@/views/CompareView.vue'),
+    meta: { title: 'Compare Products' }
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@/components/auth/ForgotPassword.vue'),
+    meta: { title: 'Forgot Password' }
+  },
+  {
+    path: '/reset-password/:uid/:token',
+    name: 'reset-password',
+    component: () => import('@/components/auth/ResetPassword.vue'),
+    meta: { title: 'Reset Password' }
+  },
+  {
     path: '/privacy',
     name: 'privacy',
     component: () => import('@/components/pages/Privacy.vue'),
@@ -118,6 +142,7 @@ const routes = [
   },
   {
     path: '/settings',
+    name: 'settings',
     component: Settings,
     meta: { requiresAuth: true, title: 'Settings' }
   },

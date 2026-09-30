@@ -1,126 +1,127 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">My Profile</h1>
-    <div class="max-w-2xl mx-auto">
-      <div v-if="!isAuthenticated" class="bg-white rounded-lg shadow p-6">
-        <p class="text-center text-gray-600">
-          Please log in to view your profile.
-        </p>
-      </div>
-      
-      <div v-else class="bg-white rounded-lg shadow p-6 space-y-6">
-        <div class="flex items-center justify-between border-b pb-4">
+  <div class="min-h-screen py-12 px-4">
+    <div class="max-w-3xl mx-auto space-y-6">
+      <PageHeader title="My Profile" :subtitle="memberSince" icon="user" />
+
+      <section class="glass-panel">
+        <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 class="text-xl font-semibold">{{ user?.email }}</h2>
-            <p class="text-gray-600">Member since {{ formatDate(user?.date_joined) }}</p>
+            <h2 class="text-xl font-semibold text-white">{{ fullName || 'Your details' }}</h2>
+            <p class="text-gray-400">{{ user?.email }}</p>
           </div>
-          <span v-if="isAdmin" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-            Admin
-          </span>
+          <span v-if="isAdmin" class="rounded-full bg-blue-500/20 px-3 py-1 text-sm text-blue-300">Admin</span>
         </div>
 
-        <!-- Admin Quick Links -->
-        <div v-if="isAdmin" class="space-y-4">
-          <h3 class="text-lg font-semibold">Admin Quick Links</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <router-link 
-              :to="{ name: 'admin-dashboard' }"
-              class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <HomeIcon class="w-6 h-6 text-gray-600 mr-3" />
-              <span>Dashboard</span>
-            </router-link>
-            
-            <router-link 
-              :to="{ name: 'admin-products' }"
-              class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <ShoppingBagIcon class="w-6 h-6 text-gray-600 mr-3" />
-              <span>Products</span>
-            </router-link>
-            
-            <router-link 
-              :to="{ name: 'admin-orders' }"
-              class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <ShoppingCartIcon class="w-6 h-6 text-gray-600 mr-3" />
-              <span>Orders</span>
-            </router-link>
+        <form v-if="editing" class="mt-6 grid sm:grid-cols-2 gap-4" @submit.prevent="save">
+          <div>
+            <label for="first_name" class="field-label">First name</label>
+            <input id="first_name" v-model.trim="form.first_name" class="field-input" autocomplete="given-name" />
           </div>
-        </div>
+          <div>
+            <label for="last_name" class="field-label">Last name</label>
+            <input id="last_name" v-model.trim="form.last_name" class="field-input" autocomplete="family-name" />
+          </div>
+          <div class="sm:col-span-2">
+            <label for="phone" class="field-label">Phone <span class="text-gray-500">(optional)</span></label>
+            <input id="phone" v-model.trim="form.phone" type="tel" class="field-input" autocomplete="tel" />
+          </div>
+          <p v-if="error" class="sm:col-span-2 field-error" role="alert">{{ error }}</p>
+          <div class="sm:col-span-2 flex gap-3">
+            <button type="submit" class="btn-amber" :disabled="saving">{{ saving ? 'Saving…' : 'Save changes' }}</button>
+            <button type="button" class="btn-ghost" @click="cancelEdit">Cancel</button>
+          </div>
+        </form>
 
-        <!-- User Actions -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-semibold">Account Actions</h3>
-          <div class="flex space-x-4">
-            <button 
-              @click="handleLogout" 
-              class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-            >
-              Logout
-            </button>
-            <button 
-              class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-            >
-              Edit Profile
-            </button>
+        <template v-else>
+          <dl class="mt-6 grid sm:grid-cols-2 gap-4">
+            <div>
+              <dt class="text-sm text-gray-500">Name</dt>
+              <dd class="text-gray-200">{{ fullName || '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-sm text-gray-500">Phone</dt>
+              <dd class="text-gray-200">{{ user?.phone || '—' }}</dd>
+            </div>
+          </dl>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button type="button" class="btn-amber" @click="startEdit">Edit profile</button>
+            <router-link to="/settings" class="btn-ghost">Password and addresses</router-link>
           </div>
-        </div>
-      </div>
+        </template>
+      </section>
+
+      <section class="glass-panel grid sm:grid-cols-3 gap-3">
+        <router-link to="/orders" class="choice-card">
+          <font-awesome-icon icon="box-open" class="mt-1 text-amber-400" />
+          <span><span class="block text-white font-medium">Orders</span><span class="text-sm text-gray-400">Track and cancel</span></span>
+        </router-link>
+        <router-link to="/wishlist" class="choice-card">
+          <font-awesome-icon icon="heart" class="mt-1 text-amber-400" />
+          <span><span class="block text-white font-medium">Wishlist</span><span class="text-sm text-gray-400">Saved products</span></span>
+        </router-link>
+        <router-link v-if="isAdmin" to="/admin" class="choice-card">
+          <font-awesome-icon icon="chart-pie" class="mt-1 text-amber-400" />
+          <span><span class="block text-white font-medium">Admin</span><span class="text-sm text-gray-400">Manage the shop</span></span>
+        </router-link>
+      </section>
+
+      <button type="button" class="btn-ghost text-red-300" @click="handleLogout">Sign out</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import PageHeader from '@/components/common/PageHeader.vue'
 import { useAuthStore } from '@/stores/authStore'
-import { 
-  HomeIcon, 
-  ShoppingBagIcon, 
-  ShoppingCartIcon, 
-  UsersIcon 
-} from '@heroicons/vue/24/outline'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { showToast } = useToast()
 
-const isAuthenticated = computed(() => authStore.isAuthenticated)
-const isAdmin = computed(() => authStore.isAdmin)
 const user = computed(() => authStore.user)
+const isAdmin = computed(() => authStore.isAdmin)
+const fullName = computed(() => [user.value?.first_name, user.value?.last_name].filter(Boolean).join(' '))
+const memberSince = computed(() => user.value?.date_joined
+  ? `Member since ${new Date(user.value.date_joined).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}`
+  : '')
 
-const adminLinks = [
-  {
-    name: 'Dashboard',
-    path: '/admin',
-    icon: HomeIcon
-  },
-  {
-    name: 'Products',
-    path: '/admin/products',
-    icon: ShoppingBagIcon
-  },
-  {
-    name: 'Orders',
-    path: '/admin/orders',
-    icon: ShoppingCartIcon
-  },
-  {
-    name: 'Users',
-    path: '/admin/users',
-    icon: UsersIcon
-  }
-]
+const editing = ref(false)
+const saving = ref(false)
+const error = ref('')
+const form = reactive({ first_name: '', last_name: '', phone: '' })
 
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+function startEdit() {
+  Object.assign(form, {
+    first_name: user.value?.first_name || '',
+    last_name: user.value?.last_name || '',
+    phone: user.value?.phone || ''
   })
+  error.value = ''
+  editing.value = true
 }
 
-const handleLogout = async () => {
+function cancelEdit() {
+  editing.value = false
+}
+
+async function save() {
+  saving.value = true
+  error.value = ''
+  try {
+    await authStore.updateProfile({ ...form })
+    editing.value = false
+    showToast('Profile saved')
+  } catch (err) {
+    error.value = authStore.error
+  } finally {
+    saving.value = false
+  }
+}
+
+async function handleLogout() {
   await authStore.logout()
   router.push({ name: 'login' })
 }
