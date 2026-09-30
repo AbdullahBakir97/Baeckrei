@@ -1,5 +1,5 @@
-import ProductManagement from '@/components/admin/products/ProductManagement.vue'
-import AdminLayout from '@/components/admin/AdminLayout.vue'
+const ProductManagement = () => import('@/components/admin/products/ProductManagement.vue')
+const AdminLayout = () => import('@/components/admin/AdminLayout.vue')
 
 export const adminRoutes = {
     path: '/admin',

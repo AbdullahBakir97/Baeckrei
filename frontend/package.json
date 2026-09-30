@@ -10,7 +10,6 @@
     "generate-assets": "node src/utils/saveBakeryAssets.js"
   },
   "dependencies": {
-    "@aksharahegde/vue-glow": "^1.2.0",
     "@fontsource-variable/manrope": "^5.3.0",
     "@fontsource/instrument-serif": "^5.3.0",
     "@fortawesome/fontawesome-svg-core": "^6.5.1",

@@ -1,12 +1,7 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="section pt-6 pb-10">
     <!-- Header Section -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-        My Orders
-      </h1>
-      <p class="text-gray-400 mt-2">Track and manage your orders</p>
-    </div>
+    <PageHeader eyebrow="Account" title="Orders" subtitle="Track, view and cancel your orders" />
 
     <!-- Loading State -->
     <div v-if="orderStore.loading" class="grid place-items-center h-96">
@@ -140,6 +135,7 @@
 </template>
 
 <script setup>
+import PageHeader from '@/components/common/PageHeader.vue'
 import { PLACEHOLDER_IMAGE } from '@/utils/imageFallback'
 import { ref, onMounted } from 'vue'
 import { useToast } from '@/composables/useToast'

@@ -1,7 +1,7 @@
 <template>
-  <div class="fixed inset-0 z-50 overflow-y-auto bg-gray-900/50" role="dialog" aria-modal="true" aria-labelledby="product-form-title" @click.self="$emit('close')">
-    <div class="mx-auto my-8 w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl text-gray-800">
-      <h2 id="product-form-title" class="text-lg font-semibold text-gray-900">{{ product ? 'Edit product' : 'New product' }}</h2>
+  <div class="fixed inset-0 z-50 overflow-y-auto bg-oven-950/70" role="dialog" aria-modal="true" aria-labelledby="product-form-title" @click.self="$emit('close')">
+    <div class="admin-panel mx-auto my-8 w-full max-w-2xl p-6 text-cream">
+      <h2 id="product-form-title" class="text-lg font-semibold text-cream">{{ product ? 'Edit product' : 'New product' }}</h2>
 
       <form class="mt-4 grid sm:grid-cols-2 gap-4" @submit.prevent="handleSubmit">
         <div class="sm:col-span-2">
@@ -49,41 +49,41 @@
         <div class="sm:col-span-2">
           <label for="pf-image" class="admin-label">Photo {{ product ? '(leave empty to keep the current one)' : '' }}</label>
           <div class="mt-1 flex items-center gap-4">
-            <img v-if="previewUrl" :src="previewUrl" alt="" class="h-16 w-16 rounded object-cover bg-gray-100" />
-            <input id="pf-image" type="file" accept="image/jpeg,image/png,image/webp" class="text-sm text-gray-700" @change="onImage" />
+            <img v-if="previewUrl" :src="previewUrl" alt="" class="h-16 w-16 rounded object-cover bg-cream/[0.05]" />
+            <input id="pf-image" type="file" accept="image/jpeg,image/png,image/webp" class="text-sm text-cream/80" @change="onImage" />
           </div>
-          <p class="mt-1 text-xs text-gray-500">JPG, PNG or WebP, up to 5 MB.</p>
+          <p class="mt-1 text-xs text-cream-muted">JPG, PNG or WebP, up to 5 MB.</p>
           <p v-if="errors.image" class="admin-error">{{ errors.image }}</p>
         </div>
 
         <div class="sm:col-span-2">
-          <label for="pf-model" class="admin-label">3D model <span class="font-normal text-gray-500">(optional)</span></label>
-          <p v-if="currentModel && !form.removeModel && !form.modelFile" class="mt-1 flex items-center gap-3 text-sm text-gray-700">
-            <font-awesome-icon icon="cube" class="text-indigo-600" />
+          <label for="pf-model" class="admin-label">3D model <span class="font-normal text-cream-muted">(optional)</span></label>
+          <p v-if="currentModel && !form.removeModel && !form.modelFile" class="mt-1 flex items-center gap-3 text-sm text-cream/80">
+            <font-awesome-icon icon="cube" class="text-crust" />
             <a :href="currentModel" target="_blank" rel="noopener" class="underline truncate">{{ currentModel.split('/').pop() }}</a>
-            <button type="button" class="text-red-600 hover:underline" @click="form.removeModel = true">Remove</button>
+            <button type="button" class="text-red-300 hover:underline" @click="form.removeModel = true">Remove</button>
           </p>
-          <p v-else-if="form.removeModel" class="mt-1 text-sm text-gray-700">
-            The 3D model will be removed. <button type="button" class="text-indigo-600 hover:underline" @click="form.removeModel = false">Undo</button>
+          <p v-else-if="form.removeModel" class="mt-1 text-sm text-cream/80">
+            The 3D model will be removed. <button type="button" class="text-crust hover:underline" @click="form.removeModel = false">Undo</button>
           </p>
-          <input id="pf-model" type="file" accept=".glb,model/gltf-binary" class="mt-1 text-sm text-gray-700" @change="onModel" />
-          <p class="mt-1 text-xs text-gray-500">A .glb file up to 20 MB. Without one, the storefront builds a 3D view from the photo (works best with a transparent PNG).</p>
+          <input id="pf-model" type="file" accept=".glb,model/gltf-binary" class="mt-1 text-sm text-cream/80" @change="onModel" />
+          <p class="mt-1 text-xs text-cream-muted">A .glb file up to 20 MB. Without one, the storefront builds a 3D view from the photo (works best with a transparent PNG).</p>
           <p v-if="errors.model_3d" class="admin-error">{{ errors.model_3d }}</p>
         </div>
 
         <fieldset class="sm:col-span-2 flex flex-wrap gap-x-6 gap-y-2">
           <legend class="admin-label">Details</legend>
-          <label v-for="flag in flags" :key="flag.key" class="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input v-model="form[flag.key]" type="checkbox" class="rounded border-gray-300 text-indigo-600" />
+          <label v-for="flag in flags" :key="flag.key" class="inline-flex items-center gap-2 text-sm text-cream/80">
+            <input v-model="form[flag.key]" type="checkbox" class="rounded border-cream/15 text-crust" />
             {{ flag.label }}
           </label>
         </fieldset>
 
-        <p v-if="errors.general" class="sm:col-span-2 rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errors.general }}</p>
+        <p v-if="errors.general" class="sm:col-span-2 rounded-md bg-red-400/10 p-3 text-sm text-red-300" role="alert">{{ errors.general }}</p>
 
         <div class="sm:col-span-2 flex justify-end gap-3">
-          <button type="button" class="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200" @click="$emit('close')">Cancel</button>
-          <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700" :disabled="saving">
+          <button type="button" class="px-4 py-2 text-sm font-medium rounded-full text-cream/80 bg-cream/[0.05] hover:bg-cream/10" @click="$emit('close')">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-sm font-medium rounded-full text-oven-950 bg-crust hover:bg-crust-light" :disabled="saving">
             {{ saving ? 'Saving…' : (product ? 'Save changes' : 'Create product') }}
           </button>
         </div>
@@ -190,14 +190,14 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .admin-label {
-  @apply block text-sm font-medium text-gray-700;
+  @apply block text-sm font-medium text-cream/80;
 }
 
 .admin-input {
-  @apply mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm sm:text-sm text-gray-900 bg-white focus:border-indigo-500 focus:ring-indigo-500;
+  @apply mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800 focus:border-crust focus:ring-crust;
 }
 
 .admin-error {
-  @apply mt-1 text-sm text-red-600;
+  @apply mt-1 text-sm text-red-300;
 }
 </style>

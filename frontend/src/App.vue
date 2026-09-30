@@ -1,23 +1,24 @@
 <template>
   <div class="app">
-    <AmbientBackground />
+    <AmbientBackground v-if="!isAdmin" />
     <a href="#main" class="skip-link">Skip to content</a>
-    <Navbar />
-    <main id="main" class="main-container" :class="{ 'is-full-bleed': route.meta.fullBleed }">
+    <Navbar v-if="!isAdmin" />
+    <main id="main" class="main-container" :class="{ 'is-full-bleed': route.meta.fullBleed || isAdmin }">
       <router-view v-slot="{ Component, route }">
         <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
-          <component :is="Component" :key="route.path" />
+          <!-- The admin area keeps its layout mounted while its pages change. -->
+          <component :is="Component" :key="isAdmin ? 'admin' : route.path" />
         </transition>
       </router-view>
     </main>
-    <Footer />
+    <Footer v-if="!isAdmin" />
     <Toast />
     <ModalWrapper />
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
@@ -27,6 +28,8 @@ import ModalWrapper from '@/components/common/ModalWrapper.vue'
 import { gsap, ScrollTrigger, initSmoothScroll, scrollToTop, prefersReducedMotion } from '@/motion'
 
 const route = useRoute()
+// The admin area has its own layout and navigation.
+const isAdmin = computed(() => route.matched.some(record => record.meta.requiresAdmin))
 
 // Page transitions: the old page lifts away, the new one settles in.
 const onLeave = (el, done) => {

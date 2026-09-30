@@ -51,7 +51,6 @@ export default {
     },
   },
   plugins: [
-    require('@tailwindcss/aspect-ratio'),
-    require("@aksharahegde/vue-glow/tailwind")
+    require('@tailwindcss/aspect-ratio')
   ],
 }

@@ -1,21 +1,21 @@
 <template>
-  <div class="min-h-[60vh] flex items-center justify-center py-16 px-4">
-    <div class="glass-panel max-w-lg w-full text-center">
-      <p class="text-6xl font-extrabold text-amber-400">404</p>
-      <h1 class="mt-4 text-2xl font-bold text-white">Page not found</h1>
-      <p class="mt-2 text-gray-400">
-        We couldn't find <span class="font-mono text-gray-300 break-all">{{ route.fullPath }}</span>.
-        Maybe it was moved, or the link is out of date.
-      </p>
-      <form class="mt-6 flex gap-2" role="search" @submit.prevent="search">
-        <label for="not-found-search" class="sr-only">Search products</label>
-        <input id="not-found-search" v-model.trim="query" class="field-input" placeholder="Search products…" />
-        <button type="submit" class="btn-amber px-4 py-2">Search</button>
-      </form>
-      <div class="mt-6 flex flex-wrap justify-center gap-3">
-        <router-link to="/products" class="btn-ghost">Browse products</router-link>
-        <router-link to="/contact" class="btn-ghost">Contact us</router-link>
-      </div>
+  <div class="section notfound">
+    <img :src="pretzelImg" alt="" class="notfound-img" />
+    <p class="notfound-code" aria-hidden="true">404</p>
+    <h1 v-split.load class="display-title text-5xl sm:text-7xl">This shelf is empty.</h1>
+    <p class="mt-4 max-w-md text-cream-muted">
+      We couldn't find <span class="font-mono text-cream break-all">{{ route.fullPath }}</span>.
+      Maybe it was moved, or the link is out of date.
+    </p>
+    <form class="notfound-search" role="search" @submit.prevent="search">
+      <label for="not-found-search" class="sr-only">Search products</label>
+      <input id="not-found-search" v-model.trim="query" placeholder="Search the shop…" />
+      <button type="submit" class="btn-amber !py-3 !px-6">Search</button>
+    </form>
+    <div class="mt-6 flex flex-wrap justify-center gap-3">
+      <router-link to="/" class="btn-ghost">Home</router-link>
+      <router-link to="/products" class="btn-ghost">Browse products</router-link>
+      <router-link to="/contact" class="btn-ghost">Contact us</router-link>
     </div>
   </div>
 </template>
@@ -23,6 +23,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import pretzelImg from '@/assets/bakery/pretzel.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,3 +33,67 @@ const search = () => {
   if (query.value) router.push({ name: 'products', query: { search: query.value } })
 }
 </script>
+
+<style scoped>
+.notfound {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4rem;
+  text-align: center;
+}
+
+.notfound-code {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: clamp(10rem, 30vw, 22rem);
+  line-height: 1;
+  color: rgba(230, 161, 90, 0.08);
+  pointer-events: none;
+  user-select: none;
+}
+
+.notfound-img {
+  position: relative;
+  width: 9rem;
+  margin-bottom: 2rem;
+  filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.5));
+  animation: wobble 6s ease-in-out infinite;
+}
+
+@keyframes wobble {
+  50% { transform: translateY(-10px) rotate(8deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notfound-img {
+    animation: none;
+  }
+}
+
+.notfound-search {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 28rem;
+  margin-top: 2rem;
+  padding: 0.35rem;
+  border-radius: 9999px;
+  background: rgba(244, 236, 225, 0.05);
+  border: 1px solid rgba(244, 236, 225, 0.12);
+}
+
+.notfound-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 1rem;
+  border: 0;
+  background: transparent;
+  color: #f4ece1;
+  outline: none;
+}
+</style>

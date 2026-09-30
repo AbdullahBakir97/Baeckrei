@@ -3,7 +3,7 @@
     <div class="flex justify-end mb-6">
       <button
         @click="openCreateModal"
-        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
       >
         <PlusIcon class="h-5 w-5 mr-2" />
         Add Product
@@ -40,7 +40,7 @@
 
         <template #name="{ item }">
           <div>
-            <div class="font-medium text-gray-900">{{ item.name }}</div>
+            <div class="font-medium text-cream">{{ item.name }}</div>
           </div>
         </template>
 
@@ -56,9 +56,9 @@
           <div class="flex items-center">
             <span
               :class="[
-                item.stock > 10 ? 'bg-green-100 text-green-800' :
-                item.stock > 0 ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800',
+                item.stock > 10 ? 'bg-emerald-400/10 text-emerald-300' :
+                item.stock > 0 ? 'bg-amber-300/10 text-amber-200' :
+                'bg-red-400/10 text-red-300',
                 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
               ]"
             >
@@ -69,10 +69,7 @@
 
         <template #status="{ item }">
           <span
-            :class="[
-              item.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800',
-              'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
-            ]"
+            :class="[ item.status === 'active' ? 'bg-emerald-400/10 text-emerald-300' : 'bg-red-400/10 text-red-300', 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full' ]"
           >
             {{ item.status }}
           </span>
@@ -82,7 +79,7 @@
           <div class="flex justify-end space-x-2">
             <button
               @click="viewProduct(item)"
-              class="text-gray-400 hover:text-gray-500 bg-transparent p-1"
+              class="text-cream-faint hover:text-cream-muted bg-transparent p-1"
               title="View Details"
             >
               <EyeIcon class="h-5 w-5" />

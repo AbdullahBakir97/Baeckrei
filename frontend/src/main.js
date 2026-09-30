@@ -9,7 +9,6 @@ import '@fontsource-variable/manrope/wght.css'
 import './style.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import './plugins/fontawesome'
-import VueGlow from '@aksharahegde/vue-glow'
 import { installMotion } from './motion/directives'
 
 const app = createApp(App)
@@ -17,7 +16,6 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
-app.use(VueGlow)
 installMotion(app)
 
 // Register global components
