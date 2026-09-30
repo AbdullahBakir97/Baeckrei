@@ -1,3 +1,5 @@
+import uuid
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .models import Order
 from .serializers import OrderSerializer
 from .services import OrderService
+from apps.accounts.models import Customer
 from django.db.models import Count, Sum
 from django.utils import timezone
 
@@ -18,7 +21,21 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Order.objects.all()
         return Order.objects.filter(customer__user=user)
 
-    @action(detail=True, methods=['post'])
+    def get_permissions(self):
+        # Customers may view and place orders; deleting them is staff-only.
+        if self.action == 'destroy':
+            return [IsAuthenticated(), IsAdminUser()]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        # The owner always comes from the authenticated user, never the payload.
+        customer, _ = Customer.objects.get_or_create(
+            user=self.request.user,
+            defaults={'customer_id': uuid.uuid4().hex},
+        )
+        serializer.save(customer=customer)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsAdminUser])
     def add_tracking(self, request, pk=None):
         order = self.get_object()
         tracking_number = request.data.get('tracking_number')
@@ -38,7 +55,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsAdminUser])
     def update_status(self, request, pk=None):
         order = self.get_object()
         new_status = request.data.get('status')
