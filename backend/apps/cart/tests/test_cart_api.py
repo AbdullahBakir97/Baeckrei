@@ -7,6 +7,9 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.products.models import Category, Product
+from apps.core.testing import make_test_password
+
+PASSWORD = make_test_password()
 
 CART_URL = '/api/shopping-cart/'
 
@@ -101,7 +104,7 @@ def test_cannot_add_more_than_stock(client, product):
 
 
 def test_jwt_user_cart_follows_the_user_not_the_session(product):
-    user = User.objects.create_user(email='jwt@example.com', password='Str0ng-Passw0rd!')
+    user = User.objects.create_user(email='jwt@example.com', password=PASSWORD)
     first = APIClient()
     first.force_authenticate(user)
     assert add(first, product, 2).status_code == 200
