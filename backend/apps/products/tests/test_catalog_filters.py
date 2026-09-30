@@ -6,6 +6,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 
 from apps.products.models import Category, Product
+from apps.core.testing import make_test_password
+
+PASSWORD = make_test_password()
 
 
 @pytest.fixture(autouse=True)
@@ -63,7 +66,7 @@ def test_shop_hides_drafts_but_staff_can_list_everything(catalog):
     assert 'Secret recipe' not in names(APIClient().get('/api/products/', {'include_all': 'true'}))
 
     staff = APIClient()
-    staff.force_authenticate(User.objects.create_superuser(email='boss@example.com', password='Str0ng-Passw0rd!'))
+    staff.force_authenticate(User.objects.create_superuser(email='boss@example.com', password=PASSWORD))
     assert 'Secret recipe' in names(staff.get('/api/products/', {'include_all': 'true'}))
     assert names(staff.get('/api/products/', {'include_all': 'true', 'status': 'draft'})) == ['Secret recipe']
 

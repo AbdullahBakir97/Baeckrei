@@ -11,6 +11,9 @@ from rest_framework.test import APIClient
 from apps.accounts.models import Customer, User
 from apps.orders.models import Order, OrderItem
 from apps.products.models import Category, Product
+from apps.core.testing import make_test_password
+
+PASSWORD = make_test_password()
 
 
 @pytest.fixture(autouse=True)
@@ -26,7 +29,7 @@ def png(name='bread.png'):
 
 @pytest.fixture
 def admin_client(db):
-    admin = User.objects.create_superuser(email='boss@example.com', password='Str0ng-Passw0rd!')
+    admin = User.objects.create_superuser(email='boss@example.com', password=PASSWORD)
     client = APIClient()
     client.force_authenticate(admin)
     return client
@@ -76,7 +79,7 @@ def test_deleting_an_ordered_product_discontinues_it(admin_client, breads):
         name='Brezel', description='x', category=breads, price=Decimal('1.00'), stock=5,
         status='active', available=True, image=png(),
     )
-    user = User.objects.create_user(email='c@example.com', password='Str0ng-Passw0rd!')
+    user = User.objects.create_user(email='c@example.com', password=PASSWORD)
     customer = Customer.objects.create(user=user, customer_id=uuid.uuid4().hex)
     order = Order.objects.create(customer=customer)
     OrderItem.objects.create(order=order, product=product, quantity=1, price_per_item=Decimal('1.00'))
@@ -92,7 +95,7 @@ def test_invalid_product_id_is_404(admin_client):
 
 
 def test_customers_cannot_manage_products(db, breads):
-    user = User.objects.create_user(email='c@example.com', password='Str0ng-Passw0rd!')
+    user = User.objects.create_user(email='c@example.com', password=PASSWORD)
     client = APIClient()
     client.force_authenticate(user)
     assert client.post('/api/products/', {}, format='json').status_code == 403

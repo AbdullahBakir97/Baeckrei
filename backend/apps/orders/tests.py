@@ -112,7 +112,7 @@ class CheckoutTests(TestCase):
         from apps.products.models import Category, Product
 
         self.client = APIClient()
-        self.user = User.objects.create_user(email='dana@example.com', password='Str0ng-Passw0rd!')
+        self.user = User.objects.create_user(email='dana@example.com', password=PASSWORD)
         self.client.force_authenticate(self.user)
         category = Category.objects.create(name='Brot', description='Bread')
         self.bread = Product.objects.create(
@@ -231,10 +231,10 @@ class CheckoutTests(TestCase):
 
 class AdminOrderTests(TestCase):
     def setUp(self):
-        self.admin = User.objects.create_superuser(email='boss@example.com', password='Str0ng-Passw0rd!')
+        self.admin = User.objects.create_superuser(email='boss@example.com', password=PASSWORD)
         self.client = APIClient()
         self.client.force_authenticate(self.admin)
-        alice = User.objects.create_user(email='alice@example.com', password='Str0ng-Passw0rd!')
+        alice = User.objects.create_user(email='alice@example.com', password=PASSWORD)
         self.order = make_order(alice)
 
     def test_dashboard_stats_and_recent_orders(self):

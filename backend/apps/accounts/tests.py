@@ -6,6 +6,7 @@ from apps.accounts.models import Customer
 from apps.core.testing import make_test_password
 
 PASSWORD = make_test_password()
+NEW_PASSWORD = make_test_password()
 
 User = get_user_model()
 
@@ -82,8 +83,8 @@ class RegisterTests(TestCase):
 class AddressTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.alice = User.objects.create_user(email='alice@example.com', password='Str0ng-Passw0rd!')
-        self.bob = User.objects.create_user(email='bob@example.com', password='Str0ng-Passw0rd!')
+        self.alice = User.objects.create_user(email='alice@example.com', password=PASSWORD)
+        self.bob = User.objects.create_user(email='bob@example.com', password=PASSWORD)
         self.client.force_authenticate(self.alice)
 
     def _create(self, **extra):
@@ -122,7 +123,7 @@ class AddressTests(TestCase):
 
 class PasswordResetTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(email='carol@example.com', password='Old-Passw0rd!')
+        self.user = User.objects.create_user(email='carol@example.com', password=PASSWORD)
 
     def test_reset_flow(self):
         import re
@@ -132,14 +133,14 @@ class PasswordResetTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         uid, token = re.search(r'/reset-password/([^/]+)/(\S+)', mail.outbox[0].body).groups()
         response = APIClient().post('/api/accounts/password-reset/confirm/', {
-            'uid': uid, 'token': token, 'new_password': 'Brand-N3w-Passw0rd!',
+            'uid': uid, 'token': token, 'new_password': NEW_PASSWORD,
         })
         self.assertEqual(response.status_code, 200, response.content)
         self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password('Brand-N3w-Passw0rd!'))
+        self.assertTrue(self.user.check_password(NEW_PASSWORD))
         # The link only works once.
         response = APIClient().post('/api/accounts/password-reset/confirm/', {
-            'uid': uid, 'token': token, 'new_password': 'Another-Passw0rd!',
+            'uid': uid, 'token': token, 'new_password': make_test_password(),
         })
         self.assertEqual(response.status_code, 400)
 
@@ -151,7 +152,7 @@ class PasswordResetTests(TestCase):
 
     def test_invalid_token_is_rejected(self):
         response = APIClient().post('/api/accounts/password-reset/confirm/', {
-            'uid': 'MQ', 'token': 'bad-token', 'new_password': 'Brand-N3w-Passw0rd!',
+            'uid': 'MQ', 'token': 'bad-token', 'new_password': NEW_PASSWORD,
         })
         self.assertEqual(response.status_code, 400)
 
@@ -163,8 +164,8 @@ class PasswordResetTests(TestCase):
 
 class AdminUserTests(TestCase):
     def setUp(self):
-        self.admin = User.objects.create_superuser(email='boss@example.com', password='Str0ng-Passw0rd!')
-        self.alice = User.objects.create_user(email='alice@example.com', password='Str0ng-Passw0rd!', first_name='Alice')
+        self.admin = User.objects.create_superuser(email='boss@example.com', password=PASSWORD)
+        self.alice = User.objects.create_user(email='alice@example.com', password=PASSWORD, first_name='Alice')
         self.client = APIClient()
         self.client.force_authenticate(self.admin)
 
