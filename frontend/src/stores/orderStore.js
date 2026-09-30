@@ -83,7 +83,7 @@ export const useOrderStore = defineStore('orders', () => {
       // Ordering
       if (params.ordering) queryParams.append('ordering', params.ordering)
 
-      const response = await axios.get(API_PATH, {
+      const response = await axios.get(`${API_PATH}/`, {
         params: queryParams,
         withCredentials: true
       })
