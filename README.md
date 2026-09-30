@@ -19,13 +19,26 @@ Bakery management system — production scheduling, recipe-driven inventory dedu
 
 ```bash
 git clone https://github.com/AbdullahBakir97/Baeckrei.git
-cd Baeckrei
+cd Baeckrei/backend
 python -m venv .venv
 source .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
+cp .env.example .env         # sets DJANGO_DEBUG=True for local development
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver
 ```
+
+Frontend (in a second terminal):
+
+```bash
+cd Baeckrei/frontend
+npm ci
+npm run dev
+```
+
+In production, set `DJANGO_DEBUG=False`, a random `DJANGO_SECRET_KEY` and
+`DJANGO_ALLOWED_HOSTS` (see `backend/.env.example`).
 
 ## Topics
 
