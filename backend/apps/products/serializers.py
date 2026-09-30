@@ -63,7 +63,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'description', 'price', 'stock',
             'category', 'category_name', 'image', 'status',
-            'is_vegan', 'is_vegetarian', 'is_gluten_free',
+            'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
             'available', 'created_at', 'modified_at'
         )
         read_only_fields = ('id', 'created_at', 'modified_at')
@@ -77,7 +77,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'category', 'price',
             'image', 'image_url', 'is_vegan', 'is_vegetarian',
-            'is_gluten_free', 'available', 'stock'
+            'is_gluten_free', 'is_seasonal', 'available', 'stock'
         ]
 
     def get_image_url(self, obj):
@@ -105,7 +105,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'description', 'category',
             'price', 'formatted_price', 'image', 'image_url', 'images',
-            'is_vegan', 'is_vegetarian', 'is_gluten_free',
+            'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
             'available', 'stock', 'stock_status', 'ingredients', 
             'allergens', 'nutrition_info', 'created_at', 'modified_at'
         ]
@@ -175,7 +175,7 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             'name', 'slug', 'description', 'category',
             'price', 'stock', 'image', 'ingredients',
             'nutrition_info', 'is_vegan', 'is_vegetarian',
-            'is_gluten_free', 'status', 'available'
+            'is_gluten_free', 'is_seasonal', 'status', 'available'
         ]
 
     def create(self, validated_data):

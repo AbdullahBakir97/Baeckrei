@@ -31,7 +31,7 @@ class ProductManagementViewSet(ViewSet):
     search_fields = ['name', 'description']
     filter_fields = ['category', 'available', 'price']
     pagination_class = ProductPagination
-    ordering_fields = ['name', 'price', 'created_at', 'updated_at']
+    ordering_fields = ['name', 'price', 'created_at', 'modified_at']
     default_ordering = 'name'
 
     def __init__(self, *args, **kwargs):

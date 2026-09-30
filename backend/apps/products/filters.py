@@ -95,6 +95,10 @@ class ProductFilter(BaseFilter):
             q_objects |= Q(**{f"{field}__icontains": search_term})
         return self.queryset.filter(q_objects)
     
+    @staticmethod
+    def _is_true(value) -> bool:
+        return str(value).strip().lower() in ('1', 'true', 'yes', 'on')
+
     def apply_filters(self, filters: Dict[str, Any]) -> QuerySet:
         """Apply all filters to queryset."""
         try:
@@ -104,6 +108,14 @@ class ProductFilter(BaseFilter):
             logger.debug(f"Applying filters: {filters}")
             logger.debug(f"Initial queryset count: {self.queryset.count()}")
             
+            # Category by slug (used by the category pages)
+            category_slug = filters.get('category')
+            if category_slug:
+                self.queryset = self.queryset.filter(category__slug=category_slug)
+
+            if self._is_true(filters.get('seasonal')):
+                self.queryset = self.queryset.filter(is_seasonal=True)
+
             # Category filter
             category_ids = filters.get('category_ids')
             if category_ids:
@@ -142,21 +154,21 @@ class ProductFilter(BaseFilter):
                 except (TypeError, ValueError, InvalidOperation):
                     self.add_error('price', "Invalid minimum price value")
             
-            # Dietary preferences
-            if filters.get('is_vegan'):
+            # Dietary preferences ("false" must not count as set)
+            if self._is_true(filters.get('is_vegan')):
                 self.queryset = self.queryset.filter(is_vegan=True)
                 logger.debug(f"After vegan filter count: {self.queryset.count()}")
             
-            if filters.get('is_vegetarian'):
+            if self._is_true(filters.get('is_vegetarian')):
                 self.queryset = self.queryset.filter(is_vegetarian=True)
                 logger.debug(f"After vegetarian filter count: {self.queryset.count()}")
             
-            if filters.get('is_gluten_free'):
+            if self._is_true(filters.get('is_gluten_free')):
                 self.queryset = self.queryset.filter(is_gluten_free=True)
                 logger.debug(f"After gluten-free filter count: {self.queryset.count()}")
             
             # Stock filter
-            if filters.get('in_stock'):
+            if self._is_true(filters.get('in_stock')):
                 self.queryset = self.queryset.filter(stock__gt=0)
                 logger.debug(f"After stock filter count: {self.queryset.count()}")
             
