@@ -115,3 +115,39 @@ def test_jwt_user_cart_follows_the_user_not_the_session(product):
     second.force_authenticate(user)
     items = second.get(CART_URL).json()['items']
     assert [i['quantity'] for i in items] == [2]
+
+
+@pytest.mark.django_db
+def test_guest_cart_is_found_by_its_session():
+    # Regression: the version check raised a NameError, so a guest's cart
+    # was never found again and every request started an empty one.
+    from apps.cart.commands.cart_commands import GetSessionCartCommand
+    from apps.cart.models import Cart
+
+    cart = Cart.objects.create(session_key='guest-session-1')
+    assert GetSessionCartCommand('guest-session-1')._execute() == cart
+
+
+def test_signing_in_keeps_the_guest_cart(client, product):
+    assert add(client, product, 2).status_code == 200
+
+    user = User.objects.create_user(email='guest-then-customer@example.com', password=PASSWORD)
+    client.force_authenticate(user)  # same browser session, now signed in
+    items = client.get(CART_URL).json()['items']
+    assert [(i['product'], i['quantity']) for i in items] == [(str(product.id), 2)]
+
+    # The guest cart is gone; the items live in the customer's cart.
+    other = APIClient()
+    other.force_authenticate(user)
+    assert [i['quantity'] for i in other.get(CART_URL).json()['items']] == [2]
+
+
+def test_merging_never_exceeds_stock(client, product):
+    user = User.objects.create_user(email='merge-stock@example.com', password=PASSWORD)
+    signed_in = APIClient()
+    signed_in.force_authenticate(user)
+    add(signed_in, product, 4)
+
+    add(client, product, 3)  # as a guest
+    client.force_authenticate(user)
+    assert client.get(CART_URL).json()['items'][0]['quantity'] == 5  # stock is 5

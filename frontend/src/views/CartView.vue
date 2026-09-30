@@ -23,15 +23,15 @@
         <transition-group name="line">
           <li v-for="item in cartStore.items" :key="item.product.id" class="line">
             <router-link :to="{ name: 'product-detail', params: { id: item.product.id } }" class="line-media">
-              <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="item.product.name" @error="applyImageFallback" />
+              <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="localized(item.product, 'name')" @error="applyImageFallback" />
             </router-link>
             <div class="min-w-0 flex-1">
               <router-link :to="{ name: 'product-detail', params: { id: item.product.id } }" class="line-name">
-                {{ item.product.name }}
+                {{ localized(item.product, 'name') }}
               </router-link>
               <p class="mt-1 text-sm text-cream-faint">{{ $t('cart.each', { price: formatEuro(item.product.price) }) }}</p>
               <div class="mt-4 flex flex-wrap items-center gap-4">
-                <div class="stepper" role="group" :aria-label="$t('cart.quantityOf', { name: item.product.name })">
+                <div class="stepper" role="group" :aria-label="$t('cart.quantityOf', { name: localized(item.product, 'name') })">
                   <button type="button" :disabled="busy" :aria-label="$t('common.oneLess')" @click="setQuantity(item, item.quantity - 1)">
                     <font-awesome-icon icon="minus" />
                   </button>
@@ -78,6 +78,7 @@
 </template>
 
 <script setup>
+import { localized } from '@/i18n/catalog'
 import { onMounted, ref } from 'vue'
 import { useCartStore } from '@/stores/cartStore'
 import { useToast } from '@/composables/useToast'
@@ -107,7 +108,7 @@ async function run(action, success) {
 }
 
 const setQuantity = (item, quantity) => run(() => cartStore.updateQuantity(item.product.id, quantity))
-const remove = (item) => run(() => cartStore.removeItem(item.product.id), t('common.removedFromCart', { name: item.product.name }))
+const remove = (item) => run(() => cartStore.removeItem(item.product.id), t('common.removedFromCart', { name: localized(item.product, 'name') }))
 function clear() {
   if (!window.confirm(t('cart.confirmEmpty'))) return
   run(() => cartStore.clearCart(), t('cart.emptied'))

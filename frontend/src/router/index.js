@@ -119,7 +119,7 @@ const routes = [
     path: '/cart',
     name: 'cart',
     component: () => import('@/views/CartView.vue'),
-    meta: { requiresAuth: true, title: 'Shopping Cart' }
+    meta: { requiresAuth: false, title: 'Shopping Cart' }
   },
   {
     path: '/checkout',

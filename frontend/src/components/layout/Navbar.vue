@@ -60,7 +60,7 @@
                 <li v-for="item in cartStore.items.slice(0, 4)" :key="item.product.id" class="flex items-center gap-3 p-2">
                   <img :src="item.product.image_url || item.product.image || PLACEHOLDER_IMAGE" alt="" class="h-12 w-12 object-contain" @error="applyImageFallback" />
                   <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm text-cream">{{ item.product.name }}</p>
+                    <p class="truncate text-sm text-cream">{{ localized(item.product, 'name') }}</p>
                     <p class="text-xs text-cream-faint">{{ item.quantity }} × {{ formatEuro(item.product.price) }}</p>
                   </div>
                 </li>
@@ -131,6 +131,7 @@
 </template>
 
 <script setup>
+import { localized } from '@/i18n/catalog'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'

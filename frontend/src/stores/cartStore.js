@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import axios from '@/plugins/axios'
+import { API_URL } from '@/config/api'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 const BASE_URL = `${API_URL}/api/shopping-cart`
 
 const mediaUrl = (path) => {
@@ -16,6 +17,7 @@ const normalizeItem = (item) => ({
   product: {
     id: item.product,
     name: item.product_name,
+    name_en: item.product_name_en,
     price: parseFloat(item.product_price),
     stock: item.available_stock,
     image: mediaUrl(item.product_image)

@@ -213,7 +213,9 @@ class CartRetriever:
                 # Try to find existing item
                 existing_item = customer_cart.items.filter(product=item.product).first()
                 if existing_item:
-                    existing_item.quantity += item.quantity
+                    # Never more than is in stock.
+                    existing_item.quantity = min(existing_item.quantity + item.quantity,
+                                                 max(item.product.stock, existing_item.quantity))
                     existing_item.save()
                 else:
                     # Create new item in customer cart

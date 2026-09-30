@@ -37,9 +37,9 @@
 
         <ul class="order-items">
           <li v-for="item in order.order_items" :key="item.id" class="order-item">
-            <img :src="imageUrl(item.product.image)" :alt="item.product.name" @error="applyImageFallback" />
+            <img :src="imageUrl(item.product.image)" :alt="localized(item.product, 'name')" @error="applyImageFallback" />
             <span class="min-w-0 flex-1">
-              <span class="block truncate text-cream">{{ item.product.name }}</span>
+              <span class="block truncate text-cream">{{ localized(item.product, 'name') }}</span>
               <span class="text-sm text-cream-faint">{{ item.quantity }} × {{ formatEuro(item.price_per_item) }}</span>
             </span>
             <span class="tabular-nums text-cream/80">{{ formatEuro(item.quantity * item.price_per_item) }}</span>
@@ -67,6 +67,7 @@
 </template>
 
 <script setup>
+import { localized } from '@/i18n/catalog'
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -74,6 +75,7 @@ import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { formatDate, formatDateTime, formatEuro } from '@/utils/money'
 import { useToast } from '@/composables/useToast'
 import { useOrderStore } from '@/stores/orderStore'
+import { API_URL } from '@/config/api'
 
 const orderStore = useOrderStore()
 const { showToast } = useToast()
@@ -84,7 +86,7 @@ const loadOrders = () => orderStore.fetchOrders().catch(() => {})
 const imageUrl = (path) => {
   if (!path) return PLACEHOLDER_IMAGE
   if (path.startsWith('http')) return path
-  return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${path}`
+  return `${API_URL}${path}`
 }
 
 async function cancelOrder(orderId) {
