@@ -86,10 +86,23 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, validators=[validate_password])
 
 class AddressSerializer(serializers.ModelSerializer):
+    state = serializers.CharField(max_length=100, required=False, allow_blank=True, default='')
+    country = serializers.CharField(max_length=100, required=False, default='DE')
+
     class Meta:
         model = Address
         fields = ['id', 'address_line_1', 'address_line_2', 'city', 'state', 'postal_code', 'country']
         read_only_fields = ['id']
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(validators=[validate_password])
 
 class CustomerSerializer(serializers.ModelSerializer):
     """Serializer for customer data."""

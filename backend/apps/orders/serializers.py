@@ -127,6 +127,7 @@ class CheckoutSerializer(serializers.Serializer):
     payment_method = serializers.ChoiceField(choices=Payment.PaymentMethod.choices)
     address = CheckoutAddressSerializer(required=False)
     address_id = serializers.IntegerField(required=False)
+    save_address = serializers.BooleanField(required=False, default=False)
     contact_phone = serializers.CharField(max_length=30, required=False, allow_blank=True, default='')
     requested_time = serializers.DateTimeField(required=False, allow_null=True)
     notes = serializers.CharField(max_length=1000, required=False, allow_blank=True, default='')

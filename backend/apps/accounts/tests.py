@@ -74,3 +74,85 @@ class RegisterTests(TestCase):
         self.assertEqual(response.status_code, 201, response.content)
         user = User.objects.get(email='new@example.com')
         self.assertTrue(Customer.objects.filter(user=user).exists())
+
+
+class AddressTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.alice = User.objects.create_user(email='alice@example.com', password='Str0ng-Passw0rd!')
+        self.bob = User.objects.create_user(email='bob@example.com', password='Str0ng-Passw0rd!')
+        self.client.force_authenticate(self.alice)
+
+    def _create(self, **extra):
+        payload = {'address_line_1': 'Friedrichstraße 1', 'city': 'Berlin', 'postal_code': '10117'}
+        payload.update(extra)
+        return self.client.post('/api/accounts/addresses/', payload, format='json')
+
+    def test_create_list_update_delete(self):
+        response = self._create()
+        self.assertEqual(response.status_code, 201, response.content)
+        address_id = response.json()['id']
+        self.assertEqual(response.json()['country'], 'DE')
+        self.assertEqual(len(self.client.get('/api/accounts/addresses/').json()), 1)
+        response = self.client.patch(f'/api/accounts/addresses/{address_id}/', {'city': 'Potsdam'}, format='json')
+        self.assertEqual(response.json()['city'], 'Potsdam')
+        self.assertEqual(self.client.delete(f'/api/accounts/addresses/{address_id}/').status_code, 204)
+        self.assertEqual(self.client.get('/api/accounts/addresses/').json(), [])
+
+    def test_addresses_are_private(self):
+        address_id = self._create().json()['id']
+        other = APIClient()
+        other.force_authenticate(self.bob)
+        self.assertEqual(other.get('/api/accounts/addresses/').json(), [])
+        self.assertEqual(other.delete(f'/api/accounts/addresses/{address_id}/').status_code, 404)
+
+    def test_deleting_an_address_used_by_an_order_only_hides_it(self):
+        from apps.accounts.models import Address
+        from apps.orders.models import Order
+        address_id = self._create().json()['id']
+        address = Address.objects.get(pk=address_id)
+        Order.objects.create(customer=address.customer, address=address, fulfillment_method='delivery')
+        self.assertEqual(self.client.delete(f'/api/accounts/addresses/{address_id}/').status_code, 204)
+        self.assertEqual(self.client.get('/api/accounts/addresses/').json(), [])
+        self.assertTrue(Address.objects.filter(pk=address_id).exists())
+
+
+class PasswordResetTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(email='carol@example.com', password='Old-Passw0rd!')
+
+    def test_reset_flow(self):
+        import re
+        from django.core import mail
+        response = APIClient().post('/api/accounts/password-reset/', {'email': 'carol@example.com'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        uid, token = re.search(r'/reset-password/([^/]+)/(\S+)', mail.outbox[0].body).groups()
+        response = APIClient().post('/api/accounts/password-reset/confirm/', {
+            'uid': uid, 'token': token, 'new_password': 'Brand-N3w-Passw0rd!',
+        })
+        self.assertEqual(response.status_code, 200, response.content)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Brand-N3w-Passw0rd!'))
+        # The link only works once.
+        response = APIClient().post('/api/accounts/password-reset/confirm/', {
+            'uid': uid, 'token': token, 'new_password': 'Another-Passw0rd!',
+        })
+        self.assertEqual(response.status_code, 400)
+
+    def test_unknown_email_gets_same_answer_and_no_mail(self):
+        from django.core import mail
+        response = APIClient().post('/api/accounts/password-reset/', {'email': 'nobody@example.com'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_invalid_token_is_rejected(self):
+        response = APIClient().post('/api/accounts/password-reset/confirm/', {
+            'uid': 'MQ', 'token': 'bad-token', 'new_password': 'Brand-N3w-Passw0rd!',
+        })
+        self.assertEqual(response.status_code, 400)
+
+    def test_requests_are_rate_limited(self):
+        client = APIClient()
+        codes = [client.post('/api/accounts/password-reset/', {'email': 'x@example.com'}).status_code for _ in range(6)]
+        self.assertEqual(codes[-1], 429)

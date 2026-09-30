@@ -167,6 +167,19 @@ class CheckoutTests(TestCase):
         self.assertEqual(Decimal(data['delivery_fee']), Decimal('3.50'))
         self.assertEqual(Decimal(data['total_price']), Decimal('7.00'))
 
+    def test_saved_address_from_checkout_can_be_reused(self):
+        self._add(1)
+        response = self._checkout(fulfillment_method='delivery', save_address=True, address={
+            'address_line_1': 'Unter den Linden 5', 'city': 'Berlin', 'postal_code': '10117',
+        })
+        self.assertEqual(response.status_code, 201, response.content)
+        saved = self.client.get('/api/accounts/addresses/').json()
+        self.assertEqual([a['address_line_1'] for a in saved], ['Unter den Linden 5'])
+        self._add(1)
+        response = self._checkout(fulfillment_method='delivery', address_id=saved[0]['id'])
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.json()['address']['id'], saved[0]['id'])
+
     def test_paypal_is_rejected_until_configured(self):
         self._add(1)
         response = self._checkout(payment_method='PP')

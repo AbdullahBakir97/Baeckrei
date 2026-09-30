@@ -94,7 +94,9 @@ class OrderService:
                     if address is None:
                         raise CheckoutError('That address could not be found.', 'invalid_address')
                 else:
-                    address = Address.objects.create(customer=customer, **data['address'])
+                    address = Address.objects.create(
+                        customer=customer, saved=data.get('save_address', False), **data['address']
+                    )
 
             requested_time = data.get('requested_time')
             order = Order.objects.create(

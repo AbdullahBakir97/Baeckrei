@@ -93,6 +93,9 @@ class Address(models.Model):
     state = models.CharField(max_length=100)
     postal_code = models.CharField(max_length=20)
     country = models.CharField(max_length=100)
+    # Shown in the customer's saved addresses. Addresses entered only for a
+    # single order, or "deleted" while past orders still use them, are unsaved.
+    saved = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
