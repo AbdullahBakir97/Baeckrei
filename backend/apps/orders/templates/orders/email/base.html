@@ -1,0 +1,21 @@
+{% load i18n %}{% get_current_language as lang %}<!doctype html>
+<html lang="{{ lang }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>{{ shop_name }}</title></head>
+<body style="margin:0;padding:0;background:#0e0c0a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0e0c0a;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#1e1914;border-radius:20px;border:1px solid #2a231c;font-family:Helvetica,Arial,sans-serif;color:#f4ece1;">
+        <tr><td style="padding:32px 32px 8px;">
+          <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:28px;color:#f4ece1;"><span style="color:#e6a15a;font-style:italic;">{{ shop_name|slice:":1" }}</span>{{ shop_name|slice:"1:" }}</p>
+        </td></tr>
+        <tr><td style="padding:16px 32px 32px;font-size:15px;line-height:1.6;color:#d9cfc2;">
+          {% block content %}{% endblock %}
+        </td></tr>
+        <tr><td style="padding:20px 32px;border-top:1px solid #2a231c;font-size:12px;line-height:1.6;color:#7d7061;">
+          {{ shop_name }} · {{ shop_address }}<br>{% translate "Questions? Just reply to this email." %}
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

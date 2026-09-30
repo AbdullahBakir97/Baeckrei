@@ -2,6 +2,7 @@ from django.utils.translation import gettext as _
 from django.conf import settings
 from django.utils import timezone
 from rest_framework import serializers
+from . import slots
 from .models import Order, OrderItem, Payment
 from apps.accounts.models import Address
 from apps.accounts.serializers import AddressSerializer
@@ -9,13 +10,14 @@ from apps.accounts.serializers import AddressSerializer
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
+    product_name_en = serializers.CharField(source='product.name_en', read_only=True)
     product_image = serializers.ImageField(source='product.image', read_only=True)
     subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = OrderItem
         fields = [
-            'id', 'product', 'product_name', 'product_image',
+            'id', 'product', 'product_name', 'product_name_en', 'product_image',
             'quantity', 'price_per_item', 'subtotal'
         ]
         read_only_fields = ['price_per_item', 'subtotal']
@@ -139,8 +141,13 @@ class CheckoutSerializer(serializers.Serializer):
                 raise serializers.ValidationError({'address': _('A delivery address is required.')})
         if attrs['payment_method'] == Payment.PaymentMethod.PAYPAL and not settings.PAYPAL_ENABLED:
             raise serializers.ValidationError({'payment_method': _('PayPal is not available yet.')})
+        if attrs['payment_method'] == Payment.PaymentMethod.STRIPE and not settings.STRIPE_ENABLED:
+            raise serializers.ValidationError({'payment_method': _('Online payment is not available.')})
         requested_time = attrs.get('requested_time')
-        if requested_time and requested_time < timezone.now():
-            raise serializers.ValidationError({'requested_time': _('Choose a time in the future.')})
+        if requested_time:
+            if requested_time < timezone.now():
+                raise serializers.ValidationError({'requested_time': _('Choose a time in the future.')})
+            if not slots.is_bookable(attrs['fulfillment_method'], requested_time):
+                raise serializers.ValidationError({'requested_time': _('That time is not available any more. Please choose another one.')})
         return attrs
 

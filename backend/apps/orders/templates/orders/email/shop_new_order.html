@@ -1,0 +1,8 @@
+{% extends "orders/email/base.html" %}{% load i18n %}
+{% block content %}
+<h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:30px;color:#f4ece1;">Neue Bestellung {{ order.order_number }}</h1>
+<p style="margin:0;">{{ order.customer.user.get_full_name|default:order.customer.user.email }} · {{ order.customer.user.email }}{% if order.contact_phone %} · {{ order.contact_phone }}{% endif %}</p>
+{% include "orders/email/_summary.html" %}
+{% if order.notes %}<p style="margin:0 0 8px;padding:12px 16px;border-radius:12px;background:#2a231c;color:#f4ece1;">„{{ order.notes }}“</p>{% endif %}
+{% include "orders/email/_button.html" with url=order_url label="Im Admin öffnen" %}
+{% endblock %}

@@ -1,0 +1,9 @@
+Neue Bestellung {{ order.order_number }}
+
+{{ order.customer.user.get_full_name|default:order.customer.user.email }} · {{ order.customer.user.email }}{% if order.contact_phone %} · {{ order.contact_phone }}{% endif %}
+
+{% include "orders/email/_summary.txt" %}
+{% if order.notes %}
+Hinweis: {{ order.notes }}
+{% endif %}
+Im Admin öffnen: {{ order_url }}

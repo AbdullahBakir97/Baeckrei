@@ -1,0 +1,12 @@
+{% load i18n %}{% blocktranslate with number=order.order_number %}Order {{ number }} was canceled{% endblocktranslate %}
+
+{% if customer_name %}{% blocktranslate %}Hello {{ customer_name }},{% endblocktranslate %}{% else %}{% translate "Hello," %}{% endif %}
+{% if reason %}{{ reason }}{% else %}{% translate "your order has been canceled." %}{% endif %}{% if payment and payment.status == "Refunded" %}
+{% translate "Your online payment has been refunded. It can take a few days to show on your statement." %}{% endif %}
+
+{% include "orders/email/_summary.txt" %}
+
+{% translate "View your order" %}: {{ order_url }}
+
+{{ shop_name }} · {{ shop_address }}
+{% translate "Questions? Just reply to this email." %}

@@ -1,0 +1,9 @@
+{% extends "orders/email/base.html" %}{% load i18n %}
+{% block content %}
+<h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:30px;color:#f4ece1;">{% translate "Thank you for your order!" %}</h1>
+<p style="margin:0;">{% if customer_name %}{% blocktranslate %}Hello {{ customer_name }},{% endblocktranslate %}{% else %}{% translate "Hello," %}{% endif %}<br>
+{% blocktranslate with number=order.order_number %}we have received your order {{ number }} and are getting it ready.{% endblocktranslate %}</p>
+{% include "orders/email/_summary.html" %}
+{% translate "View your order" as label %}{% include "orders/email/_button.html" with url=order_url label=label %}
+<p style="margin:16px 0 0;">{% translate "We will let you know if anything changes. See you soon!" %}</p>
+{% endblock %}

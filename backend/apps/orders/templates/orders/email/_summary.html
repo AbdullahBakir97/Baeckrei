@@ -1,0 +1,23 @@
+{% load i18n order_emails %}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;font-size:14px;">
+  {% for item in items %}<tr>
+    <td style="padding:8px 0;border-bottom:1px solid #2a231c;color:#f4ece1;">{{ item.quantity }} × {{ item.display_name }}</td>
+    <td align="right" style="padding:8px 0;border-bottom:1px solid #2a231c;color:#d9cfc2;white-space:nowrap;">{{ item.subtotal|euro }}</td>
+  </tr>{% endfor %}
+  {% if order.delivery_fee %}<tr>
+    <td style="padding:8px 0;color:#b9ab98;">{% translate "Delivery fee" %}</td>
+    <td align="right" style="padding:8px 0;color:#b9ab98;">{{ order.delivery_fee|euro }}</td>
+  </tr>{% endif %}
+  <tr>
+    <td style="padding:12px 0 0;font-weight:bold;color:#f4ece1;">{% translate "Total" %}</td>
+    <td align="right" style="padding:12px 0 0;font-weight:bold;color:#f2c48d;font-size:16px;">{{ order.total_price|euro }}</td>
+  </tr>
+  <tr><td colspan="2" style="padding:2px 0 0;font-size:12px;color:#7d7061;">{% blocktranslate with vat=order.vat_amount|euro %}incl. {{ vat }} VAT{% endblocktranslate %}</td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;font-size:14px;">
+  <tr><td style="padding:4px 0;color:#7d7061;width:35%;">{% if is_delivery %}{% translate "Delivery" %}{% else %}{% translate "Pickup" %}{% endif %}</td>
+      <td style="padding:4px 0;color:#f4ece1;">{% if is_delivery and order.address %}{{ order.address.address_line_1 }}, {{ order.address.postal_code }} {{ order.address.city }}{% else %}{{ shop_name }}, {{ shop_address }}{% endif %}</td></tr>
+  <tr><td style="padding:4px 0;color:#7d7061;">{% translate "Time" %}</td>
+      <td style="padding:4px 0;color:#f4ece1;">{% if requested %}{{ requested|when }}{% else %}{% translate "As soon as possible" %}{% endif %}</td></tr>
+  {% if payment %}<tr><td style="padding:4px 0;color:#7d7061;">{% translate "Payment" %}</td>
+      <td style="padding:4px 0;color:#f4ece1;">{{ payment.get_payment_method_display }}</td></tr>{% endif %}
+</table>

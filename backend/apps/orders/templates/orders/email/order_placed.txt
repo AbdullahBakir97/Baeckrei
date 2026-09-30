@@ -1,0 +1,13 @@
+{% load i18n %}{% translate "Thank you for your order!" %}
+
+{% if customer_name %}{% blocktranslate %}Hello {{ customer_name }},{% endblocktranslate %}{% else %}{% translate "Hello," %}{% endif %}
+{% blocktranslate with number=order.order_number %}we have received your order {{ number }} and are getting it ready.{% endblocktranslate %}
+
+{% include "orders/email/_summary.txt" %}
+
+{% translate "View your order" %}: {{ order_url }}
+
+{% translate "We will let you know if anything changes. See you soon!" %}
+
+{{ shop_name }} · {{ shop_address }}
+{% translate "Questions? Just reply to this email." %}

@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
 import { formatEuro } from '@/utils/money'
@@ -144,7 +144,11 @@ const fetchDashboardData = async () => {
 
 onMounted(() => {
   fetchDashboardData()
+  // Keep the numbers current when a new order comes in (useNewOrderAlerts).
+  window.addEventListener('admin:new-orders', fetchDashboardData)
 })
+
+onBeforeUnmount(() => window.removeEventListener('admin:new-orders', fetchDashboardData))
 </script>
 
 <style scoped>

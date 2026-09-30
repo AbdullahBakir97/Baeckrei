@@ -13,6 +13,7 @@
                      :class="{ 'is-active': isActive(item) }" @click="drawerOpen = false">
           <font-awesome-icon :icon="item.icon" class="w-4" />
           <span>{{ $t(`admin.nav.${item.key}`) }}</span>
+          <span v-if="item.key === 'orders' && unseen" class="admin-badge" :aria-label="$t('admin.alerts.unseen', { count: unseen })">{{ unseen }}</span>
         </router-link>
       </nav>
 
@@ -48,6 +49,12 @@
           <h1 class="admin-title">{{ currentPageTitle }}</h1>
         </div>
         <p class="admin-date">{{ today }}</p>
+        <button v-if="canNotify" type="button" class="admin-icon-btn admin-bell" :class="{ 'is-on': notificationsOn }"
+                :aria-pressed="notificationsOn" :title="$t(notificationsOn ? 'admin.alerts.notificationsOn' : 'admin.alerts.enableNotifications')"
+                :aria-label="$t(notificationsOn ? 'admin.alerts.notificationsOn' : 'admin.alerts.enableNotifications')"
+                @click="enableOrderNotifications">
+          <font-awesome-icon icon="bell" />
+        </button>
       </header>
 
       <main class="admin-content">
@@ -69,6 +76,7 @@ import { useI18n } from 'vue-i18n'
 import { business } from '@/config/business'
 import { LOCALES, i18n, intlLocale, setLocale } from '@/i18n'
 import adminMessages from '@/i18n/messages/admin'
+import { enableOrderNotifications, markOrdersSeen, useNewOrderAlerts } from '@/composables/useNewOrderAlerts'
 
 // Admin texts ship with the admin chunk, not with the storefront.
 for (const [lang, messages] of Object.entries(adminMessages)) {
@@ -80,6 +88,8 @@ const route = useRoute()
 const authStore = useAuthStore()
 const drawerOpen = ref(false)
 const { t, te, locale } = useI18n()
+const { unseen, notificationsOn, setTitle } = useNewOrderAlerts()
+const canNotify = typeof Notification !== 'undefined'
 
 const navItems = [
   { key: 'dashboard', path: '/admin', icon: 'chart-pie' },
@@ -120,6 +130,13 @@ const currentPageTitle = computed(() => {
 })
 
 watch(() => route.fullPath, () => { drawerOpen.value = false })
+// Opening the orders page counts as having seen the new orders.
+watch([() => route.path, unseen], ([path]) => {
+  if (path.startsWith('/admin/orders') && unseen.value) {
+    markOrdersSeen()
+    setTitle()
+  }
+}, { immediate: true })
 
 const handleLogout = async () => {
   try {
@@ -217,6 +234,37 @@ const handleLogout = async () => {
 .admin-fade-leave-to {
   opacity: 0;
   transform: translateY(6px);
+}
+
+.admin-badge {
+  margin-left: auto;
+  min-width: 1.35rem;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.35rem;
+  text-align: center;
+  color: #0e0c0a;
+  background: #e6a15a;
+  animation: admin-badge-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes admin-badge-pop {
+  from { transform: scale(0.4); opacity: 0; }
+}
+
+.admin-icon-btn.is-on {
+  color: #e6a15a;
+}
+
+/* Pushed right on its own while the date is hidden (small screens). */
+.admin-bell {
+  margin-left: auto;
+}
+
+.admin-date + .admin-bell {
+  margin-left: 0;
 }
 </style>
 

@@ -53,12 +53,15 @@ class OrderService:
         return order
 
     @staticmethod
-    def checkout(customer: Customer, cart, data: dict) -> Order:
+    def checkout(customer: Customer, cart, data: dict, language: str = 'de') -> Order:
         """Turn the customer's cart into an order.
 
         Stock is deducted here (and only here), atomically per product, so two
-        customers cannot both buy the last item.
+        customers cannot both buy the last item. Orders paid on pickup or
+        delivery are confirmed by email right away; online payments once
+        Stripe reports them paid (see payments.py).
         """
+        from . import emails
         from apps.cart.models import Cart
 
         with transaction.atomic():
@@ -109,6 +112,7 @@ class OrderService:
                 requested_time=requested_time,
                 estimated_delivery_date=(requested_time or timezone.now()).date(),
                 notes=data.get('notes', ''),
+                language=language if language in dict(settings.LANGUAGES) else 'de',
             )
             OrderItem.objects.bulk_create([
                 OrderItem(order=order, product=item.product, quantity=item.quantity,
@@ -117,17 +121,22 @@ class OrderService:
             ])
             order.save()  # recompute total_price from the items and delivery fee
 
-            Payment.objects.create(
+            payment = Payment.objects.create(
                 order=order,
                 payment_method=data['payment_method'],
                 amount=order.total_price,
             )
             Cart.objects.filter(pk=cart.pk).update(completed=True, completed_at=timezone.now())
+            if not payment.is_online:
+                transaction.on_commit(lambda: emails.order_placed(order))
             return order
 
     @staticmethod
-    def update_order_status(order: Order, new_status: str) -> Order:
-        """Update order status with validation"""
+    def update_order_status(order: Order, new_status: str, reason: str = '') -> Order:
+        """Change an order's status. Canceling gives the stock back, refunds an
+        online payment (or closes its unpaid payment page) and tells the
+        customer by email, with `reason` if given."""
+        from . import emails, payments
         if new_status not in Order.StatusChoices.values:
             raise ValueError(f"Invalid status: {new_status}")
 
@@ -135,15 +144,23 @@ class OrderService:
             raise ValueError(f"Cannot change order status from {order.status} to {new_status}")
 
                 
+        payment = getattr(order, 'order_payment', None)
         with transaction.atomic():
             if new_status == Order.StatusChoices.CANCELED:
                 # Stock was deducted at checkout; put it back.
                 for item in order.order_items.all():
                     Product.objects.filter(pk=item.product_id).update(stock=F('stock') + item.quantity)
+                if payment and payment.is_online:
+                    if payment.status == Payment.PaymentStatus.COMPLETED:
+                        # Raises PaymentError (and keeps the order) if Stripe refuses.
+                        payments.refund(payment)
+                    elif payment.status == Payment.PaymentStatus.PENDING:
+                        payments.expire_checkout(payment)
+                        payment.record_failure(reason or 'Order canceled before payment')
+                transaction.on_commit(lambda: emails.order_canceled(order, reason))
             order.status = new_status
             order.save()
             # Cash and card are paid when the order is handed over.
-            payment = getattr(order, 'order_payment', None)
             if (new_status == Order.StatusChoices.COMPLETED and payment
                     and payment.status == Payment.PaymentStatus.PENDING
                     and payment.payment_method in (Payment.PaymentMethod.CASH, Payment.PaymentMethod.CREDIT_CARD)):

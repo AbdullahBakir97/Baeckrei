@@ -88,3 +88,131 @@ msgstr "Produkt nicht gefunden"
 
 msgid "Product not found or inactive"
 msgstr "Produkt nicht gefunden oder nicht aktiv"
+
+msgid "Pending"
+msgstr "Ausstehend"
+
+msgid "Processing"
+msgstr "In Bearbeitung"
+
+msgid "Completed"
+msgstr "Abgeschlossen"
+
+msgid "Canceled"
+msgstr "Storniert"
+
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+msgid "Refunded"
+msgstr "Erstattet"
+
+msgid "Pickup"
+msgstr "Abholung"
+
+msgid "Delivery"
+msgstr "Lieferung"
+
+msgid "Card on pickup/delivery"
+msgstr "Karte bei Abholung/Lieferung"
+
+msgid "Cash on pickup/delivery"
+msgstr "Bar bei Abholung/Lieferung"
+
+msgid "PayPal"
+msgstr "PayPal"
+
+msgid "Paid online"
+msgstr "Online bezahlt"
+
+msgid "Online payment is not available."
+msgstr "Online-Zahlung ist nicht verfügbar."
+
+msgid "That time is not available any more. Please choose another one."
+msgstr "Diese Zeit ist nicht mehr frei. Bitte wähle eine andere."
+
+msgid "This order does not need to be paid online."
+msgstr "Diese Bestellung muss nicht online bezahlt werden."
+
+msgid "This order can no longer be paid."
+msgstr "Diese Bestellung kann nicht mehr bezahlt werden."
+
+msgid "Online payment is unavailable right now. Please try again in a moment."
+msgstr ""
+"Die Online-Zahlung ist gerade nicht erreichbar. Bitte versuche es gleich "
+"noch einmal."
+
+msgid "This payment cannot be refunded automatically."
+msgstr "Diese Zahlung kann nicht automatisch erstattet werden."
+
+msgid ""
+"The refund failed. Please try again or refund it in the Stripe dashboard."
+msgstr ""
+"Die Erstattung ist fehlgeschlagen. Bitte versuche es erneut oder erstatte "
+"sie im Stripe-Dashboard."
+
+msgid "The online payment was not completed, so the order was canceled."
+msgstr ""
+"Die Online-Zahlung wurde nicht abgeschlossen, deshalb wurde die Bestellung "
+"storniert."
+
+msgid "Your order %(number)s at %(shop)s"
+msgstr "Deine Bestellung %(number)s bei %(shop)s"
+
+msgid "New order %(number)s"
+msgstr "Neue Bestellung %(number)s"
+
+msgid "Your order %(number)s was canceled"
+msgstr "Deine Bestellung %(number)s wurde storniert"
+
+msgid "Questions? Just reply to this email."
+msgstr "Fragen? Antworte einfach auf diese E-Mail."
+
+msgid "Delivery fee"
+msgstr "Liefergebühr"
+
+msgid "Total"
+msgstr "Gesamt"
+
+msgid "Time"
+msgstr "Zeit"
+
+msgid "Payment"
+msgstr "Bezahlung"
+
+msgid "As soon as possible"
+msgstr "So bald wie möglich"
+
+msgid "incl. %(vat)s VAT"
+msgstr "inkl. %(vat)s MwSt."
+
+msgid "Thank you for your order!"
+msgstr "Vielen Dank für deine Bestellung!"
+
+msgid "Hello %(customer_name)s,"
+msgstr "Hallo %(customer_name)s,"
+
+msgid "Hello,"
+msgstr "Hallo,"
+
+msgid "we have received your order %(number)s and are getting it ready."
+msgstr "wir haben deine Bestellung %(number)s erhalten und machen sie fertig."
+
+msgid "View your order"
+msgstr "Bestellung ansehen"
+
+msgid "We will let you know if anything changes. See you soon!"
+msgstr "Wir melden uns, falls sich etwas ändert. Bis bald!"
+
+msgid "Order %(number)s was canceled"
+msgstr "Bestellung %(number)s wurde storniert"
+
+msgid "your order has been canceled."
+msgstr "deine Bestellung wurde storniert."
+
+msgid ""
+"Your online payment has been refunded. It can take a few days to show on "
+"your statement."
+msgstr ""
+"Deine Online-Zahlung wurde erstattet. Es kann ein paar Tage dauern, bis sie "
+"auf deinem Konto erscheint."

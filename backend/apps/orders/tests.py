@@ -221,8 +221,13 @@ class CheckoutTests(TestCase):
     def test_checkout_options(self):
         data = self.client.get('/api/orders/orders/checkout_options/').json()
         self.assertEqual([m['code'] for m in data['fulfillment_methods']], ['pickup', 'delivery'])
-        paypal = next(m for m in data['payment_methods'] if m['code'] == 'PP')
-        self.assertFalse(paypal['available'])
+        # Online payment is listed but off until Stripe keys are set; the
+        # never-implemented PayPal option is no longer offered.
+        online = next(m for m in data['payment_methods'] if m['code'] == 'ST')
+        self.assertFalse(online['available'])
+        self.assertNotIn('PP', [m['code'] for m in data['payment_methods']])
+        self.assertIn('pickup', data['slots'])
+        self.assertIn('delivery', data['slots'])
 
     def test_customers_cannot_create_orders_directly(self):
         response = self.client.post('/api/orders/orders/', {}, format='json')

@@ -1,0 +1,9 @@
+{% extends "orders/email/base.html" %}{% load i18n %}
+{% block content %}
+<h1 style="margin:0 0 12px;font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:30px;color:#f4ece1;">{% blocktranslate with number=order.order_number %}Order {{ number }} was canceled{% endblocktranslate %}</h1>
+<p style="margin:0;">{% if customer_name %}{% blocktranslate %}Hello {{ customer_name }},{% endblocktranslate %}{% else %}{% translate "Hello," %}{% endif %}<br>
+{% if reason %}{{ reason }}{% else %}{% translate "your order has been canceled." %}{% endif %}</p>
+{% if payment and payment.status == "Refunded" %}<p style="margin:12px 0 0;">{% translate "Your online payment has been refunded. It can take a few days to show on your statement." %}</p>{% endif %}
+{% include "orders/email/_summary.html" %}
+{% translate "View your order" as label %}{% include "orders/email/_button.html" with url=order_url label=label %}
+{% endblock %}

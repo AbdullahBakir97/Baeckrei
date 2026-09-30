@@ -23,7 +23,16 @@ export default {
     keep: 'Bestellung behalten',
     cancel: 'Bestellung stornieren',
     canceledToast: 'Deine Bestellung wurde storniert',
-    cancelFailed: 'Die Bestellung konnte nicht storniert werden'
+    cancelFailed: 'Die Bestellung konnte nicht storniert werden',
+    payNow: 'Jetzt bezahlen · {total}',
+    payOpen: 'Die Zahlung ist noch offen',
+    payOpenText: 'Deine Bestellung ist für dich reserviert, bis die Zahlungsseite abläuft. Danach wird sie automatisch storniert.',
+    payCanceled: 'Die Zahlung wurde nicht abgeschlossen',
+    payCanceledText: 'Du kannst es noch einmal versuchen oder die Bestellung stornieren.',
+    payFailed: 'Die Zahlungsseite konnte nicht geöffnet werden. Bitte versuche es noch einmal.',
+    confirmingPayment: 'Wir bestätigen deine Zahlung …',
+    paidThanks: 'Danke! Deine Zahlung ist eingegangen.',
+    emailSent: 'Eine Bestätigung ist an {email} unterwegs.'
   },
   en: {
     allOrders: 'All orders',
@@ -49,6 +58,15 @@ export default {
     keep: 'Keep order',
     cancel: 'Cancel order',
     canceledToast: 'Your order was canceled',
-    cancelFailed: 'The order could not be canceled'
+    cancelFailed: 'The order could not be canceled',
+    payNow: 'Pay now · {total}',
+    payOpen: 'Payment is still open',
+    payOpenText: "Your order is reserved until the payment page expires. After that it is canceled automatically.",
+    payCanceled: "The payment wasn't completed",
+    payCanceledText: 'You can try again or cancel the order.',
+    payFailed: "The payment page couldn't be opened. Please try again.",
+    confirmingPayment: 'Confirming your payment…',
+    paidThanks: 'Thank you! Your payment has been received.',
+    emailSent: 'A confirmation is on its way to {email}.'
   }
 }

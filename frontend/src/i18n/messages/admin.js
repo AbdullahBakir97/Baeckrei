@@ -1,6 +1,13 @@
 // The admin area (back office).
 export default {
   de: {
+    alerts: {
+      newOrder: 'Neue Bestellung {number}',
+      newOrderTitle: 'Neue Bestellung',
+      unseen: '{count} neue Bestellungen',
+      enableNotifications: 'Desktop-Benachrichtigungen für neue Bestellungen einschalten',
+      notificationsOn: 'Benachrichtigungen für neue Bestellungen sind an'
+    },
     layout: {
       sidebar: 'Verwaltung',
       manage: 'Verwalten',
@@ -206,6 +213,7 @@ export default {
       startPreparing: 'Zubereitung starten',
       markHandedOver: 'Als übergeben markieren',
       cancelOrder: 'Bestellung stornieren',
+      refundHint: 'Online bezahlt: Beim Stornieren wird der Betrag automatisch über Stripe erstattet.',
       loadError: 'Bestellungen konnten nicht geladen werden.',
       loadOneError: 'Diese Bestellung konnte nicht geladen werden.',
       statusError: 'Der Status konnte nicht geändert werden.',
@@ -240,6 +248,13 @@ export default {
     }
   },
   en: {
+    alerts: {
+      newOrder: 'New order {number}',
+      newOrderTitle: 'New order',
+      unseen: '{count} new orders',
+      enableNotifications: 'Turn on desktop notifications for new orders',
+      notificationsOn: 'Notifications for new orders are on'
+    },
     layout: {
       sidebar: 'Admin',
       manage: 'Manage',
@@ -445,6 +460,7 @@ export default {
       startPreparing: 'Start preparing',
       markHandedOver: 'Mark as handed over',
       cancelOrder: 'Cancel order',
+      refundHint: 'Paid online: canceling refunds the amount automatically through Stripe.',
       loadError: 'Orders could not be loaded.',
       loadOneError: 'That order could not be loaded.',
       statusError: 'The status could not be changed.',
