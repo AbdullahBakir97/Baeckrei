@@ -294,22 +294,16 @@ class Cart(VersionMixin, TimeStampedModel):
         event_type = event_type_mapping.get(event_type, 'quantity_updated')
 
         with transaction.atomic():
-            # Lock product for update
-            product = Product.objects.select_for_update().get(pk=product.pk)
+            product = Product.objects.get(pk=product.pk)
 
-            # Calculate new stock level
-            new_stock = product.stock - quantity_change
-            old_stock = product.stock
-
-            # Validate stock level
-            if new_stock < 0:
+            # Stock is only deducted at checkout; validate the new cart
+            # quantity against what is available.
+            new_quantity = current_quantity + quantity_change
+            if new_quantity > product.stock:
                 raise InsufficientStockError(
-                    f"Insufficient stock. Requested: {abs(quantity_change)}, Available: {product.stock}"
+                    f"Insufficient stock. Requested: {new_quantity}, Available: {product.stock}",
+                    available_stock=product.stock
                 )
-
-            # Update product stock
-            product.stock = new_stock
-            product.save(update_fields=['stock'])
 
             # Log event
             CartEventService().log_event(
@@ -319,9 +313,7 @@ class Cart(VersionMixin, TimeStampedModel):
                 quantity=abs(quantity_change),
                 details={
                     'operation_id': str(uuid.uuid4()),
-                    'old_stock': old_stock,
-                    'new_stock': new_stock,
-                    'delta': -quantity_change,
+                    'delta': quantity_change,
                     'current_quantity': current_quantity
                 }
             )
@@ -484,7 +476,8 @@ class CartItem(VersionMixin, TimeStampedModel):
                     product, _ = cart_item.cart._update_product_quantity(
                         product=cart_item.product,
                         quantity_change=quantity_diff,
-                        event_type='UPDATE'
+                        event_type='UPDATE',
+                        current_quantity=cart_item.quantity
                     )
                     
                     # Update cart item

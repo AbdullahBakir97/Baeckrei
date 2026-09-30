@@ -105,10 +105,6 @@ class MergeCartStrategy(VersionOperation[T, None]):
             else:
                 self._create_new_item(target_cart, source_item, locked_product)
                 
-            # Update product stock
-            locked_product.stock -= source_item.quantity
-            locked_product.save(update_fields=['stock', 'version'])
-                
     def _validate_product(self, product: 'Product') -> bool:
         """Validate product availability."""
         if not product.available or product.status != 'active':

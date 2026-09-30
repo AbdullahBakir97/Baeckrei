@@ -46,7 +46,7 @@ class BaseCartStrategy(VersionOperation[T, Optional[T]]):
                     quantity_change = self._calculate_change(current_quantity, quantity)
                     
                     # Handle stock
-                    self._handle_stock(locked_product, quantity_change)
+                    self._handle_stock(locked_product, quantity)
                     
                     # Update cart item
                     if quantity > 0:
@@ -99,13 +99,10 @@ class BaseCartStrategy(VersionOperation[T, Optional[T]]):
         if not cart_item.product.available or cart_item.product.status != 'active':
             raise ValidationError(f"Product {cart_item.product.name} is not available for purchase")
             
-    def _handle_stock(self, product: 'Product', quantity_change: int) -> None:
-        """Handle product stock changes."""
-        if quantity_change > 0 and quantity_change > product.stock:
-            raise ValidationError(f"Not enough stock. Requested: {quantity_change}, Available: {product.stock}")
-            
-        product.stock -= quantity_change
-        product.save(update_fields=['stock', 'version'])
+    def _handle_stock(self, product: 'Product', new_quantity: int) -> None:
+        """Check the cart quantity against stock; stock is deducted at checkout."""
+        if new_quantity > product.stock:
+            raise ValidationError(f"Not enough stock. Requested: {new_quantity}, Available: {product.stock}")
         
     def _calculate_change(self, current_quantity: int, new_quantity: int) -> int:
         """Calculate quantity change."""

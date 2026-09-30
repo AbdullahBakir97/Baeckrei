@@ -72,12 +72,26 @@ def test_guest_add_update_remove_and_clear(client, product):
     assert response.json()['items'] == []
 
 
-def test_adding_more_of_the_same_product_counts_only_the_increment(client, product):
-    # Stock 5: holding 3 leaves 2 available, so adding 1 more must succeed.
+def test_cart_operations_never_change_stock(client, product):
+    # Stock is only deducted at checkout.
+    add(client, product, 3)
+    client.put(f'{CART_URL}update/{product.id}/', {'quantity': 4}, format='json')
+    product.refresh_from_db()
+    assert product.stock == 5
+    client.delete(f'{CART_URL}remove/{product.id}/')
+    product.refresh_from_db()
+    assert product.stock == 5
+
+
+def test_cart_quantity_is_capped_by_stock(client, product):
     assert add(client, product, 3).status_code == 200
-    response = add(client, product, 1)
-    assert response.status_code == 200, response.content
-    assert response.json()['items'][0]['quantity'] == 4
+    assert add(client, product, 2).status_code == 200  # 5 of 5
+    response = add(client, product, 1)                  # 6 of 5
+    assert response.status_code == 400
+    assert response.json()['error_type'] == 'insufficient_stock'
+    response = client.put(f'{CART_URL}update/{product.id}/', {'quantity': 6}, format='json')
+    assert response.status_code == 400
+    assert client.get(CART_URL).json()['items'][0]['quantity'] == 5
 
 
 def test_cannot_add_more_than_stock(client, product):
