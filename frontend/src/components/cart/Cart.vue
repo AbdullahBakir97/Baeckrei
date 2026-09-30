@@ -51,7 +51,7 @@
                      :alt="item.product.name"
                      class="w-full h-full object-cover transform group-hover:scale-110 
                             transition-transform duration-700 ease-in-out"
-                     @error="$event.target.src = '/images/placeholder.png'" />
+                     @error="applyImageFallback" />
               </div>
 
               <!-- Product Info -->
@@ -153,6 +153,7 @@
 </template>
 
 <script setup>
+import { applyImageFallback } from '@/utils/imageFallback'
 import { ref, onMounted } from 'vue'
 import { useCartStore } from '@/stores/cartStore'
 import { useToast } from '@/composables/useToast'

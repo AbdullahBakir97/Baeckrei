@@ -13,7 +13,7 @@
              :alt="product.name"
              class="w-full h-full object-cover transform group-hover:scale-110 
                     transition-transform duration-700 ease-in-out"
-             @error="$event.target.src = '/images/placeholder.png'" />
+             @error="applyImageFallback" />
       </div>
 
       <!-- Product Info -->
@@ -40,6 +40,7 @@
 </template>
 
 <script setup>
+import { applyImageFallback } from '@/utils/imageFallback'
 import { defineProps, defineEmits, computed } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import QuantityControl from './QuantityControl.vue'

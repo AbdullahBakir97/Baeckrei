@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { PLACEHOLDER_IMAGE } from '@/utils/imageFallback'
 import axios from '@/plugins/axios'
 import { ref, computed } from 'vue'
 
@@ -372,10 +373,10 @@ export const useProductStore = defineStore('products', () => {
   }
 
   const getImageUrl = (path) => {
-    if (!path) return '/images/placeholder.png'
+    if (!path) return PLACEHOLDER_IMAGE
     
     // If it's already a full URL or the placeholder, return it
-    if (path.startsWith('http') || path === '/images/placeholder.png') {
+    if (path.startsWith('http') || path === PLACEHOLDER_IMAGE) {
       return path
     }
   

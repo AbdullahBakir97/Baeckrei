@@ -374,6 +374,7 @@
 </template>
 
 <script setup>
+import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProductStore } from '@/stores/productStore'
@@ -397,7 +398,7 @@ const modalStore = useModalStore()
 
 // Constants
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const defaultImage = ref('/assets/images/placeholder.jpg')
+const defaultImage = ref(PLACEHOLDER_IMAGE)
 
 // State
 const quantity = ref(1)
@@ -519,10 +520,10 @@ const toggleCompare = async () => {
 }
 
 const getImageUrl = (path) => {
-  if (!path) return '/images/placeholder.png'
+  if (!path) return PLACEHOLDER_IMAGE
   
   // If it's already a full URL or the placeholder, return it
-  if (path.startsWith('http') || path === '/images/placeholder.png') {
+  if (path.startsWith('http') || path === PLACEHOLDER_IMAGE) {
     return path
   }
 
@@ -533,7 +534,7 @@ const getImageUrl = (path) => {
   
   if (!hasValidExtension) {
     console.warn(`Invalid image extension for path: ${path}`)
-    return '/images/placeholder.png'
+    return PLACEHOLDER_IMAGE
   }
 
   // Construct the full URL, ensuring no duplicate /media/ prefixes
@@ -544,7 +545,7 @@ const getImageUrl = (path) => {
 
 const handleImageError = (event) => {
   console.warn('Image failed to load:', event.target.src)
-  event.target.src = '/images/placeholder.png'
+  applyImageFallback(event)
 }
 
 async function loadProduct() {

@@ -62,6 +62,7 @@
 </template>
 
 <script setup>
+import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { ref, watch, computed, onMounted } from 'vue'
 
 const props = defineProps({
@@ -112,16 +113,12 @@ const currentImage = computed(() => {
     const index = currentIndex.value >= 0 && currentIndex.value < props.images.length 
         ? currentIndex.value 
         : 0
-    return props.images[index] || props.images[0] || '/placeholder.png'
+    return props.images[index] || props.images[0] || PLACEHOLDER_IMAGE
 })
 
-const handleImageError = (event) => {
-    event.target.src = '/placeholder.png'
-}
+const handleImageError = applyImageFallback
 
-const handleThumbnailError = (event) => {
-    event.target.src = '/placeholder.png'
-}
+const handleThumbnailError = applyImageFallback
 
 const handleClose = () => {
     emit('update:modelValue', false)

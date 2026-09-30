@@ -60,7 +60,7 @@
               <img 
                 :src="item.product.image" 
                 :alt="item.product.name"
-                @error="$event.target.src = '/images/placeholder.png'"
+                @error="applyImageFallback"
                 :id="'cart-item-image-' + item.product.id"
               />
             </div>
@@ -135,6 +135,7 @@
 </template>
 
 <script setup>
+import { applyImageFallback } from '@/utils/imageFallback'
 import { computed, onMounted } from 'vue'
 import { useCartStore } from '@/stores/cartStore'
 import { storeToRefs } from 'pinia'

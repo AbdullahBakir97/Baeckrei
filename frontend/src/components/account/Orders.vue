@@ -139,6 +139,7 @@
 </template>
 
 <script setup>
+import { PLACEHOLDER_IMAGE } from '@/utils/imageFallback'
 import { ref, onMounted } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -170,7 +171,7 @@ const formatPrice = (price) => {
 }
 
 const getImageUrl = (path) => {
-  if (!path) return '/images/placeholder.png'
+  if (!path) return PLACEHOLDER_IMAGE
   if (path.startsWith('http')) return path
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
   return `${API_URL}${path}`
