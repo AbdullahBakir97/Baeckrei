@@ -219,3 +219,26 @@ class CheckoutTests(TestCase):
     def test_customers_cannot_create_orders_directly(self):
         response = self.client.post('/api/orders/orders/', {}, format='json')
         self.assertEqual(response.status_code, 403)
+
+
+class AdminOrderTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(email='boss@example.com', password='Str0ng-Passw0rd!')
+        self.client = APIClient()
+        self.client.force_authenticate(self.admin)
+        alice = User.objects.create_user(email='alice@example.com', password='Str0ng-Passw0rd!')
+        self.order = make_order(alice)
+
+    def test_dashboard_stats_and_recent_orders(self):
+        stats = self.client.get('/api/orders/orders/dashboard_stats/')
+        self.assertEqual(stats.status_code, 200, stats.content)
+        self.assertEqual(stats.json()['total_orders'], 1)
+        self.assertEqual(stats.json()['open_orders'], 1)
+        recent = self.client.get('/api/orders/orders/recent_orders/').json()
+        self.assertEqual(recent[0]['customer_email'], 'alice@example.com')
+
+    def test_filters(self):
+        self.assertEqual(len(self.client.get('/api/orders/orders/', {'status': 'Pending'}).json()), 1)
+        self.assertEqual(len(self.client.get('/api/orders/orders/', {'status': 'Completed'}).json()), 0)
+        self.assertEqual(len(self.client.get('/api/orders/orders/', {'search': 'alice'}).json()), 1)
+        self.assertEqual(len(self.client.get('/api/orders/orders/', {'search': 'nobody'}).json()), 0)

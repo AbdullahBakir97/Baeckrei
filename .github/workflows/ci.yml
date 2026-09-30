@@ -46,6 +46,7 @@ jobs:
           apps/orders/tests.py
           apps/cart/tests/test_cart_api.py
           apps/products/tests/test_catalog_filters.py
+          apps/products/tests/test_admin_catalog.py
 
   frontend:
     runs-on: ubuntu-latest

@@ -23,10 +23,11 @@ from .serializers import (
     RegisterSerializer,
     ChangePasswordSerializer,
     AddressSerializer,
+    AdminUserSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
 )
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 
 User = get_user_model()
@@ -50,15 +51,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Non-staff users can only ever see or modify their own account.
-        if self.request.user.is_staff:
-            return User.objects.all()
-        return User.objects.filter(pk=self.request.user.pk)
+        if not self.request.user.is_staff:
+            return User.objects.filter(pk=self.request.user.pk)
+        queryset = User.objects.annotate(order_count=Count('customer__customer_orders')).order_by('-date_joined')
+        term = self.request.query_params.get('search')
+        if term:
+            queryset = queryset.filter(
+                Q(email__icontains=term) | Q(first_name__icontains=term) | Q(last_name__icontains=term)
+            )
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'register':
             return RegisterSerializer
         elif self.action == 'change_password':
             return ChangePasswordSerializer
+        if self.request.user.is_staff and self.action in ('list', 'retrieve', 'update', 'partial_update'):
+            return AdminUserSerializer
         return UserSerializer
 
     @action(detail=False, methods=['get', 'patch'])

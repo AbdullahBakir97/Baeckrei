@@ -9,6 +9,10 @@ from rest_framework.viewsets import ViewSet
 from django.db.models import Count, Sum, F, Q
 from django.utils import timezone
 from apps.products.controllers.PMC import ProductManagementController
+from django.db.models import ProtectedError
+from django.shortcuts import get_object_or_404
+from django.http import Http404
+from apps.products.serializers import AdminProductSerializer, AdminCategorySerializer
 from apps.products.serializers import (
     ProductSerializer, ProductListSerializer, ProductDetailSerializer,
     CategorySerializer, IngredientSerializer, AllergenInfoSerializer,
@@ -174,18 +178,54 @@ class ProductManagementViewSet(ViewSet):
     def retrieve(self, request, pk=None):
         return self.controller.retrieve(request, pk)
 
+    @staticmethod
+    def _get_product(pk):
+        try:
+            return get_object_or_404(Product, pk=pk)
+        except DjangoValidationError:  # not a UUID
+            raise Http404
+
     def create(self, request):
-        return self.controller.create(request)
+        serializer = AdminProductSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        product = serializer.save()
+        return Response(
+            ProductDetailSerializer(product, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     def update(self, request, pk=None):
-        return self.controller.update(request, pk)
+        product = self._get_product(pk)
+        serializer = AdminProductSerializer(product, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        product = serializer.save()
+        return Response(ProductDetailSerializer(product, context={'request': request}).data)
+
+    def partial_update(self, request, pk=None):
+        return self.update(request, pk)
 
     def destroy(self, request, pk=None):
-        return self.controller.destroy(request, pk)
+        product = self._get_product(pk)
+        try:
+            product.delete()
+        except ProtectedError:
+            # Past orders reference the product; keep it but take it off sale.
+            product.status = 'discontinued'
+            product.available = False
+            product.save(update_fields=['status', 'available', 'modified_at'])
+            return Response({
+                'detail': 'This product appears in past orders, so it was marked as discontinued instead of deleted.',
+                'discontinued': True,
+            })
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     # Category Operations
     @action(detail=False, methods=['get'])
     def categories(self, request):
+        if request.query_params.get('include_inactive') == 'true' and request.user.is_staff:
+            categories = Category.objects.all().order_by('order', 'name')
+            data = AdminCategorySerializer(categories, many=True, context={'request': request}).data
+            return Response({'count': len(data), 'results': data})
         return self.controller.categories(request)
 
     @action(detail=True, methods=['get'])
@@ -194,15 +234,30 @@ class ProductManagementViewSet(ViewSet):
 
     @action(detail=False, methods=['post'])
     def create_category(self, request):
-        return self.controller.create_category(request)
+        serializer = AdminCategorySerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['put'])
+    @action(detail=True, methods=['put', 'patch'])
     def update_category(self, request, pk=None):
-        return self.controller.update_category(request, pk)
+        category = get_object_or_404(Category, pk=pk)
+        serializer = AdminCategorySerializer(category, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
     @action(detail=True, methods=['delete'])
     def delete_category(self, request, pk=None):
-        return self.controller.delete_category(request, pk)
+        category = get_object_or_404(Category, pk=pk)
+        product_count = category.products.count()
+        if product_count:
+            return Response(
+                {'detail': f'Move the {product_count} product(s) in this category first, or hide the category instead.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        category.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     # Ingredient Operations
     @action(detail=False, methods=['get'])
@@ -326,7 +381,7 @@ class ProductManagementViewSet(ViewSet):
             low_stock_threshold = 10
             low_stock_products = Product.objects.filter(
                 stock__lte=low_stock_threshold,
-                is_active=True
+                status='active'
             ).order_by('stock')[:5]
             
             products_data = [{

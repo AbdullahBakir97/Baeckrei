@@ -52,6 +52,33 @@ class UserSerializer(serializers.ModelSerializer):
             )
         return super().update(instance, validated_data)
 
+class AdminUserSerializer(serializers.ModelSerializer):
+    """What staff see and may change about other users."""
+    order_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'first_name', 'last_name', 'phone', 'date_joined',
+                  'last_login', 'is_active', 'is_staff', 'is_admin', 'order_count')
+        read_only_fields = ('id', 'email', 'date_joined', 'last_login', 'is_admin', 'order_count')
+
+    def get_order_count(self, obj):
+        return getattr(obj, 'order_count', None)
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        if request and self.instance == request.user:
+            if attrs.get('is_active') is False or attrs.get('is_staff') is False:
+                raise serializers.ValidationError('You cannot deactivate or demote your own account.')
+        return attrs
+
+    def update(self, instance, validated_data):
+        # The shop's admin UI checks is_admin; DRF permissions check is_staff.
+        if 'is_staff' in validated_data:
+            validated_data['is_admin'] = validated_data['is_staff']
+        return super().update(instance, validated_data)
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)

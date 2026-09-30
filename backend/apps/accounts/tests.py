@@ -156,3 +156,34 @@ class PasswordResetTests(TestCase):
         client = APIClient()
         codes = [client.post('/api/accounts/password-reset/', {'email': 'x@example.com'}).status_code for _ in range(6)]
         self.assertEqual(codes[-1], 429)
+
+
+class AdminUserTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(email='boss@example.com', password='Str0ng-Passw0rd!')
+        self.alice = User.objects.create_user(email='alice@example.com', password='Str0ng-Passw0rd!', first_name='Alice')
+        self.client = APIClient()
+        self.client.force_authenticate(self.admin)
+
+    def test_search_and_order_count(self):
+        users = self.client.get('/api/accounts/users/', {'search': 'alice'}).json()
+        self.assertEqual([u['email'] for u in users], ['alice@example.com'])
+        self.assertEqual(users[0]['order_count'], 0)
+
+    def test_staff_can_deactivate_and_promote(self):
+        response = self.client.patch(f'/api/accounts/users/{self.alice.pk}/', {'is_active': False, 'is_staff': True}, format='json')
+        self.assertEqual(response.status_code, 200, response.content)
+        self.alice.refresh_from_db()
+        self.assertFalse(self.alice.is_active)
+        self.assertTrue(self.alice.is_staff and self.alice.is_admin)
+
+    def test_staff_cannot_lock_themselves_out(self):
+        response = self.client.patch(f'/api/accounts/users/{self.admin.pk}/', {'is_active': False}, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_active)
+
+    def test_accounts_dashboard_stats(self):
+        response = self.client.get('/api/accounts/users/dashboard_stats/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['total_users'], 2)
