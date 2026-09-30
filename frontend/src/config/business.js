@@ -15,6 +15,8 @@ export const business = {
   vatId: '', // USt-IdNr., if any
   register: '', // Handelsregister entry, if any
   openingHours: [], // e.g. [{ days: 'Mon–Fri', hours: '07:00–18:00' }]
+  // Optional Spline scene for the home page hero (see .env.example).
+  splineScene: import.meta.env.VITE_SPLINE_SCENE || '',
   social: {
     instagram: '',
     facebook: '',

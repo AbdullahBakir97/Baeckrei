@@ -118,7 +118,7 @@
                 <template v-if="soldOut">Sold out today</template>
                 <template v-else>
                   <font-awesome-icon :icon="busy ? 'spinner' : 'cart-plus'" :spin="busy" />
-                  Add to cart · {{ formatEuro(product.price * quantity) }}
+                  Add to cart<span class="hidden sm:inline"> · {{ formatEuro(product.price * quantity) }}</span>
                 </template>
               </button>
             </template>
@@ -307,7 +307,7 @@ watch(product, (value) => { if (value) document.title = `${value.name} - ${busin
 
 <style scoped>
 .pd {
-  padding-top: 6.5rem;
+  padding-top: 1rem;
 }
 
 .pd-grid {
@@ -330,8 +330,8 @@ watch(product, (value) => { if (value) document.title = `${value.name} - ${busin
 
 .pd-stage {
   position: relative;
-  height: min(78vh, 720px);
-  min-height: 380px;
+  height: min(62vh, 520px);
+  min-height: 340px;
   border-radius: 2rem;
   overflow: hidden;
   border: 1px solid rgba(244, 236, 225, 0.08);
@@ -339,6 +339,12 @@ watch(product, (value) => { if (value) document.title = `${value.name} - ${busin
     radial-gradient(120% 90% at 50% 100%, rgba(210, 96, 63, 0.14), transparent 60%),
     radial-gradient(80% 70% at 50% 40%, rgba(230, 161, 90, 0.14), transparent 70%),
     linear-gradient(180deg, #1e1914, #15120f);
+}
+
+@media (min-width: 1024px) {
+  .pd-stage {
+    height: min(78vh, 720px);
+  }
 }
 
 .pd-stage-glow {
@@ -587,7 +593,7 @@ watch(product, (value) => { if (value) document.title = `${value.name} - ${busin
 }
 
 .pd-details summary span {
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: 'Manrope Variable', system-ui, sans-serif;
   font-size: 0.8rem;
   color: #7d7061;
 }
@@ -595,7 +601,7 @@ watch(product, (value) => { if (value) document.title = `${value.name} - ${busin
 .pd-details summary::after {
   content: '+';
   margin-left: 1rem;
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: 'Manrope Variable', system-ui, sans-serif;
   font-size: 1.25rem;
   color: #e6a15a;
   transition: transform 0.3s;

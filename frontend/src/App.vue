@@ -3,7 +3,7 @@
     <AmbientBackground />
     <a href="#main" class="skip-link">Skip to content</a>
     <Navbar />
-    <main id="main" class="main-container">
+    <main id="main" class="main-container" :class="{ 'is-full-bleed': route.meta.fullBleed }">
       <router-view v-slot="{ Component, route }">
         <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
           <component :is="Component" :key="route.path" />
@@ -18,12 +18,15 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Toast from '@/components/common/Toast.vue'
 import AmbientBackground from '@/components/layout/AmbientBackground.vue'
 import ModalWrapper from '@/components/common/ModalWrapper.vue'
 import { gsap, ScrollTrigger, initSmoothScroll, scrollToTop, prefersReducedMotion } from '@/motion'
+
+const route = useRoute()
 
 // Page transitions: the old page lifts away, the new one settles in.
 const onLeave = (el, done) => {
@@ -57,11 +60,18 @@ onMounted(() => {
   color: var(--color-text-primary);
 }
 
-/* Pages set their own width so sections can run edge to edge. */
+/* Pages set their own width so sections can run edge to edge. The top
+   padding clears the fixed navigation; full-bleed pages (the home hero)
+   run underneath it. */
 .main-container {
   position: relative;
   z-index: 1;
   min-height: 60vh;
+  padding-top: 6rem;
+}
+
+.main-container.is-full-bleed {
+  padding-top: 0;
 }
 
 .skip-link {

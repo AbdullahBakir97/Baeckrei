@@ -78,6 +78,9 @@ function traceBoundary(inside, w, h) {
       const nx = cx + DIRS[d][0]
       const ny = cy + DIRS[d][1]
       if (!at(nx, ny)) continue
+      // Jacob's stopping criterion: the loop is closed once we leave the
+      // start pixel the same way we did the first time.
+      if (cx === sx && cy === sy && points.length > 1 && nx === points[1][0] && ny === points[1][1]) return points
       const p = (back + k - 1) % 8
       const px = cx + DIRS[p][0] - nx
       const py = cy + DIRS[p][1] - ny
@@ -87,8 +90,8 @@ function traceBoundary(inside, w, h) {
       moved = true
       break
     }
-    if (!moved || (cx === sx && cy === sy)) break
-    points.push([cx, cy])
+    if (!moved) break
+    if (!(cx === sx && cy === sy)) points.push([cx, cy])
   }
   return points
 }
@@ -129,6 +132,31 @@ function smooth(points) {
   }
   return out
 }
+
+// Drop points that sit almost on top of their neighbour and needle-sharp
+// spikes: the bevel pushes such corners far inwards, which tears the cap.
+function clean(points, minDistance = 1.5) {
+  let out = points.filter((p, i) => {
+    if (i === 0) return true
+    const q = points[i - 1]
+    return Math.hypot(p[0] - q[0], p[1] - q[1]) >= minDistance
+  })
+  for (let pass = 0; pass < 3; pass++) {
+    const n = out.length
+    if (n < 4) break
+    out = out.filter((p, i) => {
+      const a = out[(i - 1 + n) % n]
+      const b = out[(i + 1) % n]
+      const ux = p[0] - a[0], uy = p[1] - a[1]
+      const vx = b[0] - p[0], vy = b[1] - p[1]
+      const cos = (ux * vx + uy * vy) / ((Math.hypot(ux, uy) * Math.hypot(vx, vy)) || 1)
+      return cos > -0.85 // keep unless the outline nearly doubles back
+    })
+  }
+  return out
+}
+
+const outlineFrom = (mask, w, h) => clean(smooth(simplify(traceBoundary(mask, w, h), 0.9)))
 
 function traceOutline(ctx, w, h) {
   const { data } = ctx.getImageData(0, 0, w, h)
@@ -183,9 +211,9 @@ function traceOutline(ctx, w, h) {
     if (y > maxY) maxY = y
   }
 
-  const outline = smooth(simplify(traceBoundary(filled, w, h), 0.9))
+  const outline = outlineFrom(filled, w, h)
   const holeOutlines = holes
-    .map((hole) => smooth(simplify(traceBoundary(hole, w, h), 0.9)))
+    .map((hole) => outlineFrom(hole, w, h))
     .filter((pts) => pts.length >= 6)
 
   return { outline, holeOutlines, edgeColor, bounds: { minX, minY, maxX, maxY } }
@@ -195,7 +223,7 @@ function traceOutline(ctx, w, h) {
  * Build an extruded mesh from a cut-out image URL.
  * Resolves to a THREE.Mesh roughly 2 units across, centred at the origin.
  */
-export async function buildSilhouetteMesh(url, { depth = 0.22, maskSize = MASK_SIZE } = {}) {
+export async function buildSilhouetteMesh(url, { depth = 0.22, maskSize = MASK_SIZE, textureSize = TEXTURE_SIZE } = {}) {
   const img = await loadImage(url)
   const mask = drawScaled(img, maskSize)
   const { width: w, height: h } = mask.canvas
@@ -234,7 +262,7 @@ export async function buildSilhouetteMesh(url, { depth = 0.22, maskSize = MASK_S
   uv.needsUpdate = true
   geometry.computeVertexNormals()
 
-  const tex = drawScaled(img, TEXTURE_SIZE)
+  const tex = drawScaled(img, textureSize)
   const painted = document.createElement('canvas')
   painted.width = tex.canvas.width
   painted.height = tex.canvas.height

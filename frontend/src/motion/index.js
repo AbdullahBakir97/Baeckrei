@@ -39,6 +39,6 @@ export function scrollToTop() {
 
 // Modals and drawers should not scroll the page behind them.
 export function lockScroll(locked) {
-  if (!lenis) return
-  locked ? lenis.stop() : lenis.start()
+  document.documentElement.style.overflow = locked ? 'hidden' : ''
+  if (lenis) locked ? lenis.stop() : lenis.start()
 }

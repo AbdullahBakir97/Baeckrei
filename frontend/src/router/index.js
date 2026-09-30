@@ -14,7 +14,10 @@ import { business } from '@/config/business'
 const routes = [
   {
     path: '/',
-    redirect: { name: 'products' }
+    name: 'home',
+    component: () => import('@/views/HomeView.vue'),
+    // The hero runs underneath the fixed navigation.
+    meta: { requiresAuth: false, fullBleed: true }
   },
   {
     path: '/products',

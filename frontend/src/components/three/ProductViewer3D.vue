@@ -206,6 +206,12 @@ watch(() => [props.image, props.model], () => {
   animation: hint-fade 6s forwards;
 }
 
+@media (max-width: 480px) {
+  .viewer-hint {
+    display: none;
+  }
+}
+
 .viewer-spinner {
   width: 0.8rem;
   height: 0.8rem;
