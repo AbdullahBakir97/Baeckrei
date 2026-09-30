@@ -25,6 +25,7 @@ source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 cp .env.example .env         # sets DJANGO_DEBUG=True for local development
 python manage.py migrate
+python manage.py seed_demo        # optional: a few demo categories and products
 python manage.py createsuperuser
 python manage.py runserver
 ```
@@ -37,8 +38,14 @@ npm ci
 npm run dev
 ```
 
-In production, set `DJANGO_DEBUG=False`, a random `DJANGO_SECRET_KEY` and
-`DJANGO_ALLOWED_HOSTS` (see `backend/.env.example`).
+Tests:
+
+```bash
+cd backend && pytest apps/orders/ apps/cart/tests/test_cart_api.py   # see .github/workflows/ci.yml
+cd frontend && npm run build && npm run test:e2e                     # browser tests (Playwright)
+```
+
+Going live (Docker, Postgres, HTTPS, Stripe, email): see [DEPLOY.md](DEPLOY.md).
 
 ## Topics
 

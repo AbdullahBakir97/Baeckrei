@@ -2,8 +2,9 @@ import { defineStore } from 'pinia'
 import { PLACEHOLDER_IMAGE } from '@/utils/imageFallback'
 import axios from '@/plugins/axios'
 import { ref, computed } from 'vue'
+import { API_URL } from '@/config/api'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = API_URL
 const API_PATH = `${API_BASE}/api/products`
 
 export const useProductStore = defineStore('products', () => {
@@ -417,7 +418,7 @@ export const useProductStore = defineStore('products', () => {
     const cleanPath = path.replace(/\/media\/+/g, '/media/')
   
     // Construct the full URL, ensuring no duplicate /media/ prefixes
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const baseUrl = API_URL
     const fullUrl = `${baseUrl}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`
   
     return fullUrl

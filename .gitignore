@@ -16,3 +16,10 @@ backend/.env
 .idea/
 .DS_Store
 Thumbs.db
+
+# Deployment secrets
+.env.production
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
