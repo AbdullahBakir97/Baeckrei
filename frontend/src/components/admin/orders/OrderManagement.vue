@@ -148,13 +148,17 @@
             {{ $t(action.label) }}
           </button>
         </div>
+        <p v-if="nextActions.length && selected.payment?.payment_method === 'ST' && selected.payment?.status === 'Completed'"
+           class="mt-3 text-xs text-cream-faint">
+          <font-awesome-icon icon="circle-info" class="mr-1" /> {{ $t('admin.orders.refundHint') }}
+        </p>
       </aside>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
@@ -274,10 +278,16 @@ async function saveTracking() {
   }
 }
 
+// New orders arrive while the page is open (see useNewOrderAlerts).
+const onNewOrders = () => fetchOrders()
+
 onMounted(async () => {
+  window.addEventListener('admin:new-orders', onNewOrders)
   await fetchOrders()
   if (route.query.order) openOrder(route.query.order)
 })
+
+onBeforeUnmount(() => window.removeEventListener('admin:new-orders', onNewOrders))
 </script>
 
 <style scoped>

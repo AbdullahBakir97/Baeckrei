@@ -15,6 +15,9 @@ export const business = {
   vatId: '', // USt-IdNr., if any
   register: '', // Handelsregister entry, if any
   openingHours: [], // e.g. [{ days: 'Mon–Fri', hours: '07:00–18:00' }]
+  // Pickup and delivery times are shown on the shop's clock, wherever the
+  // visitor is (the bookable slots come from the backend's opening hours).
+  timeZone: 'Europe/Berlin',
   // Optional Spline scene for the home page hero (see .env.example).
   splineScene: import.meta.env.VITE_SPLINE_SCENE || '',
   social: {

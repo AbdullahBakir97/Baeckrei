@@ -86,7 +86,7 @@ def validate_version(obj: models.Model, expected_version: int) -> None:
         VersionConflict: If versions don't match
     """
     if obj.version != expected_version:
-        raise VersionConflict(
+        raise VersionConflictError(
             f"Version mismatch: expected {expected_version}, got {obj.version}",
             obj_type=type(obj).__name__,
             obj_id=obj.id

@@ -12,6 +12,7 @@ from django.db import transaction
 class CartItemSerializer(serializers.ModelSerializer):
     """Serializer for cart items with enhanced validation and version control."""
     product_name = serializers.CharField(source='product.name', read_only=True)
+    product_name_en = serializers.CharField(source='product.name_en', read_only=True)
     product_price = serializers.DecimalField(
         source='product.price',
         max_digits=10,
@@ -30,7 +31,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = [
-            'id', 'cart', 'product', 'product_name', 'product_price', 'product_image',
+            'id', 'cart', 'product', 'product_name', 'product_name_en', 'product_price', 'product_image',
             'quantity', 'unit_price', 'total_price', 'version',
             'available_stock', 'created_at', 'updated_at'
         ]

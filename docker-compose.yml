@@ -1,0 +1,60 @@
+# Production setup on one server: Postgres, the app, and Caddy for HTTPS.
+#   cp .env.production.example .env.production   # fill it in
+#   echo "SITE_DOMAIN=backlover.de" > .env
+#   docker compose up -d --build
+# See DEPLOY.md.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # POSTGRES_DB, POSTGRES_USER and POSTGRES_PASSWORD come from here.
+    env_file: .env.production
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      args:
+        VITE_SITE_URL: https://${SITE_DOMAIN:?set SITE_DOMAIN in .env}
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      POSTGRES_HOST: db
+      DJANGO_ALLOWED_HOSTS: ${SITE_DOMAIN},www.${SITE_DOMAIN}
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://${SITE_DOMAIN},https://www.${SITE_DOMAIN}
+      DJANGO_CORS_ALLOWED_ORIGINS: https://${SITE_DOMAIN}
+      FRONTEND_URL: https://${SITE_DOMAIN}
+    volumes:
+      - media:/data/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - media:/data/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:

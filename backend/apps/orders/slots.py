@@ -1,0 +1,107 @@
+"""Pickup and delivery times offered at checkout.
+
+Slots come from the shop's opening hours (settings.SHOP_OPENING_HOURS), e.g.
+
+    mon-fri 07:00-18:00; sat 08:00-14:00
+
+Days that are not listed are closed. A day may have several ranges
+("mon 07:00-12:00 14:00-18:00"). Each slot is SHOP_SLOT_MINUTES long and
+starts at least the lead time from now, so the bakery has time to pack (or
+bake) the order. With SHOP_SLOT_CAPACITY set, a full slot is shown as taken.
+"""
+import re
+from datetime import datetime, time, timedelta
+
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Count
+from django.utils import timezone
+
+DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+_RANGE = re.compile(r'^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$')
+
+
+def _day_numbers(spec):
+    if '-' in spec:
+        first, last = spec.split('-', 1)
+        start, end = DAYS.index(first), DAYS.index(last)
+        return list(range(start, end + 1)) if start <= end else list(range(start, 7)) + list(range(0, end + 1))
+    return [DAYS.index(spec)]
+
+
+def parse_opening_hours(text):
+    """'mon-fri 07:00-18:00; sat 08:00-14:00' -> {weekday: [(open, close), ...]}."""
+    hours = {}
+    for part in filter(None, (p.strip().lower() for p in (text or '').split(';'))):
+        day_spec, *ranges = part.split()
+        try:
+            days = _day_numbers(day_spec)
+        except ValueError:
+            raise ImproperlyConfigured(f'SHOP_OPENING_HOURS: unknown day "{day_spec}"')
+        if ranges == ['closed']:
+            for day in days:
+                hours[day] = []
+            continue
+        for value in ranges:
+            match = _RANGE.match(value)
+            if not match:
+                raise ImproperlyConfigured(f'SHOP_OPENING_HOURS: "{value}" is not a time range like 07:00-18:00')
+            h1, m1, h2, m2 = map(int, match.groups())
+            opens, closes = time(h1, m1), time(h2, m2)
+            if closes <= opens:
+                raise ImproperlyConfigured(f'SHOP_OPENING_HOURS: "{value}" closes before it opens')
+            for day in days:
+                hours.setdefault(day, []).append((opens, closes))
+    return hours
+
+
+def opening_hours():
+    return parse_opening_hours(settings.SHOP_OPENING_HOURS)
+
+
+def lead_minutes(method):
+    from .models import Order
+    if method == Order.FulfillmentChoices.DELIVERY:
+        return settings.SHOP_DELIVERY_LEAD_MINUTES
+    return settings.SHOP_PICKUP_LEAD_MINUTES
+
+
+def _slot_starts(method, now, days):
+    step = timedelta(minutes=settings.SHOP_SLOT_MINUTES)
+    earliest = now + timedelta(minutes=lead_minutes(method))
+    tz = timezone.get_current_timezone()
+    hours = opening_hours()
+    today = timezone.localtime(now, tz).date()
+    for offset in range(days):
+        day = today + timedelta(days=offset)
+        for opens, closes in hours.get(day.weekday(), []):
+            start = timezone.make_aware(datetime.combine(day, opens), tz)
+            end = timezone.make_aware(datetime.combine(day, closes), tz)
+            while start + step <= end:
+                if start >= earliest:
+                    yield start
+                start += step
+
+
+def available_slots(method, now=None, days=None):
+    """Upcoming slots as [{'start': datetime, 'available': bool}], soonest first."""
+    from .models import Order
+    now = now or timezone.now()
+    starts = list(_slot_starts(method, now, days or settings.SHOP_SLOT_DAYS))
+    taken = set()
+    capacity = settings.SHOP_SLOT_CAPACITY
+    if capacity and starts:
+        booked = (
+            Order.objects.filter(requested_time__in=starts)
+            .exclude(status=Order.StatusChoices.CANCELED)
+            .values('requested_time').annotate(count=Count('id'))
+        )
+        taken = {row['requested_time'] for row in booked if row['count'] >= capacity}
+    return [{'start': start, 'available': start not in taken} for start in starts]
+
+
+def is_bookable(method, requested_time, now=None):
+    return any(
+        slot['available'] and slot['start'] == requested_time
+        for slot in available_slots(method, now=now)
+    )

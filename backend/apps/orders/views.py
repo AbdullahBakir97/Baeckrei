@@ -7,6 +7,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .models import Order, Payment
 from django.conf import settings
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from . import payments, slots
 from .serializers import OrderSerializer, CheckoutSerializer
 from .services import OrderService, CheckoutError
 from apps.accounts.models import Customer
@@ -62,8 +66,16 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def checkout_options(self, request):
-        """Fulfilment and payment choices for the checkout page."""
+        """Fulfilment and payment choices and bookable times for the checkout page."""
+        def slot_list(method):
+            return [{'start': slot['start'].isoformat(), 'available': slot['available']}
+                    for slot in slots.available_slots(method)]
+
         return Response({
+            'slots': {
+                Order.FulfillmentChoices.PICKUP: slot_list(Order.FulfillmentChoices.PICKUP),
+                Order.FulfillmentChoices.DELIVERY: slot_list(Order.FulfillmentChoices.DELIVERY),
+            },
             'vat_rate': str(settings.VAT_RATE),
             'fulfillment_methods': [
                 {'code': Order.FulfillmentChoices.PICKUP, 'label': 'Pickup in store', 'fee': '0.00'},
@@ -72,8 +84,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             'payment_methods': [
                 {'code': Payment.PaymentMethod.CASH, 'label': 'Cash on pickup or delivery', 'available': True},
                 {'code': Payment.PaymentMethod.CREDIT_CARD, 'label': 'Card on pickup or delivery', 'available': True},
-                {'code': Payment.PaymentMethod.PAYPAL, 'label': 'PayPal', 'available': settings.PAYPAL_ENABLED},
-            ],
+                {'code': Payment.PaymentMethod.STRIPE, 'label': 'Online', 'available': settings.STRIPE_ENABLED},
+            ] + ([{'code': Payment.PaymentMethod.PAYPAL, 'label': 'PayPal', 'available': True}]
+                 if settings.PAYPAL_ENABLED else []),
         })
 
     @action(detail=False, methods=['post'])
@@ -85,13 +98,32 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         cart, _created = CartManagementController().get_or_create_cart(request)
         try:
-            order = OrderService.checkout(self._customer(), cart, serializer.validated_data)
+            order = OrderService.checkout(
+                self._customer(), cart, serializer.validated_data, language=getattr(request, 'LANGUAGE_CODE', 'de')
+            )
         except CheckoutError as e:
             return Response(
                 {'status': 'error', 'error_type': e.code, 'detail': {'message': e.message, **e.extra}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        return Response(OrderSerializer(order, context={'request': request}).data, status=status.HTTP_201_CREATED)
+        data = OrderSerializer(order, context={'request': request}).data
+        if order.order_payment.is_online:
+            # The order stays reserved; the customer pays on Stripe's page next.
+            # If that page cannot be opened, the order page offers to try again.
+            try:
+                data['payment_url'] = payments.start_checkout(order)
+            except payments.PaymentError as e:
+                data['payment_error'] = str(e)
+        return Response(data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'])
+    def pay(self, request, pk=None):
+        """Open (or reopen) the online payment page for an unpaid order."""
+        order = self.get_object()
+        try:
+            return Response({'payment_url': payments.start_checkout(order)})
+        except payments.PaymentError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -102,7 +134,10 @@ class OrderViewSet(viewsets.ModelViewSet):
                 {'error': _('This order can no longer be canceled')},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        order = OrderService.update_order_status(order, Order.StatusChoices.CANCELED)
+        try:
+            order = OrderService.update_order_status(order, Order.StatusChoices.CANCELED)
+        except payments.PaymentError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(OrderSerializer(order).data)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsAdminUser])
@@ -131,7 +166,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         new_status = request.data.get('status')
         
         try:
-            order = OrderService.update_order_status(order, new_status)
+            order = OrderService.update_order_status(order, new_status, reason=request.data.get('reason', ''))
             return Response(OrderSerializer(order).data)
         except Exception as e:
             return Response(
@@ -169,3 +204,16 @@ class OrderViewSet(viewsets.ModelViewSet):
             'fulfillment_method': order.fulfillment_method,
             'created_at': order.created_at,
         } for order in recent])
+
+
+@csrf_exempt
+@require_POST
+def stripe_webhook(request):
+    """Stripe reports payment results here (see payments.handle_webhook)."""
+    if not settings.STRIPE_ENABLED:
+        return HttpResponse(status=404)
+    try:
+        payments.handle_webhook(request.body, request.META.get('HTTP_STRIPE_SIGNATURE'))
+    except ValueError:
+        return HttpResponse(status=400)
+    return HttpResponse(status=200)

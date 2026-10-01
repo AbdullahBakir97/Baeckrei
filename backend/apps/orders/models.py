@@ -56,6 +56,8 @@ class Order(models.Model):
     delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     contact_phone = models.CharField(max_length=30, blank=True, default='')
     requested_time = models.DateTimeField(null=True, blank=True)
+    # The shop language the order was placed in; emails are sent in it.
+    language = models.CharField(max_length=8, choices=settings.LANGUAGES, default='de')
     shipping_tracking_number = models.CharField(max_length=100, blank=True, null=True)
     estimated_delivery_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
@@ -185,10 +187,12 @@ class OrderItem(models.Model):
 
 class Payment(models.Model):
     class PaymentMethod(models.TextChoices):
-        # Card and cash are paid on pickup/delivery; PayPal is paid online.
+        # Card and cash are paid on pickup/delivery; Stripe is paid online at
+        # checkout. PayPal is kept for older orders.
         CREDIT_CARD = 'CC', _('Card on pickup/delivery')
         PAYPAL = 'PP', _('PayPal')
         CASH = 'CA', _('Cash on pickup/delivery')
+        STRIPE = 'ST', _('Paid online')
 
     class PaymentStatus(models.TextChoices):
         PENDING = 'Pending', _('Pending')
@@ -242,6 +246,10 @@ class Payment(models.Model):
         self.payment_date = timezone.now()
         self.is_verified = True
         self.save()
+
+    @property
+    def is_online(self):
+        return self.payment_method == self.PaymentMethod.STRIPE
 
     def fail_payment(self):
         self.status = self.PaymentStatus.FAILED

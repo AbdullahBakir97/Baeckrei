@@ -1,0 +1,7 @@
+{% load i18n order_emails %}{% for item in items %}{{ item.quantity }} × {{ item.display_name }}  {{ item.subtotal|euro }}
+{% endfor %}{% if order.delivery_fee %}{% translate "Delivery fee" %}  {{ order.delivery_fee|euro }}
+{% endif %}{% translate "Total" %}  {{ order.total_price|euro }} ({% blocktranslate with vat=order.vat_amount|euro %}incl. {{ vat }} VAT{% endblocktranslate %})
+
+{% if is_delivery %}{% translate "Delivery" %}: {% if order.address %}{{ order.address.address_line_1 }}, {{ order.address.postal_code }} {{ order.address.city }}{% endif %}{% else %}{% translate "Pickup" %}: {{ shop_name }}, {{ shop_address }}{% endif %}
+{% translate "Time" %}: {% if requested %}{{ requested|when }}{% else %}{% translate "As soon as possible" %}{% endif %}{% if payment %}
+{% translate "Payment" %}: {{ payment.get_payment_method_display }}{% endif %}

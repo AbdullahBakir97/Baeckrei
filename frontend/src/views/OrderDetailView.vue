@@ -14,16 +14,35 @@
     </div>
 
     <template v-else-if="order">
-      <div v-if="justPlaced" class="placed glass-panel mb-8" role="status">
+      <!-- Online payment: waiting for Stripe's confirmation, or still to pay -->
+      <div v-if="awaitingPayment" class="placed glass-panel mb-8" role="status" aria-live="polite">
+        <span class="placed-check is-waiting" aria-hidden="true">
+          <font-awesome-icon :icon="confirming ? 'spinner' : 'lock'" :spin="confirming" />
+        </span>
+        <div v-if="confirming">
+          <p class="display-title text-4xl">{{ $t('order.confirmingPayment') }}</p>
+        </div>
+        <div v-else>
+          <p class="display-title text-4xl">{{ paymentCanceled ? $t('order.payCanceled') : $t('order.payOpen') }}</p>
+          <p class="mt-1 text-cream-muted">{{ paymentCanceled ? $t('order.payCanceledText') : $t('order.payOpenText') }}</p>
+          <button type="button" class="btn-amber mt-4" :disabled="paying" @click="pay">
+            <font-awesome-icon :icon="paying ? 'spinner' : 'lock'" :spin="paying" />
+            {{ $t('order.payNow', { total: formatEuro(order.total_price) }) }}
+          </button>
+        </div>
+      </div>
+
+      <div v-else-if="justPlaced && order.status !== 'Canceled'" class="placed glass-panel mb-8" role="status">
         <span class="placed-check" aria-hidden="true"><font-awesome-icon icon="check" /></span>
         <div>
-          <p class="display-title text-4xl">{{ $t('order.thanks') }}</p>
+          <p class="display-title text-4xl">{{ justPaid ? $t('order.paidThanks') : $t('order.thanks') }}</p>
           <p class="mt-1 text-cream-muted">
             <template v-if="order.fulfillment_method === 'pickup'">
               {{ $t('order.readyAt', { name: business.name, address: storeAddress }) }}
             </template>
             <template v-else>{{ $t('order.willDeliver') }}</template>
           </p>
+          <p v-if="authStore.user?.email" class="text-sm text-cream-faint">{{ $t('order.emailSent', { email: authStore.user.email }) }}</p>
         </div>
       </div>
 
@@ -80,11 +99,11 @@
         <h2 class="panel-title mb-2">{{ $t('order.items') }}</h2>
         <ul class="divide-y divide-white/10">
           <li v-for="item in order.order_items" :key="item.id" class="flex items-center gap-4 py-3">
-            <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="item.product.name"
+            <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="localized(item.product, 'name')"
                  class="h-14 w-14 rounded-xl object-contain bg-white/5" @error="applyImageFallback" />
             <span class="flex-1 min-w-0">
               <router-link :to="{ name: 'product-detail', params: { id: item.product.id } }" class="block text-cream hover:text-crust-light truncate">
-                {{ item.product.name }}
+                {{ localized(item.product, 'name') }}
               </router-link>
               <span class="text-sm text-cream-muted">{{ item.quantity }} × {{ formatEuro(item.price_per_item) }}</span>
             </span>
@@ -119,10 +138,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { localized } from '@/i18n/catalog'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useOrderStore } from '@/stores/orderStore'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/authStore'
 import { business, streetLine, cityLine } from '@/config/business'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { formatEuro, formatDateTime } from '@/utils/money'
@@ -130,6 +151,7 @@ import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const orderStore = useOrderStore()
+const authStore = useAuthStore()
 const { showToast } = useToast()
 const { t } = useI18n()
 
@@ -140,6 +162,40 @@ const confirmingCancel = ref(false)
 
 const order = computed(() => orderStore.currentOrder)
 const justPlaced = computed(() => route.query.placed === '1')
+const paying = ref(false)
+const polls = ref(0)
+
+// Online payments are confirmed by Stripe's webhook, usually within seconds
+// of the customer coming back; until then the page checks again.
+const onlinePending = computed(() =>
+  order.value?.payment?.payment_method === 'ST' && order.value.payment.status === 'Pending' && order.value.status === 'Pending')
+const returnedPaid = computed(() => route.query.paid === '1')
+const confirming = computed(() => onlinePending.value && returnedPaid.value && polls.value < 30)
+const awaitingPayment = computed(() => onlinePending.value && (!returnedPaid.value || confirming.value))
+const paymentCanceled = computed(() => route.query.payment === 'canceled')
+const justPaid = computed(() => returnedPaid.value && order.value?.payment?.status === 'Completed')
+let pollTimer = null
+
+function pollPayment() {
+  clearTimeout(pollTimer)
+  if (!confirming.value) return
+  pollTimer = setTimeout(async () => {
+    polls.value += 1
+    await orderStore.fetchOrderById(route.params.id).catch(() => {})
+    pollPayment()
+  }, 2000)
+}
+
+async function pay() {
+  paying.value = true
+  try {
+    window.location.assign(await orderStore.payOrder(order.value.id))
+  } catch (err) {
+    showToast(err.response?.data?.error || t('order.payFailed'), 'error')
+    paying.value = false
+    await orderStore.fetchOrderById(route.params.id).catch(() => {})
+  }
+}
 const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
 
 const steps = [
@@ -174,7 +230,10 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  pollPayment()
 })
+
+onBeforeUnmount(() => clearTimeout(pollTimer))
 </script>
 
 <style scoped>
@@ -196,6 +255,11 @@ onMounted(async () => {
   color: #0e0c0a;
   background: #9fd49a;
   animation: pop-in 0.7s var(--ease-out-expo) both;
+}
+
+.placed-check.is-waiting {
+  color: #0e0c0a;
+  background: #e6a15a;
 }
 
 @keyframes pop-in {

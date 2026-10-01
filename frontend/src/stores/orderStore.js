@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import axios from '@/plugins/axios'
 import { ref, computed } from 'vue'
+import { API_URL } from '@/config/api'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE = API_URL
 const API_PATH = `${API_BASE}/api/orders/orders`
 
 const mediaUrl = (path) => {
@@ -24,6 +25,7 @@ const normalizeOrder = (order) => ({
     product: {
       id: item.product,
       name: item.product_name,
+      name_en: item.product_name_en,
       image: mediaUrl(item.product_image)
     }
   }))
@@ -240,6 +242,12 @@ export const useOrderStore = defineStore('orders', () => {
     }
   }
 
+  // Open (or reopen) the online payment page for an unpaid order.
+  const payOrder = async (orderId) => {
+    const response = await axios.post(`${API_PATH}/${orderId}/pay/`)
+    return response.data.payment_url
+  }
+
   // Admin actions
   const updateOrderStatus = async (orderId, status) => {
     try {
@@ -332,6 +340,7 @@ export const useOrderStore = defineStore('orders', () => {
     fetchOrders,
     fetchCheckoutOptions,
     placeOrder,
+    payOrder,
     fetchOrderById,
     cancelOrder,
     trackOrder,

@@ -83,6 +83,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
+    # Serves collected static files and, in production, the built storefront.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Answers in the language the shop sends (Accept-Language: de or en).
     'django.middleware.locale.LocaleMiddleware',
@@ -120,12 +122,30 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# SQLite locally. In production either DATABASE_URL or the POSTGRES_*
+# settings (as used by docker-compose.yml) point to Postgres.
+import dj_database_url  # noqa: E402
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=int(os.environ.get('DATABASE_CONN_MAX_AGE', '60')),
+    )
 }
+if not os.environ.get('DATABASE_URL') and os.environ.get('POSTGRES_HOST'):
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'HOST': os.environ['POSTGRES_HOST'],
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'NAME': os.environ.get('POSTGRES_DB', 'backlover'),
+        'USER': os.environ.get('POSTGRES_USER', 'backlover'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+        'CONN_MAX_AGE': int(os.environ.get('DATABASE_CONN_MAX_AGE', '60')),
+    }
+if DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+    # Several requests at once (the shop loads cart, products and more in
+    # parallel) should wait for each other instead of failing as "locked".
+    DATABASES['default'].setdefault('OPTIONS', {}).update({'transaction_mode': 'IMMEDIATE', 'timeout': 20})
+    DATABASES['default']['CONN_MAX_AGE'] = 0
 
 
 # Password validation
@@ -159,7 +179,8 @@ LANGUAGES = [
 
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
-TIME_ZONE = 'UTC'
+# Opening hours, pickup slots and "today" in the admin follow the shop's clock.
+TIME_ZONE = os.environ.get('DJANGO_TIME_ZONE', 'Europe/Berlin')
 
 USE_I18N = True
 
@@ -175,7 +196,31 @@ STATICFILES_DIRS = [path for path in [BASE_DIR / 'static'] if path.is_dir()]
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
+
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
+# Optional: keep uploads (product photos, 3D models) in an S3-compatible
+# bucket instead of on the server's disk. Needs `django-storages[s3]`
+# (requirements-prod.txt); see DEPLOY.md for the bucket's CORS rule.
+if os.environ.get('AWS_STORAGE_BUCKET_NAME'):
+    STORAGES['default'] = {'BACKEND': 'storages.backends.s3.S3Storage'}
+    AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME') or None
+    AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL') or None
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN') or None
+    AWS_QUERYSTRING_AUTH = False
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'public, max-age=31536000'}
+
+# The built storefront (frontend/dist). WhiteNoise serves its files (/assets,
+# /draco, images) straight from this folder; page URLs fall through to
+# FRONTEND_INDEX_FILE below. Vite's hashed assets are cached for a year.
+WHITENOISE_ROOT = os.environ.get('FRONTEND_DIST_DIR') or None
+WHITENOISE_IMMUTABLE_FILE_TEST = r'^.+[.-][0-9a-zA-Z_-]{8,12}\.\w+$'
 
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'  
@@ -280,7 +325,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'DEBUG',
+        'level': os.environ.get('DJANGO_LOG_LEVEL', 'DEBUG' if DEBUG else 'INFO'),
     },
     'loggers': {
         'django': {
@@ -308,6 +353,26 @@ DELIVERY_FEE = Decimal(os.environ.get('SHOP_DELIVERY_FEE', '3.50'))
 # Online payment providers need credentials; until configured, only cash
 # and card on pickup/delivery are offered.
 PAYPAL_ENABLED = _env_bool('SHOP_PAYPAL_ENABLED', False)
+
+# Online payment with Stripe Checkout (cards, Apple Pay, Google Pay and any
+# other method switched on in the Stripe dashboard). Offered at checkout
+# once the secret key and webhook secret are set; see DEPLOY.md.
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_ENABLED = bool(STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET)
+# Unpaid online orders give their stock back after this long (Stripe's
+# minimum is 30 minutes).
+STRIPE_CHECKOUT_MINUTES = max(30, int(os.environ.get('STRIPE_CHECKOUT_MINUTES', '30')))
+
+# Pickup and delivery times offered at checkout (apps/orders/slots.py).
+# Days not listed are closed, e.g. "mon-fri 07:00-18:00; sat 08:00-14:00".
+SHOP_OPENING_HOURS = os.environ.get('SHOP_OPENING_HOURS', 'mon-fri 07:00-18:00; sat 07:00-14:00; sun 08:00-12:00')
+SHOP_SLOT_MINUTES = int(os.environ.get('SHOP_SLOT_MINUTES', '30'))
+SHOP_SLOT_DAYS = int(os.environ.get('SHOP_SLOT_DAYS', '7'))
+SHOP_PICKUP_LEAD_MINUTES = int(os.environ.get('SHOP_PICKUP_LEAD_MINUTES', '60'))
+SHOP_DELIVERY_LEAD_MINUTES = int(os.environ.get('SHOP_DELIVERY_LEAD_MINUTES', '120'))
+# Orders per slot before it is shown as taken (0 = no limit).
+SHOP_SLOT_CAPACITY = int(os.environ.get('SHOP_SLOT_CAPACITY', '0'))
 
 # Shown in page titles, share previews and structured data (apps/core/seo.py).
 SHOP_NAME = os.environ.get('SHOP_NAME', 'Backlover')
@@ -341,6 +406,17 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = _env_bool('DJANGO_SECURE_SSL_REDIRECT', True)
     SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', '0'))
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Error reports (optional): set SENTRY_DSN. Needs `sentry-sdk`
+# (requirements-prod.txt). Personal data is not sent.
+if os.environ.get('SENTRY_DSN'):
+    import sentry_sdk  # noqa: E402
+    sentry_sdk.init(
+        dsn=os.environ['SENTRY_DSN'],
+        environment=os.environ.get('SENTRY_ENVIRONMENT', 'production'),
+        traces_sample_rate=float(os.environ.get('SENTRY_TRACES_SAMPLE_RATE', '0')),
+        send_default_pii=False,
+    )
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

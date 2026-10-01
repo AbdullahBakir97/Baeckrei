@@ -1,0 +1,6 @@
+# Production server extras (Docker image). See DEPLOY.md.
+-r requirements.txt
+gunicorn==26.2.0
+psycopg[binary]==3.3.6
+sentry-sdk==2.71.0
+django-storages[s3]==1.14.6

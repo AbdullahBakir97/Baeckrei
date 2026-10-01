@@ -66,6 +66,15 @@ class CartManagementController(BaseController):
             customer = self._get_customer(request)
 
             if customer:
+                # Signed in after shopping as a guest: bring the guest cart along.
+                session_key = request.session.session_key
+                if session_key and Cart.objects.filter(
+                    session_key=session_key, customer__isnull=True, completed=False
+                ).exists():
+                    merged = self.cart_retriever.merge_guest_cart_to_customer(customer, session_key)
+                    if merged:
+                        self.cart_retriever.clear_cart_cache(session_key=session_key)
+                        return merged, False
                 cart, created = self.cart_retriever.get_or_create_for_customer(customer)
             else:
                 if not request.session.session_key:

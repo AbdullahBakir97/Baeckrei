@@ -8,8 +8,8 @@
       </div>
 
       <div v-else-if="!cartStore.items.length" class="glass-panel text-center py-12">
-        <p class="text-lg text-white font-medium">{{ $t('cart.emptyTitle') }}</p>
-        <p class="mt-2 text-gray-400">{{ $t('checkout.emptyText') }}</p>
+        <p class="text-lg text-cream font-medium">{{ $t('cart.emptyTitle') }}</p>
+        <p class="mt-2 text-cream-muted">{{ $t('checkout.emptyText') }}</p>
         <router-link to="/products" class="btn-amber mt-6">{{ $t('common.browseProducts') }}</router-link>
       </div>
 
@@ -17,7 +17,7 @@
         <div class="lg:col-span-7 space-y-6">
           <!-- Fulfilment -->
           <section class="glass-panel space-y-4">
-            <h2 class="text-lg font-semibold text-white">{{ $t('checkout.step1') }}</h2>
+            <h2 class="display-title text-3xl">{{ $t('checkout.step1') }}</h2>
             <div class="grid sm:grid-cols-2 gap-3">
               <button
                 v-for="method in fulfillmentMethods"
@@ -28,10 +28,10 @@
                 :aria-pressed="form.fulfillment_method === method.code"
                 @click="form.fulfillment_method = method.code"
               >
-                <font-awesome-icon :icon="method.code === 'pickup' ? 'store' : 'truck'" class="mt-1 text-amber-400" />
+                <font-awesome-icon :icon="method.code === 'pickup' ? 'store' : 'truck'" class="mt-1 text-crust" />
                 <span>
-                  <span class="block font-medium text-white">{{ $t(`common.${method.code}`) }}</span>
-                  <span class="block text-sm text-gray-400">
+                  <span class="block font-medium text-cream">{{ $t(`common.${method.code}`) }}</span>
+                  <span class="block text-sm text-cream-muted">
                     <template v-if="method.code === 'pickup'">{{ business.name }}, {{ storeAddress }}</template>
                     <template v-else>{{ $t('checkout.deliveryFee', { fee: formatEuro(method.fee) }) }}</template>
                   </span>
@@ -50,8 +50,8 @@
                 :aria-pressed="selectedAddressId === address.id"
                 @click="selectedAddressId = address.id"
               >
-                <font-awesome-icon icon="location-dot" class="mt-1 text-amber-400" />
-                <span class="text-gray-200">{{ address.address_line_1 }}, {{ address.postal_code }} {{ address.city }}</span>
+                <font-awesome-icon icon="location-dot" class="mt-1 text-crust" />
+                <span class="text-cream/80">{{ address.address_line_1 }}, {{ address.postal_code }} {{ address.city }}</span>
               </button>
               <button
                 type="button"
@@ -60,8 +60,8 @@
                 :aria-pressed="selectedAddressId === null"
                 @click="selectedAddressId = null"
               >
-                <font-awesome-icon icon="plus" class="mt-1 text-amber-400" />
-                <span class="text-gray-200">{{ $t('checkout.newAddress') }}</span>
+                <font-awesome-icon icon="plus" class="mt-1 text-crust" />
+                <span class="text-cream/80">{{ $t('checkout.newAddress') }}</span>
               </button>
             </div>
 
@@ -72,7 +72,7 @@
                 <p v-if="errors.address_line_1" class="field-error">{{ errors.address_line_1 }}</p>
               </div>
               <div class="sm:col-span-6">
-                <label for="address_line_2" class="field-label">{{ $t('address.line2') }} <span class="text-gray-500">({{ $t('common.optional') }})</span></label>
+                <label for="address_line_2" class="field-label">{{ $t('address.line2') }} <span class="text-cream-faint">({{ $t('common.optional') }})</span></label>
                 <input id="address_line_2" v-model.trim="form.address.address_line_2" class="field-input" autocomplete="address-line2" />
               </div>
               <div class="sm:col-span-2">
@@ -85,7 +85,7 @@
                 <input id="city" v-model.trim="form.address.city" class="field-input" autocomplete="address-level2" required />
                 <p v-if="errors.city" class="field-error">{{ errors.city }}</p>
               </div>
-              <label class="sm:col-span-6 flex items-center gap-2 text-gray-300">
+              <label class="sm:col-span-6 flex items-center gap-2 text-cream/80">
                 <input v-model="form.save_address" type="checkbox" class="rounded border-white/20 bg-white/5 text-amber-500" />
                 {{ $t('checkout.saveAddress') }}
               </label>
@@ -94,22 +94,38 @@
 
           <!-- Time and contact -->
           <section class="glass-panel space-y-4">
-            <h2 class="text-lg font-semibold text-white">{{ $t('checkout.step2') }}</h2>
+            <h2 class="display-title text-3xl">{{ $t('checkout.step2') }}</h2>
+            <fieldset>
+              <legend class="field-label">{{ isDelivery ? $t('checkout.deliveryTime') : $t('checkout.pickupTime') }}</legend>
+              <template v-if="slotDays.length">
+                <div class="slot-days" role="group" :aria-label="$t('checkout.day')">
+                  <button v-for="day in slotDays" :key="day.key" type="button" class="slot-chip"
+                          :class="{ 'is-selected': selectedDay === day.key }" :aria-pressed="selectedDay === day.key"
+                          @click="selectedDay = day.key">
+                    {{ slotDayLabel(day.key) }}
+                  </button>
+                </div>
+                <div class="slot-times" role="group" :aria-label="$t('checkout.time')">
+                  <button v-for="slot in daySlots" :key="slot.start" type="button" class="slot-chip is-time"
+                          :class="{ 'is-selected': form.requested_time === slot.start }" :disabled="!slot.available"
+                          :aria-pressed="form.requested_time === slot.start"
+                          :title="slot.available ? '' : $t('checkout.slotFull')"
+                          @click="form.requested_time = slot.start">
+                    {{ slotTime(slot.start) }}
+                  </button>
+                </div>
+              </template>
+              <p v-else class="text-sm text-cream-muted">{{ $t('checkout.noSlots') }}</p>
+              <p v-if="errors.requested_time" class="field-error">{{ errors.requested_time }}</p>
+            </fieldset>
             <div class="grid sm:grid-cols-2 gap-4">
               <div>
-                <label for="requested_time" class="field-label">
-                  {{ isDelivery ? $t('checkout.deliveryTime') : $t('checkout.pickupTime') }} <span class="text-gray-500">({{ $t('common.optional') }})</span>
-                </label>
-                <input id="requested_time" v-model="form.requested_time" type="datetime-local" :min="minTime" class="field-input" />
-                <p v-if="errors.requested_time" class="field-error">{{ errors.requested_time }}</p>
-              </div>
-              <div>
-                <label for="contact_phone" class="field-label">{{ $t('common.phone') }} <span class="text-gray-500">({{ $t('common.optional') }})</span></label>
+                <label for="contact_phone" class="field-label">{{ $t('common.phone') }} <span class="text-cream-faint">({{ $t('common.optional') }})</span></label>
                 <input id="contact_phone" v-model.trim="form.contact_phone" type="tel" class="field-input" autocomplete="tel" />
               </div>
             </div>
             <div>
-              <label for="notes" class="field-label">{{ $t('checkout.notes') }} <span class="text-gray-500">({{ $t('common.optional') }})</span></label>
+              <label for="notes" class="field-label">{{ $t('checkout.notes') }} <span class="text-cream-faint">({{ $t('common.optional') }})</span></label>
               <textarea id="notes" v-model.trim="form.notes" rows="3" maxlength="1000" class="field-input"
                         :placeholder="$t('checkout.notesPlaceholder')"></textarea>
             </div>
@@ -117,7 +133,7 @@
 
           <!-- Payment -->
           <section class="glass-panel space-y-4">
-            <h2 class="text-lg font-semibold text-white">{{ $t('checkout.step3') }}</h2>
+            <h2 class="display-title text-3xl">{{ $t('checkout.step3') }}</h2>
             <div class="grid gap-3">
               <button
                 v-for="method in paymentMethods"
@@ -129,10 +145,10 @@
                 :aria-pressed="form.payment_method === method.code"
                 @click="form.payment_method = method.code"
               >
-                <font-awesome-icon :icon="paymentIcon(method.code)" class="mt-1 text-amber-400" />
+                <font-awesome-icon :icon="paymentIcon(method.code)" class="mt-1 text-crust" />
                 <span>
-                  <span class="block font-medium text-white">{{ $t(`checkout.payment.${method.code}`) }}</span>
-                  <span class="block text-sm text-gray-400">
+                  <span class="block font-medium text-cream">{{ $t(`checkout.payment.${method.code}`) }}</span>
+                  <span class="block text-sm text-cream-muted">
                     {{ method.available ? $t(`checkout.paymentHint.${method.code}`) : $t('checkout.comingSoon') }}
                   </span>
                 </span>
@@ -145,29 +161,29 @@
         <!-- Summary -->
         <aside class="lg:col-span-5">
           <div class="glass-panel sticky top-4 space-y-4">
-            <h2 class="text-lg font-semibold text-white">{{ $t('cart.eyebrow') }}</h2>
+            <h2 class="display-title text-3xl">{{ $t('cart.eyebrow') }}</h2>
             <ul class="divide-y divide-white/10">
               <li v-for="item in cartStore.items" :key="item.id" class="flex items-center gap-3 py-3">
-                <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="item.product.name"
+                <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="localized(item.product, 'name')"
                      class="h-12 w-12 rounded-lg object-cover bg-white/5" @error="applyImageFallback" />
                 <span class="flex-1 min-w-0">
-                  <span class="block text-white truncate">{{ item.product.name }}</span>
-                  <span class="block text-sm text-gray-400">{{ item.quantity }} × {{ formatEuro(item.unitPrice) }}</span>
+                  <span class="block text-cream truncate">{{ localized(item.product, 'name') }}</span>
+                  <span class="block text-sm text-cream-muted">{{ item.quantity }} × {{ formatEuro(item.unitPrice) }}</span>
                 </span>
-                <span class="text-gray-200 tabular-nums">{{ formatEuro(item.totalPrice) }}</span>
+                <span class="text-cream/80 tabular-nums">{{ formatEuro(item.totalPrice) }}</span>
               </li>
             </ul>
-            <dl class="space-y-2 text-gray-300">
+            <dl class="space-y-2 text-cream/80">
               <div class="flex justify-between"><dt>{{ $t('common.subtotal') }}</dt><dd class="tabular-nums">{{ formatEuro(subtotal) }}</dd></div>
               <div class="flex justify-between">
                 <dt>{{ isDelivery ? $t('common.delivery') : $t('common.pickup') }}</dt>
                 <dd class="tabular-nums">{{ deliveryFee > 0 ? formatEuro(deliveryFee) : $t('checkout.free') }}</dd>
               </div>
               <div class="h-px bg-white/10 my-2"></div>
-              <div class="flex justify-between text-lg font-bold text-white">
-                <dt>{{ $t('common.total') }}</dt><dd class="tabular-nums text-amber-400">{{ formatEuro(total) }}</dd>
+              <div class="flex justify-between text-lg font-bold text-cream">
+                <dt>{{ $t('common.total') }}</dt><dd class="tabular-nums text-crust">{{ formatEuro(total) }}</dd>
               </div>
-              <div class="flex justify-between text-sm text-gray-500">
+              <div class="flex justify-between text-sm text-cream-faint">
                 <dt>{{ $t('checkout.inclVat', { percent: vatPercent }) }}</dt><dd class="tabular-nums">{{ formatEuro(vat) }}</dd>
               </div>
             </dl>
@@ -176,14 +192,21 @@
               {{ orderStore.error }}
             </p>
 
+            <p v-if="form.requested_time" class="flex items-center gap-2 text-sm text-cream-muted">
+              <font-awesome-icon icon="clock" class="text-crust" />
+              {{ isDelivery ? $t('common.delivery') : $t('common.pickup') }}: {{ slotLabel(form.requested_time) }}
+            </p>
             <button type="submit" class="btn-amber w-full" :disabled="submitting">
               <font-awesome-icon v-if="submitting" icon="spinner" spin />
-              {{ submitting ? $t('checkout.placing') : $t('checkout.place', { total: formatEuro(total) }) }}
+              <template v-if="redirecting">{{ $t('checkout.toPayment') }}</template>
+              <template v-else-if="submitting">{{ $t('checkout.placing') }}</template>
+              <template v-else-if="isOnline">{{ $t('checkout.placeAndPay', { total: formatEuro(total) }) }}</template>
+              <template v-else>{{ $t('checkout.place', { total: formatEuro(total) }) }}</template>
             </button>
-            <p class="text-xs text-gray-500">
+            <p class="text-xs text-cream-faint">
               <i18n-t keypath="checkout.legal" scope="global">
-                <template #terms><router-link to="/terms" class="underline hover:text-gray-300">{{ $t('checkout.terms') }}</router-link></template>
-                <template #privacy><router-link to="/privacy" class="underline hover:text-gray-300">{{ $t('footer.privacyPolicy') }}</router-link></template>
+                <template #terms><router-link to="/terms" class="underline hover:text-cream/80">{{ $t('checkout.terms') }}</router-link></template>
+                <template #privacy><router-link to="/privacy" class="underline hover:text-cream/80">{{ $t('footer.privacyPolicy') }}</router-link></template>
               </i18n-t>
             </p>
           </div>
@@ -194,6 +217,7 @@
 </template>
 
 <script setup>
+import { localized } from '@/i18n/catalog'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -203,6 +227,7 @@ import { useAddressStore } from '@/stores/addressStore'
 import { business, streetLine, cityLine } from '@/config/business'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { formatEuro } from '@/utils/money'
+import { groupSlots, slotDayLabel, slotLabel, slotTime } from '@/utils/slots'
 import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
@@ -214,6 +239,8 @@ const selectedAddressId = ref(null)
 
 const loadingPage = ref(true)
 const submitting = ref(false)
+const redirecting = ref(false)
+const selectedDay = ref(null)
 const errors = reactive({})
 const options = ref({ vat_rate: '0.19', fulfillment_methods: [], payment_methods: [] })
 
@@ -243,14 +270,23 @@ const vatRate = computed(() => Number(options.value.vat_rate) || 0)
 const vatPercent = computed(() => Math.round(vatRate.value * 100))
 const vat = computed(() => total.value - total.value / (1 + vatRate.value))
 
-// Earliest selectable time: one hour from now, in the local timezone.
-const minTime = (() => {
-  const d = new Date(Date.now() + 60 * 60 * 1000)
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-  return d.toISOString().slice(0, 16)
-})()
+const isOnline = computed(() => form.payment_method === 'ST')
 
-const paymentIcon = (code) => ({ CA: 'money-bill', CC: 'credit-card', PP: 'lock' }[code] || 'credit-card')
+// Bookable times for the chosen method, grouped by day. The first free
+// slot is picked for the customer; switching pickup/delivery keeps the
+// choice if it is still bookable.
+const slotDays = computed(() => groupSlots(options.value.slots?.[form.fulfillment_method]))
+const daySlots = computed(() => slotDays.value.find(day => day.key === selectedDay.value)?.slots || [])
+watch(slotDays, (days) => {
+  const all = days.flatMap(day => day.slots)
+  if (!all.some(slot => slot.available && slot.start === form.requested_time)) {
+    form.requested_time = all.find(slot => slot.available)?.start || ''
+  }
+  const current = days.find(day => day.slots.some(slot => slot.start === form.requested_time))
+  selectedDay.value = current?.key || days[0]?.key || null
+})
+
+const paymentIcon = (code) => ({ CA: 'money-bill', CC: 'credit-card', PP: 'lock', ST: 'lock' }[code] || 'credit-card')
 
 // Clear a field's error as soon as it has a value again.
 watch(() => ({ ...form.address }), (address) => {
@@ -281,7 +317,7 @@ async function submit() {
     payment_method: form.payment_method,
     contact_phone: form.contact_phone,
     notes: form.notes,
-    requested_time: form.requested_time ? new Date(form.requested_time).toISOString() : null
+    requested_time: form.requested_time || null
   }
   if (isDelivery.value) {
     if (selectedAddressId.value !== null) {
@@ -294,6 +330,12 @@ async function submit() {
   try {
     const order = await orderStore.placeOrder(payload)
     await cartStore.fetchCart({ silent: true })
+    if (order.payment_url) {
+      // Pay on Stripe's page; it sends the customer back to the order.
+      redirecting.value = true
+      window.location.assign(order.payment_url)
+      return
+    }
     router.push({ name: 'order-detail', params: { id: order.id }, query: { placed: '1' } })
   } catch (err) {
     const fieldErrors = err.fieldErrors || {}
@@ -305,10 +347,13 @@ async function submit() {
     for (const key of ['payment_method', 'requested_time']) {
       if (fieldErrors[key]) errors[key] = [].concat(fieldErrors[key])[0]
     }
-    // Stock may have changed; show the current cart.
+    // Stock or free times may have changed; show the current state.
     await cartStore.fetchCart({ silent: true })
+    if (fieldErrors.requested_time) {
+      options.value = await orderStore.fetchCheckoutOptions().catch(() => options.value)
+    }
   } finally {
-    submitting.value = false
+    if (!redirecting.value) submitting.value = false
   }
 }
 
@@ -331,3 +376,54 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.slot-days,
+.slot-times {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.25rem 0.1rem 0.5rem;
+  scrollbar-width: thin;
+}
+
+.slot-times {
+  flex-wrap: wrap;
+  overflow: visible;
+  margin-top: 0.5rem;
+}
+
+.slot-chip {
+  flex: none;
+  padding: 0.55rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #d9cfc2;
+  background: rgba(244, 236, 225, 0.05);
+  border: 1px solid rgba(244, 236, 225, 0.1);
+  transition: background 0.25s, color 0.25s, border-color 0.25s;
+}
+
+.slot-chip.is-time {
+  min-width: 4.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.slot-chip:hover:not(:disabled) {
+  border-color: rgba(230, 161, 90, 0.5);
+  color: #f4ece1;
+}
+
+.slot-chip.is-selected {
+  color: #0e0c0a;
+  background: #e6a15a;
+  border-color: #e6a15a;
+}
+
+.slot-chip:disabled {
+  opacity: 0.35;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+</style>
