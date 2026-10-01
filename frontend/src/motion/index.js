@@ -16,6 +16,12 @@ export const isCoarsePointer = () =>
 
 let lenis = null
 
+// The first-visit intro covers the page; entrance animations wait for it.
+let finishIntro
+const introDone = new Promise((resolve) => { finishIntro = resolve })
+export const whenIntroDone = () => introDone
+export const markIntroDone = () => finishIntro()
+
 // Smooth scrolling driven by GSAP's ticker so ScrollTrigger stays in sync.
 export function initSmoothScroll() {
   if (lenis || prefersReducedMotion()) return lenis

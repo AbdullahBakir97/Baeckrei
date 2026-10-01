@@ -24,7 +24,7 @@
       <section class="section pd-grid">
         <!-- Stage: 3D view or photo -->
         <div class="pd-stage-col">
-          <div class="pd-stage">
+          <div ref="stage" class="pd-stage" data-cursor="drag">
             <span class="pd-stage-glow" aria-hidden="true"></span>
             <ProductViewer3D v-if="view === '3d'" :key="product.id" :image="imageUrl" :model="product.model_3d_url || ''"
                              :alt="name" @error="view = 'photo'" />
@@ -178,7 +178,8 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { flyToCart, landShared } from '@/motion/flights'
 import { useRoute } from 'vue-router'
 import { useProductStore } from '@/stores/productStore'
 import { useCartStore } from '@/stores/cartStore'
@@ -207,6 +208,8 @@ const name = computed(() => localized(product.value, 'name'))
 const quantity = ref(1)
 const busy = ref(false)
 const view = ref(webglAvailable() ? '3d' : 'photo')
+const stage = ref(null)
+
 
 // Only show the product that matches the URL (the store may still hold the
 // previous one while the next loads).
@@ -266,7 +269,10 @@ async function withBusy(action, success) {
 }
 
 const addToCart = () => withBusy(
-  () => cartStore.addItem(product.value.id, quantity.value),
+  async () => {
+    await cartStore.addItem(product.value.id, quantity.value)
+    flyToCart(stage.value, imageUrl.value)
+  },
   t('common.addedToCart', { name: name.value })
 )
 const setCartQuantity = (value) => withBusy(() => cartStore.updateQuantity(product.value.id, value))
@@ -307,6 +313,12 @@ async function shareProduct() {
 }
 
 watch(() => route.params.id, (id) => { if (id) loadProduct() }, { immediate: true })
+// A photo launched from a product card lands on the stage.
+watch(product, async (value) => {
+  if (!value) return
+  await nextTick()
+  landShared(value.id, stage.value)
+}, { immediate: true })
 // Title, share preview and a schema.org Product with price and stock for search results.
 usePageMeta(() => {
   if (!product.value) return {}

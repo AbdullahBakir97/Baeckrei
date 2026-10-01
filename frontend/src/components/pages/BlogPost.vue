@@ -21,7 +21,7 @@
         </p>
         <h1 v-split.load class="display-title text-5xl sm:text-7xl mt-4">{{ post.title }}</h1>
         <p v-if="post.excerpt" v-reveal="{ delay: 0.2 }" class="lede">{{ post.excerpt }}</p>
-        <img v-if="post.cover_image" v-reveal="{ delay: 0.3 }" :src="post.cover_image" :alt="post.title"
+        <img v-if="post.cover_image" v-mask :src="post.cover_image" :alt="post.title"
              class="cover" @error="applyImageFallback" />
         <div class="body">
           <p v-for="(paragraph, index) in paragraphs" :key="index" v-reveal class="whitespace-pre-line">{{ paragraph }}</p>

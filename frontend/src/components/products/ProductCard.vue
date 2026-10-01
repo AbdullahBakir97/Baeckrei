@@ -1,8 +1,8 @@
 <template>
   <article v-tilt="{ max: 7 }" class="pcard lux-card" :class="{ 'is-soldout': soldOut }">
-    <router-link :to="detailLink" class="pcard-media" :aria-label="name">
+    <router-link :to="detailLink" class="pcard-media" :aria-label="name" data-cursor="view" @click="lift">
       <span class="pcard-halo" aria-hidden="true"></span>
-      <img :src="product.image_url || product.image || PLACEHOLDER_IMAGE" :alt="name"
+      <img ref="photo" :src="product.image_url || product.image || PLACEHOLDER_IMAGE" :alt="name"
            class="pcard-img" data-depth="60" loading="lazy" @error="applyImageFallback" />
       <span class="pcard-badges" data-depth="35">
         <span v-if="product.is_seasonal" class="pcard-badge is-seasonal">{{ $t('common.seasonal') }}</span>
@@ -17,7 +17,7 @@
     <div class="pcard-body" data-depth="25">
       <p class="eyebrow !text-[0.65rem]">{{ categoryName(product.category) || business.name }}</p>
       <h3 class="pcard-title">
-        <router-link :to="detailLink">{{ name }}</router-link>
+        <router-link :to="detailLink" @click="lift">{{ name }}</router-link>
       </h3>
       <div class="pcard-row">
         <span class="pcard-price">{{ price }}</span>
@@ -46,6 +46,7 @@ import { useCartStore } from '@/stores/cartStore'
 import { useToast } from '@/composables/useToast'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { formatEuro } from '@/utils/money'
+import { flyToCart, launchShared } from '@/motion/flights'
 import { useI18n } from 'vue-i18n'
 import { business } from '@/config/business'
 import { categoryName, localized } from '@/i18n/catalog'
@@ -58,6 +59,9 @@ const emit = defineEmits(['add-to-cart'])
 const cartStore = useCartStore()
 const { showToast } = useToast()
 const busy = ref(false)
+const photo = ref(null)
+// The photo carries over to the product page.
+const lift = () => launchShared(props.product.id, photo.value)
 const { t } = useI18n()
 const name = computed(() => localized(props.product, 'name'))
 
@@ -80,6 +84,7 @@ async function run(action, success) {
 
 const add = () => run(async () => {
   await cartStore.addItem(props.product.id, 1)
+  flyToCart(photo.value)
   emit('add-to-cart', props.product)
 }, t('common.addedToCart', { name: name.value }))
 

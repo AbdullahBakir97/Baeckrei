@@ -50,7 +50,7 @@
 
         <!-- Cart -->
         <div class="relative" @mouseenter="cartPreview = true" @mouseleave="cartPreview = false">
-          <router-link to="/cart" class="nav-cart" :aria-label="$t('nav.cartLabel', { count: cartStore.itemCount })">
+          <router-link id="nav-cart" to="/cart" class="nav-cart" :aria-label="$t('nav.cartLabel', { count: cartStore.itemCount })">
             <font-awesome-icon icon="shopping-bag" />
             <span class="tabular-nums">{{ cartStore.itemCount }}</span>
           </router-link>

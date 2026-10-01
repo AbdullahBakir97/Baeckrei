@@ -181,9 +181,61 @@
 
   .btn-amber {
     @apply relative inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full font-semibold
-           text-oven-950 bg-crust hover:bg-crust-light transition-colors duration-300
+           text-oven-950 bg-crust transition-colors duration-300
            disabled:opacity-50 disabled:cursor-not-allowed;
+    isolation: isolate;
+    overflow: hidden;
     box-shadow: 0 10px 30px -10px rgba(230, 161, 90, 0.6);
+  }
+
+  /* A lighter fill sweeps in from the pointer side on hover. */
+  .btn-amber::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: #f2c48d;
+    transform: translateY(101%);
+    transition: transform 0.5s var(--ease-out-expo);
+  }
+
+  .btn-amber:hover:not(:disabled)::before {
+    transform: translateY(0);
+  }
+
+  .btn-amber:hover,
+  .btn-amber:focus-visible {
+    color: #0e0c0a;
+  }
+
+  /* Arrows nudge forward on hover. */
+  .btn-amber:hover .fa-arrow-right,
+  .btn-ghost:hover .fa-arrow-right {
+    transform: translateX(4px);
+  }
+
+  .btn-amber .fa-arrow-right,
+  .btn-ghost .fa-arrow-right {
+    transition: transform 0.4s var(--ease-out-expo);
+  }
+
+  .btn-ghost:hover .fa-arrow-left {
+    transform: translateX(-4px);
+  }
+
+  .btn-ghost .fa-arrow-left {
+    transition: transform 0.4s var(--ease-out-expo);
+  }
+
+  /* Links in running text and lists draw their underline on hover. */
+  .link-draw {
+    background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 0 1px;
+    transition: background-size 0.5s var(--ease-out-expo), color 0.3s;
+  }
+
+  .link-draw:hover {
+    background-size: 100% 1px;
   }
 
   .btn-ghost {

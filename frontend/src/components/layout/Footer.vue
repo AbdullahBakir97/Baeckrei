@@ -229,7 +229,12 @@ const subscribeNewsletter = async () => {
 
 .footer-cols a {
   color: #d9cfc2;
-  transition: color 0.3s;
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 100% / 0 1px;
+  transition: color 0.3s, background-size 0.5s var(--ease-out-expo);
+}
+
+.footer-cols a:hover {
+  background-size: 100% 1px;
 }
 
 .footer-cols a:hover {
