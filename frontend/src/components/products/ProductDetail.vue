@@ -1,794 +1,674 @@
 <template>
-  <div class="container py-8">
-    <!-- Loading State -->
-    <div v-if="productStore.loading" class="grid place-items-center h-96">
-      <div class="text-6xl text-primary-600">
-        <font-awesome-icon icon="spinner" class="animate-spin" />
+  <div class="pd pb-24">
+    <!-- Loading -->
+    <section v-if="!product && productStore.loading" class="section pd-grid" aria-busy="true">
+      <div class="pd-stage skeleton"></div>
+      <div class="space-y-4 pt-10">
+        <div class="skeleton h-4 w-32 rounded-full"></div>
+        <div class="skeleton h-16 w-3/4 rounded-2xl"></div>
+        <div class="skeleton h-6 w-24 rounded-full"></div>
+        <div class="skeleton h-28 w-full rounded-2xl"></div>
       </div>
-      <p class="mt-4 text-gray-400">Loading product details...</p>
-    </div>
+    </section>
 
-    <!-- Error State -->
-    <div v-else-if="productStore.error" class="text-center py-12">
-      <font-awesome-icon icon="circle-xmark" class="text-4xl text-red-500 mb-4" />
-      <p class="text-lg text-gray-600">{{ productStore.error }}</p>
-      <button @click="loadProduct" class="btn btn-primary mt-4">
-        <font-awesome-icon icon="rotate" class="mr-2" />
-        Try Again
+    <!-- Error -->
+    <section v-else-if="!product" class="section py-32 text-center">
+      <p class="eyebrow justify-center">Something went wrong</p>
+      <h1 class="display-title text-5xl mt-4">We couldn't load this product.</h1>
+      <button type="button" class="btn-amber mt-8" @click="loadProduct">
+        <font-awesome-icon icon="rotate" /> Try again
       </button>
-    </div>
+    </section>
 
-    <!-- Product Details -->
-    <div v-else-if="product" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left Column: Images -->
-      <ProductImage 
-      :product="product"
-      :is-in-wishlist="isInWishlist"
-      :is-in-compare="isInCompare"
-      @toggle-wishlist="toggleWishlist"
-      @toggle-compare="toggleCompare"
-      @share-product="shareProduct"
-    />
+    <template v-else>
+      <section class="section pd-grid">
+        <!-- Stage: 3D view or photo -->
+        <div class="pd-stage-col">
+          <div class="pd-stage">
+            <span class="pd-stage-glow" aria-hidden="true"></span>
+            <ProductViewer3D v-if="view === '3d'" :key="product.id" :image="imageUrl" :model="product.model_3d_url || ''"
+                             :alt="product.name" @error="view = 'photo'" />
+            <img v-else :src="imageUrl" :alt="product.name" class="pd-photo" @error="applyImageFallback" />
 
-      <!-- Middle Column: Main Info -->
-      <div class="lg:col-span-2">
-        <div class="space-y-4">
-          <!-- Basic Info Card -->
-          <div class="info-card">
-            <div class="card-header">
-              <nav class="flex items-center space-x-2 text-sm text-gray-400">
-                <router-link to="/" class="hover:text-amber-500 transition-colors">Home</router-link>
-                <span>/</span>
-                <router-link to="/products" class="hover:text-amber-500 transition-colors">Products</router-link>
-                <span>/</span>
-                <router-link
-                  v-if="product?.category?.slug"
-                  :to="{ name: 'category', params: { category: product.category.slug }}"
-                  class="hover:text-amber-500 transition-colors"
-                >
-                  {{ product?.category?.name }}
-                </router-link>
-              </nav>
+            <div class="pd-toggle" role="group" aria-label="View">
+              <button type="button" :class="{ 'is-active': view === '3d' }" :aria-pressed="view === '3d'" @click="view = '3d'">
+                <font-awesome-icon icon="cube" /> 3D
+              </button>
+              <button type="button" :class="{ 'is-active': view === 'photo' }" :aria-pressed="view === 'photo'" @click="view = 'photo'">
+                <font-awesome-icon icon="image" /> Photo
+              </button>
             </div>
 
-            <div class="card-content">
-              <h1 class="text-3xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 
-                         bg-clip-text text-transparent mb-4">
-                {{ product.name }}
-              </h1>
-
-              <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <div class="flex items-center gap-4">
-                  <span class="text-3xl font-bold text-transparent bg-clip-text 
-                             bg-gradient-to-r from-amber-400 to-amber-600">
-                    {{ formatPrice(product.price) }} €
-                  </span>
-                  <span :class="[
-                    'tag',
-                    product.stock > 5 ? 'bg-green-500/20 text-green-300' :
-                    product.stock > 0 ? 'bg-yellow-500/20 text-yellow-300' :
-                    'bg-red-500/20 text-red-300'
-                  ]">
-                    {{ product.stock > 5 ? 'In Stock' :
-                       product.stock > 0 ? `Only ${product.stock} left` :
-                       'Out of Stock' }}
-                  </span>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                  <div class="quantity-controls">
-                    <button @click="handleQuantityUpdate($event, quantity - 1)"
-                            class="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.02)] 
-                                  hover:bg-gradient-to-r hover:from-amber-500/20 hover:to-amber-600/20
-                                  flex items-center justify-center 
-                                  transition-all duration-300 group
-                                  relative overflow-hidden"
-                            :disabled="quantity <= 1">
-                      <!-- Glass effect overlay -->
-                      <div class="absolute inset-0 backdrop-blur-sm bg-gradient-to-br from-white/5 to-transparent"></div>
-                      <font-awesome-icon icon="minus" 
-                                      class="text-gray-400 group-hover:text-amber-500
-                                              transition-colors duration-300 relative z-10" />
-                    </button>
-                    <span class="text-white font-medium w-6 text-center">{{ quantity }}</span>
-                    <button @click="handleQuantityUpdate($event, quantity + 1)"
-                            class="w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.02)]
-                                  hover:bg-gradient-to-r hover:from-amber-500/20 hover:to-amber-600/20
-                                  flex items-center justify-center
-                                  transition-all duration-300 group
-                                  relative overflow-hidden"
-                            :disabled="quantity >= product.stock">
-                      <!-- Glass effect overlay -->
-                      <div class="absolute inset-0 backdrop-blur-sm bg-gradient-to-br from-white/5 to-transparent"></div>
-                      <font-awesome-icon icon="plus"
-                                      class="text-gray-400 group-hover:text-amber-500
-                                              transition-colors duration-300 relative z-10" />
-                    </button>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button v-if="!isInCart"
-                            v-show="product.available"
-                            @click="addToCart(product)"
-                            class="px-4 py-2 rounded-lg text-white font-medium
-                                  bg-gradient-to-r from-amber-500/90 to-amber-600/90
-                                  hover:from-amber-500 hover:to-amber-600
-                                  transform hover:-translate-y-0.5 transition-all duration-300
-                                  shadow-lg hover:shadow-amber-500/25">
-                      Add to Cart
-                    </button>
-                    
-                    <button v-else-if="product.available"
-                            @click="removeFromCart(product.id)"
-                            class="w-10 h-10 rounded-lg bg-[rgba(255,255,255,0.05)]
-                                  hover:bg-red-500/20 active:bg-red-500/30
-                                  flex items-center justify-center
-                                  transition-all duration-300 ease-in-out
-                                  group/trash relative overflow-hidden">
-                      <!-- Glass effect overlay -->
-                      <div class="absolute inset-0 backdrop-blur-sm bg-gradient-to-br from-white/5 to-transparent"></div>
-                      <font-awesome-icon icon="trash"
-                                        class="text-gray-400 group-hover/trash:text-red-400
-                                              transition-colors duration-300 relative z-10" />
-                    </button>
-                    
-                    <button v-else
-                            disabled
-                            class="px-4 py-2 rounded-lg text-gray-400 font-medium
-                                  bg-[rgba(255,255,255,0.03)]
-                                  cursor-not-allowed opacity-50">
-                      Out of Stock
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="prose prose-invert max-w-none mb-6">
-                <p class="text-gray-300">{{ product.description }}</p>
-              </div>
-
-              <div class="flex flex-wrap gap-3">
-                <span v-if="product.is_vegan" class="tag bg-green-500/20 text-green-300">
-                  <font-awesome-icon icon="leaf" class="mr-1" /> Vegan
-                </span>
-                <span v-if="product.is_vegetarian" class="tag bg-green-500/20 text-green-300">
-                  <font-awesome-icon icon="seedling" class="mr-1" /> Vegetarian
-                </span>
-                <span v-if="product.is_gluten_free" class="tag bg-yellow-500/20 text-yellow-300">
-                  <font-awesome-icon icon="wheat-alt" class="mr-1" /> Gluten Free
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Detailed Info Grid -->
-          <div class="info-grid">
-            <!-- Ingredients Card -->
-            <div class="info-card">
-              <div class="card-header">
-                <h2 class="text-lg font-semibold text-gray-200">
-                  <font-awesome-icon icon="mortar-pestle" class="mr-2 text-amber-500" />
-                  Ingredients
-                </h2>
-                <span class="text-sm text-gray-400">{{ product.ingredients?.length || 0 }} items</span>
-              </div>
-              <div class="card-content">
-                <table class="info-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Type</th>
-                      <th>Origin</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="ingredient in product.ingredients" :key="ingredient.id">
-                      <td>{{ ingredient.name }}</td>
-                      <td>{{ ingredient.type || 'N/A' }}</td>
-                      <td>{{ ingredient.origin || 'N/A' }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Allergens Card -->
-            <div class="info-card">
-              <div class="card-header">
-                <h2 class="text-lg font-semibold text-gray-200">
-                  <font-awesome-icon icon="triangle-exclamation" class="mr-2 text-amber-500" />
-                  Allergens
-                </h2>
-                <span class="text-sm text-gray-400">{{ product.allergens?.length || 0 }} items</span>
-              </div>
-              <div class="card-content">
-                <div class="grid gap-2">
-                  <div v-for="allergen in product.allergens" 
-                       :key="allergen.id"
-                       class="flex items-center gap-3 p-2 bg-[rgba(255,255,255,0.02)] rounded-lg">
-                    <div class="p-2 bg-red-500/20 rounded-lg">
-                      <img v-if="allergen.icon && allergen.icon.startsWith('http')"
-                           :src="allergen.icon"
-                           :alt="allergen.name"
-                           class="w-6 h-6 object-contain"
-                           @error="handleImageError" />
-                      <font-awesome-icon v-else 
-                                       icon="triangle-exclamation"
-                                       class="text-red-400" />
-                    </div>
-                    <div>
-                      <h3 class="font-medium text-gray-200">{{ allergen.name }}</h3>
-                      <p class="text-sm text-gray-400">{{ allergen.description || 'No description available' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Nutrition Card -->
-            <div v-if="product.nutrition_info" class="info-card col-span-2">
-              <div class="card-header">
-                <h2 class="text-lg font-semibold text-gray-200">
-                  <font-awesome-icon icon="chart-pie" class="mr-2 text-amber-500" />
-                  Nutrition Information
-                </h2>
-                <span class="text-sm text-gray-400">per 100g</span>
-              </div>
-              <div class="card-content">
-                <div class="grid gap-4">
-                  <!-- Main Nutrients -->
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="bg-[rgba(255,255,255,0.02)] p-3 rounded-lg text-center">
-                      <div class="flex items-center justify-center gap-2 mb-1">
-                        <font-awesome-icon icon="bolt" class="text-amber-500" />
-                        <span class="text-sm text-gray-400">Calories</span>
-                      </div>
-                      <span class="text-lg font-medium text-gray-200">
-                        {{ product.nutrition_info.calories }} kcal
-                      </span>
-                    </div>
-                    <div class="bg-[rgba(255,255,255,0.02)] p-3 rounded-lg text-center">
-                      <div class="flex items-center justify-center gap-2 mb-1">
-                        <font-awesome-icon icon="dumbbell" class="text-amber-500" />
-                        <span class="text-sm text-gray-400">Proteins</span>
-                      </div>
-                      <span class="text-lg font-medium text-gray-200">
-                        {{ product.nutrition_info.proteins }}g
-                      </span>
-                    </div>
-                    <div class="bg-[rgba(255,255,255,0.02)] p-3 rounded-lg text-center">
-                      <div class="flex items-center justify-center gap-2 mb-1">
-                        <font-awesome-icon icon="bread-slice" class="text-amber-500" />
-                        <span class="text-sm text-gray-400">Carbs</span>
-                      </div>
-                      <span class="text-lg font-medium text-gray-200">
-                        {{ product.nutrition_info.carbohydrates }}g
-                      </span>
-                    </div>
-                    <div class="bg-[rgba(255,255,255,0.02)] p-3 rounded-lg text-center">
-                      <div class="flex items-center justify-center gap-2 mb-1">
-                        <font-awesome-icon icon="oil-can" class="text-amber-500" />
-                        <span class="text-sm text-gray-400">Fats</span>
-                      </div>
-                      <span class="text-lg font-medium text-gray-200">
-                        {{ product.nutrition_info.fats }}g
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Detailed Nutrition Table -->
-                  <table class="info-table">
-                    <thead>
-                      <tr>
-                        <th>Nutrient</th>
-                        <th>Amount</th>
-                        <th>% Daily Value</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>Total Fat</td>
-                        <td>{{ product.nutrition_info.fats }}g</td>
-                        <td>{{ Math.round((product.nutrition_info.fats / 65) * 100) }}%</td>
-                      </tr>
-                      <tr>
-                        <td>Saturated Fat</td>
-                        <td>{{ product.nutrition_info.saturated_fats || 0 }}g</td>
-                        <td>{{ Math.round(((product.nutrition_info.saturated_fats || 0) / 20) * 100) }}%</td>
-                      </tr>
-                      <tr>
-                        <td>Total Carbohydrates</td>
-                        <td>{{ product.nutrition_info.carbohydrates }}g</td>
-                        <td>{{ Math.round((product.nutrition_info.carbohydrates / 300) * 100) }}%</td>
-                      </tr>
-                      <tr>
-                        <td>Dietary Fiber</td>
-                        <td>{{ product.nutrition_info.fiber || 0 }}g</td>
-                        <td>{{ Math.round(((product.nutrition_info.fiber || 0) / 25) * 100) }}%</td>
-                      </tr>
-                      <tr>
-                        <td>Sugars</td>
-                        <td>{{ product.nutrition_info.sugars || 0 }}g</td>
-                        <td>-</td>
-                      </tr>
-                      <tr>
-                        <td>Protein</td>
-                        <td>{{ product.nutrition_info.proteins }}g</td>
-                        <td>{{ Math.round((product.nutrition_info.proteins / 50) * 100) }}%</td>
-                      </tr>
-                      <tr>
-                        <td>Sodium</td>
-                        <td>{{ product.nutrition_info.sodium || 0 }}mg</td>
-                        <td>{{ Math.round(((product.nutrition_info.sodium || 0) / 2400) * 100) }}%</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            <div class="pd-actions">
+              <button type="button" class="pd-icon" :class="{ 'is-on': isInWishlist }"
+                      :aria-label="isInWishlist ? 'Remove from wishlist' : 'Save to wishlist'" :aria-pressed="isInWishlist" @click="toggleWishlist">
+                <font-awesome-icon :icon="[isInWishlist ? 'fas' : 'far', 'heart']" />
+              </button>
+              <button type="button" class="pd-icon" :class="{ 'is-on': isInCompare }"
+                      :aria-label="isInCompare ? 'Remove from compare' : 'Add to compare'" :aria-pressed="isInCompare" @click="toggleCompare">
+                <font-awesome-icon icon="code-compare" />
+              </button>
+              <button type="button" class="pd-icon" aria-label="Share" @click="shareProduct">
+                <font-awesome-icon icon="share-nodes" />
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Related Products -->
-    <div v-if="productStore.relatedProducts.length > 0" 
-         class="mt-16 bg-[rgba(23,23,23,0.7)] backdrop-blur-[10px] border border-white/10 
-                hover:border-white/20 hover:shadow-red-500/10 transition-all duration-300 p-6 rounded-lg">
-      <h2 class="text-2xl font-bold mb-6 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-        Related Products
-      </h2>
-      
-      <!-- Loading State -->
-      <div v-if="productStore.relatedProductsLoading" class="flex justify-center py-8">
-        <font-awesome-icon icon="spinner" class="text-3xl text-primary-600 animate-spin" />
-      </div>
-      
-      <!-- Products Grid -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-        <router-link
-          v-for="relatedProduct in productStore.relatedProducts"
-          :key="relatedProduct.id"
-          :to="{ name: 'product-detail', params: { id: relatedProduct.id }}"
-          class="group"
-        >
-          <div class="bg-[rgba(255,255,255,0.02)] rounded-lg p-4 transition-all duration-300 
-                      hover:bg-[rgba(255,255,255,0.05)] hover:shadow-lg">
-            <!-- Product Image -->
-            <div class="aspect-square rounded-lg overflow-hidden bg-transparent mb-4">
-              <img
-                :src="getImageUrl(relatedProduct.image)"
-                :alt="relatedProduct.name"
-                class="w-full h-full object-contain mix-blend-normal transform transition-transform 
-                       duration-500 group-hover:scale-110"
-              >
-            </div>
-            
-            <!-- Product Info -->
-            <h3 class="text-lg font-semibold text-gray-200 mb-2 truncate">{{ relatedProduct.name }}</h3>
-            <p class="text-amber-500 font-bold">{{ formatPrice(relatedProduct.price) }} €</p>
+        <!-- Info -->
+        <div class="pd-info">
+          <nav aria-label="Breadcrumb" class="pd-crumbs">
+            <router-link to="/">Home</router-link>
+            <span aria-hidden="true">/</span>
+            <router-link to="/products">Shop</router-link>
+            <template v-if="product.category?.slug">
+              <span aria-hidden="true">/</span>
+              <router-link :to="{ name: 'category', params: { category: product.category.slug } }">{{ product.category.name }}</router-link>
+            </template>
+          </nav>
+
+          <p class="eyebrow mt-8">
+            {{ product.category?.name || 'Backlover' }}
+            <span v-if="product.is_seasonal" class="pd-chip is-seasonal">Seasonal</span>
+          </p>
+          <h1 :key="product.id" v-split.load class="display-title text-6xl sm:text-7xl mt-3">{{ product.name }}</h1>
+
+          <div v-reveal="{ delay: 0.2 }" class="mt-6 flex flex-wrap items-center gap-4">
+            <span class="pd-price">{{ formatEuro(product.price) }}</span>
+            <span class="pd-stock" :class="stockTone">
+              <span class="pd-dot"></span>{{ stockLabel }}
+            </span>
           </div>
-        </router-link>
-      </div>
-    </div>
+
+          <p v-reveal="{ delay: 0.3 }" class="pd-description">{{ product.description }}</p>
+
+          <div v-if="dietary.length" v-reveal="{ delay: 0.35 }" class="mt-5 flex flex-wrap gap-2">
+            <span v-for="tag in dietary" :key="tag.label" class="pd-chip">
+              <font-awesome-icon :icon="tag.icon" /> {{ tag.label }}
+            </span>
+          </div>
+
+          <!-- Purchase -->
+          <div v-reveal="{ delay: 0.4 }" class="pd-buy">
+            <template v-if="cartItem">
+              <div class="pd-stepper" role="group" aria-label="Quantity in cart">
+                <button type="button" :disabled="busy" aria-label="One less" @click="setCartQuantity(cartItem.quantity - 1)">
+                  <font-awesome-icon icon="minus" />
+                </button>
+                <span class="tabular-nums" aria-live="polite">{{ cartItem.quantity }}</span>
+                <button type="button" :disabled="busy || cartItem.quantity >= product.stock" aria-label="One more" @click="setCartQuantity(cartItem.quantity + 1)">
+                  <font-awesome-icon icon="plus" />
+                </button>
+              </div>
+              <router-link to="/cart" class="btn-amber flex-1">
+                In your cart · Go to cart <font-awesome-icon icon="arrow-right" />
+              </router-link>
+            </template>
+            <template v-else>
+              <div class="pd-stepper" role="group" aria-label="Quantity">
+                <button type="button" :disabled="quantity <= 1" aria-label="One less" @click="quantity--">
+                  <font-awesome-icon icon="minus" />
+                </button>
+                <span class="tabular-nums" aria-live="polite">{{ quantity }}</span>
+                <button type="button" :disabled="quantity >= product.stock" aria-label="One more" @click="quantity++">
+                  <font-awesome-icon icon="plus" />
+                </button>
+              </div>
+              <button v-magnetic="0.15" type="button" class="btn-amber flex-1" :disabled="busy || soldOut" @click="addToCart">
+                <template v-if="soldOut">Sold out today</template>
+                <template v-else>
+                  <font-awesome-icon :icon="busy ? 'spinner' : 'cart-plus'" :spin="busy" />
+                  Add to cart<span class="hidden sm:inline"> · {{ formatEuro(product.price * quantity) }}</span>
+                </template>
+              </button>
+            </template>
+          </div>
+
+          <ul v-reveal.stagger="{ delay: 0.45 }" class="pd-service">
+            <li><font-awesome-icon icon="store" /> <span>Pick up at {{ business.street }}, {{ business.city }}<small v-if="business.transit"> · {{ business.transit }}</small></span></li>
+            <li><font-awesome-icon icon="truck" /> <span>Delivery across {{ business.city }}</span></li>
+            <li><font-awesome-icon icon="credit-card" /> <span>Pay cash or card on pickup or delivery</span></li>
+          </ul>
+
+          <!-- Details -->
+          <div class="pd-details">
+            <details v-if="product.ingredients?.length" open>
+              <summary>Ingredients <span>{{ product.ingredients.length }}</span></summary>
+              <p class="pd-ingredients">{{ product.ingredients.map(i => i.name).join(', ') }}</p>
+            </details>
+            <details v-if="product.allergens?.length">
+              <summary>Allergens <span>{{ product.allergens.length }}</span></summary>
+              <ul class="pd-allergens">
+                <li v-for="allergen in product.allergens" :key="allergen.id">
+                  <strong>{{ allergen.name }}</strong>
+                  <span v-if="allergen.description">{{ allergen.description }}</span>
+                </li>
+              </ul>
+            </details>
+            <details v-if="nutrition.length">
+              <summary>Nutrition <span>per 100 g</span></summary>
+              <dl class="pd-nutrition">
+                <div v-for="row in nutrition" :key="row.label">
+                  <dt>{{ row.label }}</dt>
+                  <dd>{{ row.value }}</dd>
+                </div>
+              </dl>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Related -->
+      <section v-if="productStore.relatedProducts.length" class="section mt-32">
+        <div class="flex items-end justify-between gap-6">
+          <div>
+            <p v-reveal class="eyebrow">Also from the oven</p>
+            <h2 v-split class="display-title text-5xl mt-3">You might also like</h2>
+          </div>
+          <router-link to="/products" class="btn-ghost hidden sm:inline-flex">
+            All products <font-awesome-icon icon="arrow-right" />
+          </router-link>
+        </div>
+        <div v-reveal.stagger class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <ProductCard v-for="item in productStore.relatedProducts.slice(0, 4)" :key="item.id" :product="item" />
+        </div>
+      </section>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
-import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useProductStore } from '@/stores/productStore'
 import { useCartStore } from '@/stores/cartStore'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { useCompareStore } from '@/stores/compareStore'
 import { useToast } from '@/composables/useToast'
-import { useModalStore } from '@/stores/modalStore'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import ImageZoomModal from '@/components/common/ImageZoomModal.vue'
-import ProductImage from './ProductImage.vue'
+import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
+import { formatEuro } from '@/utils/money'
+import { business } from '@/config/business'
+import { webglAvailable } from '@/three/webgl'
+import ProductViewer3D from '@/components/three/ProductViewer3D.vue'
+import ProductCard from './ProductCard.vue'
 
 const route = useRoute()
-const router = useRouter()
 const productStore = useProductStore()
 const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 const compareStore = useCompareStore()
 const { showToast } = useToast()
-const modalStore = useModalStore()
 
-// Constants
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const defaultImage = ref(PLACEHOLDER_IMAGE)
-
-// State
 const quantity = ref(1)
-const selectedImage = ref(null)
-const loading = ref(false)
+const busy = ref(false)
+const view = ref(webglAvailable() ? '3d' : 'photo')
 
-// Computed
-const product = computed(() => productStore.product)
-const cartItem = computed(() => 
-  cartStore.items.find(item => item.product.id === product.value?.id)
-)
-
-const isInWishlist = computed(() => 
-  wishlistStore.items.some(item => item.id === product.value?.id)
-)
-
-const isInCompare = computed(() => 
-  compareStore.items.some(item => item.id === product.value?.id)
-)
-
-const isInCart = computed(() => {
-  return cartStore.items.some(item => item.product?.id === product.value?.id)
+// Only show the product that matches the URL (the store may still hold the
+// previous one while the next loads).
+const product = computed(() => {
+  const current = productStore.product
+  return current && String(current.id) === String(route.params.id) ? current : null
 })
+const imageUrl = computed(() => product.value?.image_url || product.value?.image || PLACEHOLDER_IMAGE)
+const cartItem = computed(() => cartStore.items.find(item => item.product?.id === product.value?.id))
+const isInWishlist = computed(() => wishlistStore.items.some(item => item.id === product.value?.id))
+const isInCompare = computed(() => compareStore.items.some(item => item.id === product.value?.id))
+const soldOut = computed(() => !product.value?.available || product.value?.stock <= 0)
 
-
-const currentQuantity = computed(() => cartItem.value?.quantity || quantity.value)
-
-const relatedProducts = computed(() => {
-  if (!product.value) return []
-  return productStore.products.filter(p => 
-    p.category?.id === product.value.category?.id && 
-    p.id !== product.value.id
-  ).slice(0, 4)
+const stockLabel = computed(() => {
+  if (soldOut.value) return 'Sold out today'
+  if (product.value.stock <= 5) return `Only ${product.value.stock} left`
+  return 'Fresh today'
 })
+const stockTone = computed(() => (soldOut.value ? 'is-out' : product.value.stock <= 5 ? 'is-low' : 'is-in'))
 
-// Methods
-const openImageModal = () => {
-  if (!product.value) return
-  
-  // Filter out invalid images and get URLs
-  const allImages = [product.value.image, ...(product.value.images || [])]
-  const validImages = allImages
-    .filter(img => {
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-      return imageExtensions.some(ext => img.toLowerCase().endsWith(ext))
-    })
-    .map(img => getImageUrl(img))
-  
-  if (validImages.length === 0) {
-    console.warn('No valid images found for the modal')
-    return
-  }
+const dietary = computed(() => [
+  product.value.is_vegan && { label: 'Vegan', icon: 'leaf' },
+  !product.value.is_vegan && product.value.is_vegetarian && { label: 'Vegetarian', icon: 'seedling' },
+  product.value.is_gluten_free && { label: 'Gluten free', icon: 'wheat-awn' }
+].filter(Boolean))
 
-  const initialIndex = selectedImage.value 
-    ? allImages.findIndex(img => img === selectedImage.value)
-    : 0
-
-  modalStore.openModal({
-    component: ImageZoomModal,
-    props: {
-      images: validImages,
-      initialIndex: Math.max(0, initialIndex),
-      productName: product.value.name
-    }
-  })
-}
-
-const shareProduct = async () => {
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: product.value.name,
-        text: product.value.description,
-        url: window.location.href
-      })
-      showToast('Product shared successfully', 'success')
-    } else {
-      await navigator.clipboard.writeText(window.location.href)
-      showToast('Link copied to clipboard', 'success')
-    }
-  } catch (error) {
-    console.error('Error sharing:', error)
-    showToast('Failed to share product', 'error')
-  }
-}
-
-const toggleWishlist = async () => {
-  try {
-    if (isInWishlist.value) {
-      await wishlistStore.removeItem(product.value.id)
-      showToast('Removed from wishlist', 'success')
-    } else {
-      await wishlistStore.addItem(product.value)
-      showToast('Added to wishlist', 'success')
-    }
-  } catch (error) {
-    console.error('Wishlist error:', error)
-    showToast('Failed to update wishlist', 'error')
-  }
-}
-
-const toggleCompare = async () => {
-  try {
-    if (isInCompare.value) {
-      await compareStore.removeItem(product.value.id)
-      showToast('Removed from compare', 'success')
-    } else {
-      if (compareStore.items.length >= 4) {
-        showToast('Maximum 4 items can be compared', 'warning')
-        return
-      }
-      await compareStore.addItem(product.value)
-      showToast('Added to compare', 'success')
-    }
-  } catch (error) {
-    console.error('Compare error:', error)
-    showToast('Failed to update compare list', 'error')
-  }
-}
-
-const getImageUrl = (path) => {
-  if (!path) return PLACEHOLDER_IMAGE
-  
-  // If it's already a full URL or the placeholder, return it
-  if (path.startsWith('http') || path === PLACEHOLDER_IMAGE) {
-    return path
-  }
-
-  // Check if the path ends with a non-image extension
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-  const extension = path.toLowerCase().split('.').pop()
-  const hasValidExtension = extension && imageExtensions.includes(`.${extension}`)
-  
-  if (!hasValidExtension) {
-    console.warn(`Invalid image extension for path: ${path}`)
-    return PLACEHOLDER_IMAGE
-  }
-
-  // Construct the full URL, ensuring no duplicate /media/ prefixes
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-  const cleanPath = path.replace(/^\/media\/+/, '/media/')
-  return `${baseUrl}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`
-}
-
-const handleImageError = (event) => {
-  console.warn('Image failed to load:', event.target.src)
-  applyImageFallback(event)
-}
+const nutrition = computed(() => {
+  const info = product.value?.nutrition_info
+  if (!info) return []
+  return [
+    ['Energy', info.calories, 'kcal'],
+    ['Protein', info.proteins, 'g'],
+    ['Carbohydrates', info.carbohydrates, 'g'],
+    ['Fat', info.fats, 'g'],
+    ['Fibre', info.fiber, 'g']
+  ].filter(([, value]) => value !== null && value !== undefined)
+    .map(([label, value, unit]) => ({ label, value: `${value} ${unit}` }))
+})
 
 async function loadProduct() {
-  if (!route.params.id) {
-    showToast('Invalid product ID', 'error')
-    router.push('/products')
-    return
-  }
-
-  try {
-    await productStore.fetchProductById(route.params.id)
-    await productStore.fetchRelatedProducts(route.params.id)
-    
-    if (!productStore.product) {
-      showToast('Product not found', 'error')
-      router.push('/products')
-    }
-    
-    // Update quantity if item is in cart
-    const item = cartStore.items.find(item => item.product.id === route.params.id)
-    if (item) {
-      quantity.value = item.quantity
-    } else {
-      quantity.value = 1
-    }
-  } catch (error) {
-    console.error('Error loading product:', error)
-    showToast('Failed to load product details', 'error')
-    router.push('/products')
-  }
+  quantity.value = 1
+  const found = await productStore.fetchProductById(route.params.id)
+  if (!found) return
+  productStore.fetchRelatedProducts(route.params.id).catch(() => {})
 }
 
-const formatPrice = (price) => {
-  return Number(price).toFixed(2)
-}
-
-const handleQuantityUpdate = async (_, newQuantity) => {
-  if (!product.value?.id) return
-  
+async function withBusy(action, success) {
+  busy.value = true
   try {
-    loading.value = true
-    if (cartItem.value) {
-      await cartStore.updateQuantity(product.value.id, newQuantity)
-    } else {
-      await cartStore.addItem(product.value.id, newQuantity)
-    }
-    quantity.value = newQuantity
-    showToast('Cart updated successfully')
-  } catch (error) {
-    console.error('Failed to update cart:', error)
-    showToast('Failed to update cart', 'error')
+    await action()
+    if (success) showToast(success)
+  } catch {
+    showToast(cartStore.error || 'The cart could not be updated.', 'error')
   } finally {
-    loading.value = false
+    busy.value = false
   }
 }
 
-const addToCart = async (product) => {
-  try {
-    await cartStore.addItem(product.id, 1)
-  } catch (error) {
-    console.error('Failed to add item:', error)
-  }
-}
-
-const removeFromCart = async (productId) => {
-  try {
-    await cartStore.removeItem(productId)
-  } catch (error) {
-    console.error('Failed to remove item:', error)
-  }
-}
-
-
-
-const previousImage = () => {
-  if (!product.value.images || product.value.images.length === 0) return
-  const currentIndex = product.value.images.indexOf(selectedImage.value)
-  if (currentIndex === -1) {
-    selectedImage.value = product.value.images[0]
-  } else {
-    selectedImage.value = product.value.images[(currentIndex - 1 + product.value.images.length) % product.value.images.length]
-  }
-}
-
-const nextImage = () => {
-  if (!product.value.images || product.value.images.length === 0) return
-  const currentIndex = product.value.images.indexOf(selectedImage.value)
-  if (currentIndex === -1) {
-    selectedImage.value = product.value.images[0]
-  } else {
-    selectedImage.value = product.value.images[(currentIndex + 1) % product.value.images.length]
-  }
-}
-
-// Lifecycle
-onMounted(() => {
-  loadProduct()
-  cartStore.fetchCart()
-  wishlistStore.fetchItems()
-  compareStore.fetchItems()
-})
-
-// Watch for route changes
-watch(
-  () => route.params.id,
-  async (newId) => {
-    if (newId) {
-      selectedImage.value = null
-      await loadProduct()
-      await productStore.fetchRelatedProducts(newId)
-    }
-  },
-  { immediate: true }
+const addToCart = () => withBusy(
+  () => cartStore.addItem(product.value.id, quantity.value),
+  `${product.value.name} added to your cart`
 )
+const setCartQuantity = (value) => withBusy(() => cartStore.updateQuantity(product.value.id, value))
 
-// Clean up
-onUnmounted(() => {
-  // Clean up any modal or state if needed
-})
+function toggleWishlist() {
+  if (isInWishlist.value) {
+    wishlistStore.removeItem(product.value.id)
+    showToast('Removed from your wishlist')
+  } else {
+    wishlistStore.addItem(product.value)
+    showToast('Saved to your wishlist')
+  }
+}
+
+function toggleCompare() {
+  if (isInCompare.value) {
+    compareStore.removeItem(product.value.id)
+    showToast('Removed from compare')
+  } else if (compareStore.items.length >= 4) {
+    showToast('You can compare up to 4 products', 'warning')
+  } else {
+    compareStore.addItem(product.value)
+    showToast('Added to compare')
+  }
+}
+
+async function shareProduct() {
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: product.value.name, url: window.location.href })
+    } else {
+      await navigator.clipboard.writeText(window.location.href)
+      showToast('Link copied')
+    }
+  } catch (error) {
+    if (error?.name !== 'AbortError') showToast('Could not share this page', 'error')
+  }
+}
+
+watch(() => route.params.id, (id) => { if (id) loadProduct() }, { immediate: true })
+watch(product, (value) => { if (value) document.title = `${value.name} - ${business.name}` })
 </script>
 
 <style scoped>
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(251, 191, 36, 0.5) rgba(255, 255, 255, 0.1);
+.pd {
+  padding-top: 1rem;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(251, 191, 36, 0.5);
-  border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(251, 191, 36, 0.7);
-}
-
-.info-grid {
+.pd-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
+  gap: 3rem;
 }
 
-.quantity-controls {
-  @apply flex items-center gap-2 rounded-lg px-2 py-1 relative;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(4px);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-  transition: all 500ms ease-in-out;
-}
+@media (min-width: 1024px) {
+  .pd-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 4.5rem;
+  }
 
-.info-card:hover .quantity-controls {
-  box-shadow: 
-    0 0 20px 0 rgba(245, 158, 11, 0.1),
-    inset 0 0 0 1px rgba(245, 158, 11, 0.2);
-}
-
-.quantity-controls button {
-  @apply w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.02)]
-         flex items-center justify-center 
-         transition-all duration-500 ease-in-out
-         relative overflow-hidden;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-.info-card:hover .quantity-controls button {
-  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.2);
-}
-
-.info-card:hover .quantity-controls button:hover {
-  @apply bg-gradient-to-r from-amber-500/20 to-amber-600/20;
-  box-shadow: 
-    0 0 15px 0 rgba(245, 158, 11, 0.2),
-    inset 0 0 0 1px rgba(245, 158, 11, 0.3);
-}
-
-/* Disabled state styles */
-button:disabled {
-  @apply opacity-50 cursor-not-allowed;
-  background: rgba(255, 255, 255, 0.02) !important;
-  box-shadow: none !important;
-}
-
-.info-card {
-  @apply bg-[rgba(23,23,23,0.7)] backdrop-blur-[10px] 
-         border border-white/10 rounded-xl p-6 
-         transition-all duration-500 ease-in-out;
-  
-  /* Add glow effect */
-  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.5),
-              inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-
-  /* Hover effects */
-  &:hover {
-    @apply border-amber-500/30;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.1),
-      0 4px 8px rgba(245, 158, 11, 0.2);
-    
-    /* Keep the subtle gradient on hover */
-    background: linear-gradient(
-      to bottom right,
-      rgba(23, 23, 23, 0.8),
-      rgba(23, 23, 23, 0.7)
-    );
+  .pd-stage-col {
+    position: sticky;
+    top: 6.5rem;
+    align-self: start;
   }
 }
 
-.card-header {
-  @apply flex items-center justify-between p-4 border-b border-white/10 bg-[rgba(255,255,255,0.02)];
+.pd-stage {
+  position: relative;
+  height: min(62vh, 520px);
+  min-height: 340px;
+  border-radius: 2rem;
+  overflow: hidden;
+  border: 1px solid rgba(244, 236, 225, 0.08);
+  background:
+    radial-gradient(120% 90% at 50% 100%, rgba(210, 96, 63, 0.14), transparent 60%),
+    radial-gradient(80% 70% at 50% 40%, rgba(230, 161, 90, 0.14), transparent 70%),
+    linear-gradient(180deg, #1e1914, #15120f);
 }
 
-.card-content {
-  @apply p-4 max-h-[300px] overflow-y-auto custom-scrollbar;
+@media (min-width: 1024px) {
+  .pd-stage {
+    height: min(78vh, 720px);
+  }
 }
 
-.tag {
-  @apply px-3 py-1 rounded-full text-sm font-medium transition-all duration-300 
-         hover:scale-105 cursor-default;
+.pd-stage-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: 60%;
+  height: 12%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(242, 196, 141, 0.25), transparent);
+  filter: blur(20px);
+  pointer-events: none;
 }
 
-.info-table {
-  @apply w-full border-collapse;
+.pd-photo {
+  position: absolute;
+  inset: 10%;
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  filter: drop-shadow(0 40px 40px rgba(0, 0, 0, 0.5));
 }
 
-.info-table th {
-  @apply text-left p-2 text-gray-400 font-medium bg-[rgba(255,255,255,0.02)];
+.pd-toggle {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  display: inline-flex;
+  padding: 0.25rem;
+  border-radius: 9999px;
+  background: rgba(14, 12, 10, 0.6);
+  border: 1px solid rgba(244, 236, 225, 0.12);
+  backdrop-filter: blur(12px);
+  z-index: 2;
 }
 
-.info-table td {
-  @apply p-2 border-t border-white/5;
+.pd-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b9ab98;
+  transition: background 0.3s, color 0.3s;
 }
 
-.info-table tr:hover {
-  @apply bg-[rgba(255,255,255,0.02)];
+.pd-toggle button.is-active {
+  color: #0e0c0a;
+  background: #e6a15a;
+}
+
+.pd-actions {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 2;
+}
+
+.pd-icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  color: #f4ece1;
+  background: rgba(14, 12, 10, 0.55);
+  border: 1px solid rgba(244, 236, 225, 0.12);
+  backdrop-filter: blur(12px);
+  transition: color 0.3s, background 0.3s;
+}
+
+.pd-icon:hover {
+  background: rgba(14, 12, 10, 0.8);
+}
+
+.pd-icon.is-on {
+  color: #e6a15a;
+}
+
+.pd-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: #7d7061;
+}
+
+.pd-crumbs a {
+  color: #b9ab98;
+}
+
+.pd-crumbs a:hover {
+  color: #f4ece1;
+}
+
+.pd-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f2c48d;
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(244, 236, 225, 0.12);
+}
+
+.pd-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.pd-stock.is-in { color: #9fd49a; }
+.pd-stock.is-low { color: #f2c48d; }
+.pd-stock.is-out { color: #f08f79; }
+
+.pd-description {
+  margin-top: 1.5rem;
+  max-width: 34rem;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #d9cfc2;
+}
+
+.pd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #d9cfc2;
+  border: 1px solid rgba(244, 236, 225, 0.14);
+}
+
+.pd-chip.is-seasonal {
+  color: #0e0c0a;
+  background: #f2c48d;
+  border-color: transparent;
+}
+
+.pd-buy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2.25rem;
+}
+
+.pd-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.35rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(244, 236, 225, 0.14);
+  color: #f4ece1;
+  font-weight: 700;
+}
+
+.pd-stepper button {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 9999px;
+  background: rgba(244, 236, 225, 0.06);
+  transition: background 0.3s;
+}
+
+.pd-stepper button:hover:not(:disabled) {
+  background: rgba(230, 161, 90, 0.25);
+}
+
+.pd-stepper button:disabled {
+  opacity: 0.35;
+}
+
+.pd-service {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding: 1.25rem 1.4rem;
+  border-radius: 1.5rem;
+  background: rgba(244, 236, 225, 0.03);
+  border: 1px solid rgba(244, 236, 225, 0.07);
+  font-size: 0.92rem;
+  color: #d9cfc2;
+}
+
+.pd-service li {
+  display: flex;
+  gap: 0.8rem;
+  align-items: baseline;
+}
+
+.pd-service svg {
+  width: 1rem;
+  color: #e6a15a;
+}
+
+.pd-service small {
+  color: #7d7061;
+  font-size: inherit;
+}
+
+.pd-details {
+  margin-top: 2rem;
+  border-top: 1px solid rgba(244, 236, 225, 0.08);
+}
+
+.pd-details details {
+  border-bottom: 1px solid rgba(244, 236, 225, 0.08);
+}
+
+.pd-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 0;
+  cursor: pointer;
+  list-style: none;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.6rem;
+  color: #f4ece1;
+}
+
+.pd-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.pd-details summary span {
+  font-family: 'Manrope Variable', system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: #7d7061;
+}
+
+.pd-details summary::after {
+  content: '+';
+  margin-left: 1rem;
+  font-family: 'Manrope Variable', system-ui, sans-serif;
+  font-size: 1.25rem;
+  color: #e6a15a;
+  transition: transform 0.3s;
+}
+
+.pd-details details[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.pd-details summary span {
+  margin-left: auto;
+}
+
+.pd-ingredients {
+  padding-bottom: 1.25rem;
+  line-height: 1.7;
+  color: #b9ab98;
+}
+
+.pd-allergens {
+  display: grid;
+  gap: 0.6rem;
+  padding-bottom: 1.25rem;
+}
+
+.pd-allergens li {
+  display: flex;
+  flex-direction: column;
+  color: #b9ab98;
+  font-size: 0.92rem;
+}
+
+.pd-allergens strong {
+  color: #f4ece1;
+}
+
+.pd-nutrition {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.75rem;
+  padding-bottom: 1.25rem;
+}
+
+.pd-nutrition div {
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  background: rgba(244, 236, 225, 0.04);
+}
+
+.pd-nutrition dt {
+  font-size: 0.75rem;
+  color: #7d7061;
+}
+
+.pd-nutrition dd {
+  margin-top: 0.2rem;
+  font-weight: 700;
+  color: #f4ece1;
+}
+
+.skeleton {
+  background: linear-gradient(100deg, rgba(244, 236, 225, 0.04) 30%, rgba(244, 236, 225, 0.09) 50%, rgba(244, 236, 225, 0.04) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
 }
 </style>

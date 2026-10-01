@@ -1,157 +1,109 @@
 <template>
   <div class="space-y-8">
-    <p v-if="loadError" class="rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{{ loadError }}</p>
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <!-- Total Products -->
-      <div class="bg-[#131B2F] rounded-xl p-6 border border-white/5">
-        <div class="flex items-center justify-between">
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-gray-400">Total Products</p>
-            <p class="text-3xl font-bold text-white">{{ stats.totalProducts || 0 }}</p>
-          </div>
-          <div class="p-4 bg-red-500/10 rounded-xl">
-            <font-awesome-icon icon="box-open" class="text-red-500 text-2xl" />
-          </div>
-        </div>
-      </div>
+    <p v-if="loadError" class="rounded-2xl bg-red-400/10 p-3 text-sm text-red-300" role="alert">{{ loadError }}</p>
 
-      <!-- Total Orders -->
-      <div class="bg-[#131B2F] rounded-xl p-6 border border-white/5">
-        <div class="flex items-center justify-between">
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-gray-400">Total Orders</p>
-            <p class="text-3xl font-bold text-white">{{ stats.totalOrders || 0 }}</p>
-            <p class="text-xs text-gray-400">{{ stats.openOrders || 0 }} open</p>
-          </div>
-          <div class="p-4 bg-emerald-500/10 rounded-xl">
-            <font-awesome-icon icon="shopping-cart" class="text-emerald-500 text-2xl" />
-          </div>
-        </div>
+    <!-- Greeting -->
+    <section class="dash-hero admin-panel">
+      <div>
+        <p class="eyebrow">{{ greeting }}</p>
+        <h2 class="display-title text-4xl sm:text-5xl mt-2">
+          {{ stats.todayOrders || 0 }} {{ stats.todayOrders === 1 ? 'order' : 'orders' }} today,
+          <em class="text-crust">{{ formatEuro(stats.todayRevenue) }}</em> earned.
+        </h2>
+        <p class="mt-2 text-cream-muted">{{ stats.openOrders || 0 }} open {{ stats.openOrders === 1 ? 'order needs' : 'orders need' }} attention.</p>
       </div>
-
-      <!-- Total Users -->
-      <div class="bg-[#131B2F] rounded-xl p-6 border border-white/5">
-        <div class="flex items-center justify-between">
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-gray-400">Total Users</p>
-            <p class="text-3xl font-bold text-white">{{ stats.totalUsers || 0 }}</p>
-          </div>
-          <div class="p-4 bg-blue-500/10 rounded-xl">
-            <font-awesome-icon icon="user" class="text-blue-500 text-2xl" />
-          </div>
-        </div>
+      <div class="flex flex-wrap gap-2">
+        <router-link :to="{ name: 'admin-orders' }" class="btn-amber !py-2.5 !px-5">Open orders <font-awesome-icon icon="arrow-right" /></router-link>
+        <router-link :to="{ name: 'admin-products' }" class="btn-ghost !py-2.5 !px-5">Products</router-link>
       </div>
+    </section>
 
-      <!-- Total Revenue -->
-      <div class="bg-[#131B2F] rounded-xl p-6 border border-white/5">
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div v-for="kpi in kpis" :key="kpi.label" class="kpi admin-panel">
         <div class="flex items-center justify-between">
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-gray-400">Total Revenue</p>
-            <p class="text-3xl font-bold text-white">{{ formatPrice(stats.totalRevenue || 0) }} €</p>
-            <p class="text-xs text-gray-400">Completed orders</p>
-          </div>
-          <div class="p-4 bg-amber-500/10 rounded-xl">
-            <font-awesome-icon icon="money-bill" class="text-amber-500 text-2xl" />
-          </div>
+          <p class="text-sm text-cream-muted">{{ kpi.label }}</p>
+          <span class="kpi-icon"><font-awesome-icon :icon="kpi.icon" /></span>
         </div>
+        <p class="kpi-value">{{ kpi.value }}</p>
+        <p class="text-xs text-cream-faint">{{ kpi.note }}</p>
       </div>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Recent Orders -->
-      <div class="bg-[#131B2F] rounded-xl border border-white/5 overflow-hidden">
-        <div class="p-6 border-b border-white/5">
-          <h2 class="text-lg font-bold text-white">Recent Orders</h2>
-        </div>
-        <div class="p-6">
-          <div class="space-y-4">
-            <div v-if="recentOrders.length === 0" class="text-gray-400 text-center py-4">
-              No recent orders
-            </div>
-            <router-link v-for="order in recentOrders"
-                 :key="order.id"
-                 :to="{ name: 'admin-orders', query: { order: order.id } }"
-                 class="flex items-center justify-between p-4 bg-[#1A2642] rounded-xl hover:bg-[#1E2A4A] transition-colors">
-              <div class="min-w-0">
-                <p class="font-medium text-white truncate">{{ order.order_number }}</p>
-                <p class="text-sm text-gray-400 truncate">{{ order.customer_email }} · {{ order.fulfillment_method === 'pickup' ? 'Pickup' : 'Delivery' }}</p>
-              </div>
-              <div class="text-right ml-4">
-                <p class="font-medium text-white">{{ formatPrice(order.total) }} €</p>
-                <p class="text-sm" :class="getStatusColor(order.status)">{{ order.status }}</p>
-              </div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <!-- Recent orders -->
+      <section class="admin-panel overflow-hidden">
+        <header class="dash-head">
+          <h2 class="display-title text-3xl">Recent orders</h2>
+          <router-link :to="{ name: 'admin-orders' }" class="text-sm text-crust hover:text-crust-light">All orders</router-link>
+        </header>
+        <p v-if="!recentOrders.length" class="p-6 text-center text-cream-faint">No orders yet.</p>
+        <ul v-else>
+          <li v-for="order in recentOrders" :key="order.id">
+            <router-link :to="{ name: 'admin-orders', query: { order: order.id } }" class="dash-row">
+              <span class="dash-avatar">{{ (order.customer_email || '?').charAt(0).toUpperCase() }}</span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-medium text-cream">{{ order.order_number }}</span>
+                <span class="block truncate text-sm text-cream-faint">
+                  {{ order.customer_email || 'Guest' }} · {{ order.fulfillment_method === 'pickup' ? 'Pickup' : 'Delivery' }}
+                </span>
+              </span>
+              <span class="text-right">
+                <span class="block font-semibold text-cream tabular-nums">{{ formatEuro(order.total) }}</span>
+                <span class="status" :class="`is-${order.status.toLowerCase()}`">{{ order.status }}</span>
+              </span>
             </router-link>
-          </div>
-        </div>
-      </div>
+          </li>
+        </ul>
+      </section>
 
-      <!-- Low Stock Products -->
-      <div class="bg-[#131B2F] rounded-xl border border-white/5 overflow-hidden">
-        <div class="p-6 border-b border-white/5">
-          <h2 class="text-lg font-bold text-white">Low Stock Products</h2>
-        </div>
-        <div class="p-6">
-          <div class="space-y-4">
-            <div v-if="lowStockProducts.length === 0" class="text-gray-400 text-center py-4">
-              No low stock products
-            </div>
-            <div v-for="product in lowStockProducts" 
-                 :key="product.id" 
-                 class="flex items-center justify-between p-4 bg-[#1A2642] rounded-xl hover:bg-[#1E2A4A] transition-colors">
-              <div class="flex items-center min-w-0">
-                <div class="w-12 h-12 rounded-lg overflow-hidden bg-[#0B1120] flex-shrink-0">
-                  <img v-if="product.image" 
-                       :src="product.image" 
-                       :alt="product.name" 
-                       class="w-full h-full object-cover">
-                  <div v-else class="w-full h-full flex items-center justify-center">
-                    <font-awesome-icon icon="box-open" class="text-gray-600" />
-                  </div>
-                </div>
-                <div class="ml-4 min-w-0">
-                  <p class="font-medium text-white truncate">{{ product.name }}</p>
-                  <p class="text-sm text-red-500">Stock: {{ product.stock }}</p>
-                </div>
-              </div>
-              <button 
-                @click="router.push(`/admin/products/${product.id}`)"
-                class="ml-4 px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
-              >
-                Update stock
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Low stock -->
+      <section class="admin-panel overflow-hidden">
+        <header class="dash-head">
+          <h2 class="display-title text-3xl">Running low</h2>
+          <span class="text-sm text-cream-faint">{{ lowStockProducts.length }} products</span>
+        </header>
+        <p v-if="!lowStockProducts.length" class="p-6 text-center text-cream-faint">Everything is well stocked.</p>
+        <ul v-else>
+          <li v-for="product in lowStockProducts" :key="product.id" class="dash-row">
+            <span class="dash-thumb">
+              <img v-if="product.image" :src="product.image" :alt="product.name" @error="applyImageFallback" />
+              <font-awesome-icon v-else icon="box-open" class="text-cream-faint" />
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-medium text-cream">{{ product.name }}</span>
+              <span class="stock-bar"><span :style="{ width: `${Math.min(100, product.stock * 20)}%` }"></span></span>
+              <span class="block text-xs" :class="product.stock ? 'text-crust-light' : 'text-red-300'">
+                {{ product.stock ? `${product.stock} left` : 'Sold out' }}
+              </span>
+            </span>
+            <router-link :to="`/admin/products/${product.id}`" class="btn-ghost !py-2 !px-4 !text-sm">Restock</router-link>
+          </li>
+        </ul>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref, onMounted } from 'vue'
 import axios from '@/plugins/axios'
+import { formatEuro } from '@/utils/money'
+import { applyImageFallback } from '@/utils/imageFallback'
 
-const router = useRouter()
 const stats = ref({})
 const recentOrders = ref([])
 const lowStockProducts = ref([])
 
-const formatPrice = (price) => {
-  return Number(price).toFixed(2)
-}
+const hour = new Date().getHours()
+const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
-const getStatusColor = (status) => {
-  const colors = {
-    'pending': 'text-amber-500',
-    'processing': 'text-blue-500',
-    'completed': 'text-emerald-500',
-    'canceled': 'text-red-500'
-  }
-  return colors[status.toLowerCase()] || 'text-gray-400'
-}
+const kpis = computed(() => [
+  { label: 'Revenue', value: formatEuro(stats.value.totalRevenue), note: 'Completed orders', icon: 'euro-sign' },
+  { label: 'Orders', value: stats.value.totalOrders || 0, note: `${stats.value.openOrders || 0} open`, icon: 'receipt' },
+  { label: 'Products', value: stats.value.totalProducts || 0, note: `${stats.value.lowStockCount || 0} low on stock`, icon: 'box-open' },
+  { label: 'Customers', value: stats.value.totalUsers || 0, note: `${stats.value.todayUsers || 0} joined today`, icon: 'users' }
+])
 
 const loadError = ref('')
 
@@ -192,3 +144,119 @@ onMounted(() => {
   fetchDashboardData()
 })
 </script>
+
+<style scoped>
+.dash-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 2rem;
+  background:
+    radial-gradient(60% 120% at 100% 0%, rgba(230, 161, 90, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(30, 25, 20, 0.9), rgba(21, 18, 15, 0.9));
+}
+
+.kpi {
+  padding: 1.25rem 1.4rem;
+}
+
+.kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  color: #e6a15a;
+  background: rgba(230, 161, 90, 0.12);
+  font-size: 0.85rem;
+}
+
+.kpi-value {
+  margin: 0.75rem 0 0.2rem;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: #f4ece1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 1.4rem 1.5rem 1rem;
+  border-bottom: 1px solid rgba(244, 236, 225, 0.07);
+}
+
+.dash-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid rgba(244, 236, 225, 0.05);
+  transition: background 0.2s;
+}
+
+.dash-row:hover {
+  background: rgba(244, 236, 225, 0.03);
+}
+
+.dash-avatar,
+.dash-thumb {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 9999px;
+  background: rgba(244, 236, 225, 0.06);
+  color: #f2c48d;
+  font-weight: 700;
+}
+
+.dash-thumb {
+  border-radius: 0.8rem;
+}
+
+.dash-thumb img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+}
+
+.stock-bar {
+  display: block;
+  height: 4px;
+  margin: 0.35rem 0 0.25rem;
+  max-width: 10rem;
+  border-radius: 9999px;
+  background: rgba(244, 236, 225, 0.08);
+  overflow: hidden;
+}
+
+.stock-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d2603f, #e6a15a);
+}
+
+.status {
+  display: inline-block;
+  margin-top: 0.2rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: #b9ab98;
+  background: rgba(244, 236, 225, 0.06);
+}
+
+.status.is-pending { color: #f2c48d; background: rgba(242, 196, 141, 0.12); }
+.status.is-processing { color: #9cc3f0; background: rgba(120, 170, 230, 0.12); }
+.status.is-completed { color: #9fd49a; background: rgba(159, 212, 154, 0.12); }
+.status.is-canceled { color: #f08f79; background: rgba(240, 143, 121, 0.12); }
+</style>

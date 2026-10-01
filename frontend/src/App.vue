@@ -1,74 +1,64 @@
 <template>
   <div class="app">
-    <AnimatedBackground :images="bakeryImages" :maxItems="30" />
-    <Navbar />
-    <main class="main-container">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
+    <AmbientBackground v-if="!isAdmin" />
+    <a href="#main" class="skip-link">Skip to content</a>
+    <Navbar v-if="!isAdmin" />
+    <main id="main" class="main-container" :class="{ 'is-full-bleed': route.meta.fullBleed || isAdmin }">
+      <router-view v-slot="{ Component, route }">
+        <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
+          <!-- The admin area keeps its layout mounted while its pages change. -->
+          <component :is="Component" :key="isAdmin ? 'admin' : route.path" />
         </transition>
       </router-view>
     </main>
-    <Footer />
+    <Footer v-if="!isAdmin" />
     <Toast />
     <ModalWrapper />
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Toast from '@/components/common/Toast.vue'
-import AnimatedBackground from '@/components/layout/AnimatedBackground.vue'
+import AmbientBackground from '@/components/layout/AmbientBackground.vue'
 import ModalWrapper from '@/components/common/ModalWrapper.vue'
+import { gsap, ScrollTrigger, initSmoothScroll, scrollToTop, prefersReducedMotion } from '@/motion'
 
-// Import bakery images
-import img1 from '@/assets/bakery/_6c31eb8b-2e73-4336-8100-0d4665af533f-removebg-preview.png'
-import img2 from '@/assets/bakery/_6d98c08d-fe70-49ab-b17d-e5311b0d486f-removebg-preview.png'
-import img3 from '@/assets/bakery/_8b3e5425-2b1c-47e2-9b11-fa54cd4c6380-removebg-preview.png'
-import img4 from '@/assets/bakery/_b3ba0503-ebcc-4641-8728-114f1a809c30-removebg-preview.png'
-import img5 from '@/assets/bakery/_c0c68da2-178d-420e-8764-efbf02ce3a98-removebg-preview.png'
-import img6 from '@/assets/bakery/_d514ba7a-e89e-45da-b5b4-bde24de3ec50-removebg-preview.png'
-import img7 from '@/assets/bakery/_e2fc7fc0-c4a3-45ce-ab25-ac3243dad013-removebg-preview.png'
-import img8 from '@/assets/bakery/_e7ecf254-d253-4be4-9e66-c23f42e2c3d4-removebg-preview.png'
-import img9 from '@/assets/bakery/croissant.png'
-import img10 from '@/assets/bakery/coffee3.png'
-import img11 from '@/assets/bakery/cuppchtino.png'
-import img12 from '@/assets/bakery/cuppo.png'
-import img13 from '@/assets/bakery/latte.png'
-import img14 from '@/assets/bakery/hotchocolate.png'
-import img15 from '@/assets/bakery/ecklier.png'
-import img16 from '@/assets/bakery/vbowl.png'
-import whatsapp1 from '@/assets/bakery/WhatsApp_Image_2025-01-17_at_15.24.12_f2692574-removebg-preview.png'
-import whatsapp2 from '@/assets/bakery/WhatsApp_Image_2025-01-17_at_15.38.00_c66d2370-removebg-preview.png'
-import whatsapp3 from '@/assets/bakery/WhatsApp_Image_2025-01-17_at_15.40.25_944bb55f-removebg-preview.png'
-import whatsapp4 from '@/assets/bakery/WhatsApp_Image_2025-01-17_at_15.42.12_78c711b9-removebg-preview.png'
-import whatsapp5 from '@/assets/bakery/WhatsApp_Image_2025-01-17_at_15.47.19_c64dd93f-removebg-preview.png'
+const route = useRoute()
+// The admin area has its own layout and navigation.
+const isAdmin = computed(() => route.matched.some(record => record.meta.requiresAdmin))
 
+// Page transitions: the old page lifts away, the new one settles in.
+// With reduced motion there is no animation, but finishing on the next
+// frame (not synchronously) keeps back-to-back navigations safe.
+const nextFrame = (done) => requestAnimationFrame(() => done())
 
-const bakeryImages = [
-  img1, img2, img3, img4, img5, img6, img7, img8, img9, 
-  img10, img11, img12, img13, img14, img15, img16,
-  whatsapp1, whatsapp2, whatsapp3, whatsapp4, whatsapp5
-]
+const onLeave = (el, done) => {
+  if (prefersReducedMotion()) return nextFrame(done)
+  gsap.to(el, { opacity: 0, y: -16, duration: 0.3, ease: 'power2.in', onComplete: done })
+}
+
+const onEnter = (el, done) => {
+  scrollToTop()
+  if (prefersReducedMotion()) {
+    ScrollTrigger.refresh()
+    return nextFrame(done)
+  }
+  gsap.fromTo(el, { opacity: 0, y: 24 }, {
+    opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', clearProps: 'transform,opacity',
+    onComplete: () => { ScrollTrigger.refresh(); done() }
+  })
+}
 
 onMounted(() => {
-  // Any app-wide initialization can go here
+  initSmoothScroll()
 })
 </script>
 
 <style>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
 /* Dark theme overrides */
 .app {
   min-height: 100vh;
@@ -77,12 +67,36 @@ onMounted(() => {
   color: var(--color-text-primary);
 }
 
+/* Pages set their own width so sections can run edge to edge. The top
+   padding clears the fixed navigation; full-bleed pages (the home hero)
+   run underneath it. */
 .main-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
   position: relative;
   z-index: 1;
+  min-height: 60vh;
+  padding-top: 6rem;
+}
+
+.main-container.is-full-bleed {
+  padding-top: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: #e6a15a;
+  color: #0e0c0a;
+  font-weight: 700;
+  transform: translateY(-200%);
+  transition: transform 0.2s;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 /* Toast customization */

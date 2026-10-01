@@ -1,20 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ProductList from '../components/products/ProductList.vue'
-import ProductDetail from '../components/products/ProductDetail.vue'
-import About from '../components/pages/About.vue'
-import Contact from '../components/pages/Contact.vue'
-import Profile from '../components/account/Profile.vue'
-import Orders from '../components/account/Orders.vue'
-import Settings from '../components/account/Settings.vue'
-import Login from '../components/auth/LoginForm.vue'
 import { adminRoutes } from '@/router/admin.routers.js'
 import { useAuthStore } from '@/stores/authStore'
 import { business } from '@/config/business'
 
+// Pages load on demand so the first visit only downloads what it shows.
+const ProductList = () => import('@/components/products/ProductList.vue')
+const ProductDetail = () => import('@/components/products/ProductDetail.vue')
+const About = () => import('@/components/pages/About.vue')
+const Contact = () => import('@/components/pages/Contact.vue')
+const Profile = () => import('@/components/account/Profile.vue')
+const Orders = () => import('@/components/account/Orders.vue')
+const Settings = () => import('@/components/account/Settings.vue')
+const Login = () => import('@/components/auth/LoginForm.vue')
+
 const routes = [
   {
     path: '/',
-    redirect: { name: 'products' }
+    name: 'home',
+    component: () => import('@/views/HomeView.vue'),
+    // The hero runs underneath the fixed navigation.
+    meta: { requiresAuth: false, fullBleed: true }
   },
   {
     path: '/products',
@@ -184,14 +189,11 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition
-    }
-    if (to.hash) {
-      return { el: to.hash, behavior: 'smooth' }
-    }
-    return { top: 0, behavior: 'smooth' }
+  // Scrolling to the top happens in the page transition (App.vue), after the
+  // old page has faded out, so it works with the smooth-scroll library.
+  scrollBehavior(to) {
+    if (to.hash) return { el: to.hash }
+    return false
   }
 })
 

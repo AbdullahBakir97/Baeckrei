@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen py-12 px-4">
     <div class="max-w-3xl mx-auto space-y-6">
-      <PageHeader title="My Profile" :subtitle="memberSince" icon="user" />
+      <PageHeader eyebrow="Account" title="My profile" :subtitle="memberSince" icon="user" />
 
       <section class="glass-panel">
         <div class="flex flex-wrap items-start justify-between gap-4">

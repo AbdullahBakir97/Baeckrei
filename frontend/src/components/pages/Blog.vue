@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen py-12 px-4">
     <div class="max-w-5xl mx-auto">
-      <PageHeader title="From the bakery" subtitle="News, seasonal bakes and stories from our kitchen" icon="newspaper" />
+      <PageHeader eyebrow="Journal" title="From the bakery" subtitle="News, seasonal bakes and stories from our kitchen" icon="newspaper" />
 
       <div v-if="loading" class="flex justify-center py-12">
         <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white/20"></div>

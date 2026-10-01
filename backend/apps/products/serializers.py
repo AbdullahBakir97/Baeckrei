@@ -97,6 +97,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     nutrition_info = NutritionInfoSerializer(read_only=True)
     image_url = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
+    model_3d_url = serializers.SerializerMethodField()
     stock_status = serializers.SerializerMethodField()
     formatted_price = serializers.SerializerMethodField()
 
@@ -104,7 +105,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'category',
-            'price', 'formatted_price', 'image', 'image_url', 'images',
+            'price', 'formatted_price', 'image', 'image_url', 'images', 'model_3d_url',
             'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
             'status', 'available', 'stock', 'stock_status', 'ingredients',
             'allergens', 'nutrition_info', 'created_at', 'modified_at'
@@ -119,6 +120,12 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             logger.warning(f"Error getting image URL for product {obj.id}: {str(e)}")
         return None
+
+    def get_model_3d_url(self, obj):
+        request = self.context.get('request')
+        if not obj.model_3d or not request:
+            return None
+        return request.build_absolute_uri(obj.model_3d.url)
 
     def get_images(self, obj):
         request = self.context.get('request')
@@ -300,14 +307,31 @@ def validate_upload_image(image):
     return image
 
 
+MAX_MODEL_SIZE = 20 * 1024 * 1024  # 20 MB
+
+
+def validate_upload_model(model_file):
+    if not (model_file.name or '').lower().endswith('.glb'):
+        raise serializers.ValidationError('Upload a binary glTF model (.glb).')
+    if model_file.size > MAX_MODEL_SIZE:
+        raise serializers.ValidationError('The 3D model must be 20 MB or smaller.')
+    # Every .glb file starts with the ASCII magic "glTF".
+    head = model_file.read(4)
+    model_file.seek(0)
+    if head != b'glTF':
+        raise serializers.ValidationError('This file is not a valid .glb model.')
+    return model_file
+
+
 class AdminProductSerializer(serializers.ModelSerializer):
     """Create and edit products from the admin pages."""
     image = serializers.ImageField(required=False, validators=[validate_upload_image])
+    model_3d = serializers.FileField(required=False, allow_null=True, validators=[validate_upload_model])
 
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'description', 'category', 'price', 'stock', 'image',
+            'id', 'name', 'description', 'category', 'price', 'stock', 'image', 'model_3d',
             'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
             'status', 'available',
         ]

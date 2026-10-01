@@ -7,29 +7,50 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Backlover palette: a bakery at night, lit by the oven.
+        oven: {
+          950: '#0e0c0a', // page
+          900: '#15120f', // surface
+          800: '#1e1914', // raised surface
+          700: '#2a231c', // borders on dark
+        },
+        cream: {
+          DEFAULT: '#f4ece1',
+          muted: '#b9ab98',
+          faint: '#7d7061',
+        },
+        crust: {
+          DEFAULT: '#e6a15a', // golden caramel accent
+          light: '#f2c48d',
+          dark: '#b8733a',
+        },
+        ember: '#d2603f',
         primary: {
-          DEFAULT: '#3B82F6', // Blue-500
-          dark: '#2563EB',    // Blue-600
-          light: '#60A5FA',   // Blue-400
+          DEFAULT: '#3B82F6',
+          dark: '#2563EB',
+          light: '#60A5FA',
         },
         secondary: {
-          DEFAULT: '#10B981', // Emerald-500
-          dark: '#059669',    // Emerald-600
-          light: '#34D399',   // Emerald-400
+          DEFAULT: '#10B981',
+          dark: '#059669',
+          light: '#34D399',
         },
         accent: {
-          DEFAULT: '#8B5CF6', // Violet-500
-          dark: '#7C3AED',    // Violet-600
-          light: '#A78BFA',   // Violet-400
+          DEFAULT: '#8B5CF6',
+          dark: '#7C3AED',
+          light: '#A78BFA',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Manrope Variable"', 'Manrope', 'system-ui', 'sans-serif'],
+        display: ['"Instrument Serif"', 'Georgia', 'serif'],
+      },
+      letterSpacing: {
+        tightest: '-0.04em',
       },
     },
   },
   plugins: [
-    require('@tailwindcss/aspect-ratio'),
-    require("@aksharahegde/vue-glow/tailwind")
+    require('@tailwindcss/aspect-ratio')
   ],
 }

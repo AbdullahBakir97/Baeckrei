@@ -1,6 +1,6 @@
 <template>
   <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-    <div v-for="stat in stats" :key="stat.name" class="bg-white overflow-hidden shadow rounded-lg">
+    <div v-for="stat in stats" :key="stat.name" class="admin-panel overflow-hidden">
       <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
@@ -13,19 +13,16 @@
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">
+              <dt class="text-sm font-medium text-cream-muted truncate">
                 {{ stat.name }}
               </dt>
               <dd class="flex items-baseline">
-                <div class="text-2xl font-semibold text-gray-900">
+                <div class="text-2xl font-semibold text-cream">
                   {{ stat.value }}
                 </div>
                 <div
                   v-if="stat.change"
-                  :class="[
-                    stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600',
-                    'ml-2 flex items-baseline text-sm font-semibold'
-                  ]"
+                  :class="[ stat.changeType === 'increase' ? 'text-emerald-300' : 'text-red-300', 'ml-2 flex items-baseline text-sm font-semibold' ]"
                 >
                   <component
                     :is="stat.changeType === 'increase' ? 'ArrowUpIcon' : 'ArrowDownIcon'"
@@ -42,7 +39,7 @@
           </div>
         </div>
       </div>
-      <div class="bg-gray-50 px-5 py-3">
+      <div class="bg-cream/[0.03] px-5 py-3">
         <div class="text-sm">
           <a
             href="#"
@@ -77,28 +74,28 @@ const stats = ref([
     name: 'Total Products',
     value: 0,
     icon: ShoppingBagIcon,
-    iconColor: 'text-purple-500'
+    iconColor: 'text-crust'
   },
   {
     type: 'active',
     name: 'Active Products',
     value: 0,
     icon: CheckCircleIcon,
-    iconColor: 'text-green-500'
+    iconColor: 'text-emerald-300'
   },
   {
     type: 'low_stock',
     name: 'Low Stock Items',
     value: 0,
     icon: ExclamationCircleIcon,
-    iconColor: 'text-yellow-500'
+    iconColor: 'text-crust-light'
   },
   {
     type: 'stock_value',
     name: 'Stock value',
     value: '0.00 €',
     icon: CurrencyDollarIcon,
-    iconColor: 'text-blue-500'
+    iconColor: 'text-crust'
   }
 ])
 

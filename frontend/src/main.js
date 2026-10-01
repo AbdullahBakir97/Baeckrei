@@ -2,17 +2,21 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+// Fonts are bundled with the site (no requests to Google's font servers).
+import '@fontsource/instrument-serif/400.css'
+import '@fontsource/instrument-serif/400-italic.css'
+import '@fontsource-variable/manrope/wght.css'
 import './style.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import './plugins/fontawesome'
-import VueGlow from '@aksharahegde/vue-glow'
+import { installMotion } from './motion/directives'
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
-app.use(VueGlow)
+installMotion(app)
 
 // Register global components
 app.component('font-awesome-icon', FontAwesomeIcon)

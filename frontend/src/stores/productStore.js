@@ -53,10 +53,13 @@ export const useProductStore = defineStore('products', () => {
       is_seasonal: data.is_seasonal ?? false
     }
     Object.keys(fields).forEach(key => fields[key] === undefined && delete fields[key])
-    if (!data.imageFile) return fields
+    // modelFile: a new .glb to upload; removeModel: clear the current one.
+    if (!data.imageFile && !data.modelFile && !data.removeModel) return fields
     const form = new FormData()
     Object.entries(fields).forEach(([key, value]) => form.append(key, value))
-    form.append('image', data.imageFile)
+    if (data.imageFile) form.append('image', data.imageFile)
+    if (data.modelFile) form.append('model_3d', data.modelFile)
+    else if (data.removeModel) form.append('model_3d', '')
     return form
   }
 
@@ -148,26 +151,6 @@ export const useProductStore = defineStore('products', () => {
         throw err
       })
 
-      // Debug log for API request
-      console.log('API Request:', {
-        url: `${API_PATH}/`,
-        params: Object.fromEntries(params.entries())
-      })
-
-      console.log('API Response:', {
-        status: response.status,
-        data: response.data,
-        count: response.data?.count,
-        results: response.data?.results?.length,
-        pagination: {
-          current_page: response.data?.current_page,
-          total_pages: response.data?.total_pages,
-          page_size: response.data?.page_size,
-          has_next: response.data?.has_next,
-          has_previous: response.data?.has_previous,
-        }
-      })
-
       if (response.data) {
         // Update pagination state
         pagination.value = {
@@ -180,11 +163,8 @@ export const useProductStore = defineStore('products', () => {
           page_range: response.data.page_range || [],
         }
 
-        console.log('Products before mapping:', response.data.results)
-
         // Update products with normalized image URLs
         products.value = (response.data.results || []).map(product => {
-          console.log('Processing product:', product)
           const normalizedProduct = {
             ...product,
             id: product.id,
@@ -212,11 +192,9 @@ export const useProductStore = defineStore('products', () => {
             is_gluten_free: product.is_gluten_free || false,
             status: product.status
           }
-          console.log('Normalized product:', normalizedProduct)
           return normalizedProduct
         })
 
-        console.log('Final products array:', products.value)
 
         return {
           results: products.value,
@@ -270,13 +248,11 @@ export const useProductStore = defineStore('products', () => {
     product.value = null
 
     try {
-      console.log('Fetching product details for ID:', id)
       const response = await axios.get(`${API_PATH}/${id}/`, {
         withCredentials: true
       })
       
       if (response.data) {
-        console.log('Product detail data:', response.data)
         product.value = {
           ...response.data,
           // Ensure image URLs are absolute

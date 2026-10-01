@@ -24,8 +24,8 @@
             leave-from="opacity-100 scale-100"
             leave-to="opacity-0 scale-95"
           >
-            <DialogPanel class="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-              <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 mb-4">
+            <DialogPanel class="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-oven-800 p-6 text-left align-middle shadow-xl transition-all">
+              <DialogTitle as="h3" class="text-lg font-medium leading-6 text-cream mb-4">
                 Product Details
               </DialogTitle>
 
@@ -46,33 +46,33 @@
                 <!-- Product Information -->
                 <div class="space-y-4">
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Product Name</h4>
-                    <p class="mt-1 text-lg font-semibold text-gray-900">{{ product.name }}</p>
+                    <h4 class="text-sm font-medium text-cream-muted">Product Name</h4>
+                    <p class="mt-1 text-lg font-semibold text-cream">{{ product.name }}</p>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">SKU</h4>
-                    <p class="mt-1 text-gray-900">{{ product.sku }}</p>
+                    <h4 class="text-sm font-medium text-cream-muted">SKU</h4>
+                    <p class="mt-1 text-cream">{{ product.sku }}</p>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Category</h4>
-                    <p class="mt-1 text-gray-900">{{ product.category }}</p>
+                    <h4 class="text-sm font-medium text-cream-muted">Category</h4>
+                    <p class="mt-1 text-cream">{{ product.category }}</p>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Price</h4>
-                    <p class="mt-1 text-gray-900">${{ product.price.toFixed(2) }}</p>
+                    <h4 class="text-sm font-medium text-cream-muted">Price</h4>
+                    <p class="mt-1 text-cream">${{ product.price.toFixed(2) }}</p>
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Stock</h4>
+                    <h4 class="text-sm font-medium text-cream-muted">Stock</h4>
                     <div class="mt-1 flex items-center">
                       <span
                         :class="[
-                          product.stock > 10 ? 'bg-green-100 text-green-800' :
-                          product.stock > 0 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800',
+                          product.stock > 10 ? 'bg-emerald-400/10 text-emerald-300' :
+                          product.stock > 0 ? 'bg-amber-300/10 text-amber-200' :
+                          'bg-red-400/10 text-red-300',
                           'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
                         ]"
                       >
@@ -82,20 +82,17 @@
                   </div>
 
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Status</h4>
+                    <h4 class="text-sm font-medium text-cream-muted">Status</h4>
                     <span
-                      :class="[
-                        product.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800',
-                        'mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
-                      ]"
+                      :class="[ product.status === 'active' ? 'bg-emerald-400/10 text-emerald-300' : 'bg-red-400/10 text-red-300', 'mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full' ]"
                     >
                       {{ product.status }}
                     </span>
                   </div>
 
                   <div v-if="product.description">
-                    <h4 class="text-sm font-medium text-gray-500">Description</h4>
-                    <p class="mt-1 text-gray-900">{{ product.description }}</p>
+                    <h4 class="text-sm font-medium text-cream-muted">Description</h4>
+                    <p class="mt-1 text-cream">{{ product.description }}</p>
                   </div>
                 </div>
 
@@ -103,23 +100,23 @@
                 <div class="col-span-1 md:col-span-2 space-y-4">
                   <!-- Nutrition Information -->
                   <div v-if="nutritionInfo" class="border-t pt-4">
-                    <h4 class="text-sm font-medium text-gray-500 mb-2">Nutrition Information</h4>
+                    <h4 class="text-sm font-medium text-cream-muted mb-2">Nutrition Information</h4>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div v-for="(value, key) in nutritionInfo" :key="key" class="bg-gray-50 p-3 rounded-lg">
-                        <div class="text-xs text-gray-500">{{ key }}</div>
-                        <div class="text-sm font-medium text-gray-900">{{ value }}</div>
+                      <div v-for="(value, key) in nutritionInfo" :key="key" class="bg-cream/[0.03] p-3 rounded-lg">
+                        <div class="text-xs text-cream-muted">{{ key }}</div>
+                        <div class="text-sm font-medium text-cream">{{ value }}</div>
                       </div>
                     </div>
                   </div>
 
                   <!-- Allergens -->
                   <div v-if="allergens.length" class="border-t pt-4">
-                    <h4 class="text-sm font-medium text-gray-500 mb-2">Allergens</h4>
+                    <h4 class="text-sm font-medium text-cream-muted mb-2">Allergens</h4>
                     <div class="flex flex-wrap gap-2">
                       <span
                         v-for="allergen in allergens"
                         :key="allergen.id"
-                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-400/10 text-red-300"
                       >
                         {{ allergen.name }}
                       </span>
@@ -128,7 +125,7 @@
 
                   <!-- Similar Products -->
                   <div v-if="similarProducts.length" class="border-t pt-4">
-                    <h4 class="text-sm font-medium text-gray-500 mb-2">Similar Products</h4>
+                    <h4 class="text-sm font-medium text-cream-muted mb-2">Similar Products</h4>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div
                         v-for="similar in similarProducts"
@@ -142,8 +139,8 @@
                             class="object-cover group-hover:opacity-75"
                           />
                         </div>
-                        <p class="mt-2 text-sm font-medium text-gray-900">{{ similar.name }}</p>
-                        <p class="text-sm text-gray-500">${{ similar.price.toFixed(2) }}</p>
+                        <p class="mt-2 text-sm font-medium text-cream">{{ similar.name }}</p>
+                        <p class="text-sm text-cream-muted">${{ similar.price.toFixed(2) }}</p>
                       </div>
                     </div>
                   </div>
@@ -153,7 +150,7 @@
               <div class="mt-6 flex justify-end space-x-3">
                 <button
                   @click="$emit('close')"
-                  class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  class="admin-panel inline-flex justify-center border border-cream/15 px-4 py-2 text-sm font-medium text-cream/80 hover:bg-cream/[0.03] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 >
                   Close
                 </button>

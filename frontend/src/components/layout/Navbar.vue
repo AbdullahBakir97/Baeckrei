@@ -1,486 +1,631 @@
 <template>
-  <nav class="bg-gray-900 shadow-lg border-b border-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16">
-        <!-- Logo and Brand -->
-        <div class="flex items-center">
-          <router-link to="/" class="flex-shrink-0 flex items-center brand-logo">
-            <span class="text-2xl font-bold text-amber-400 logo-text">{{ business.name.charAt(0) }}</span>
-            <span class="text-xl font-semibold text-gray-200 logo-text">{{ business.name.slice(1) }}</span>
+  <header class="nav-wrap" :class="{ 'is-scrolled': scrolled, 'is-hidden': hidden && !menuOpen && !searchOpen }">
+    <nav class="nav" aria-label="Main">
+      <router-link to="/" class="nav-logo" :aria-label="`${business.name} home`">
+        <span class="nav-logo-mark">{{ business.name.charAt(0) }}</span>{{ business.name.slice(1) }}
+      </router-link>
+
+      <ul class="nav-links">
+        <li v-for="link in links" :key="link.to">
+          <router-link :to="link.to" class="nav-link" :class="{ 'is-active': isActive(link.to) }">
+            {{ link.label }}
           </router-link>
-          
-          <!-- Navigation Links -->
-          <div class="hidden md:flex ml-10 space-x-8">
-            <router-link 
-              v-for="link in navigationLinks" 
-              :key="link.path" 
-              :to="link.path"
-              :class="[
-                isActive(link.path) 
-                  ? 'text-amber-400 border-amber-400' 
-                  : 'text-gray-300 hover:text-gray-100 border-transparent',
-                'px-3 py-2 text-sm font-medium border-b-2 nav-link'
-              ]"
-            >
-              {{ link.name }}
-            </router-link>
-          </div>
+        </li>
+      </ul>
+
+      <div class="nav-tools">
+        <button type="button" class="nav-icon" aria-label="Search" @click="openSearch">
+          <font-awesome-icon icon="search" />
+        </button>
+        <router-link to="/wishlist" class="nav-icon hidden sm:grid" aria-label="Wishlist">
+          <font-awesome-icon icon="heart" />
+          <span v-if="wishlistStore.items.length" class="nav-badge">{{ wishlistStore.items.length }}</span>
+        </router-link>
+        <router-link v-if="compareStore.items.length" to="/compare" class="nav-icon hidden sm:grid" aria-label="Compare products">
+          <font-awesome-icon icon="code-compare" />
+          <span class="nav-badge">{{ compareStore.items.length }}</span>
+        </router-link>
+
+        <!-- Account -->
+        <div v-if="authStore.isAuthenticated" class="relative hidden md:block" @keydown.escape="userMenuOpen = false">
+          <button type="button" class="nav-icon" :aria-expanded="userMenuOpen" aria-haspopup="true"
+                  aria-label="Account menu" @click="userMenuOpen = !userMenuOpen">
+            <span class="nav-avatar">{{ initials }}</span>
+          </button>
+          <transition name="pop">
+            <div v-if="userMenuOpen" class="nav-pop w-56" role="menu">
+              <p class="px-3 pb-2 text-xs text-cream-faint truncate">{{ authStore.user?.email }}</p>
+              <router-link v-if="authStore.isAdmin" to="/admin" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">Admin dashboard</router-link>
+              <router-link to="/profile" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">Profile</router-link>
+              <router-link to="/orders" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">Orders</router-link>
+              <router-link to="/settings" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">Settings</router-link>
+              <button type="button" class="nav-pop-item w-full text-left" role="menuitem" @click="logout">Sign out</button>
+            </div>
+          </transition>
         </div>
+        <router-link v-else to="/login" class="nav-signin hidden md:inline-flex">Sign in</router-link>
 
-        <!-- Search and Cart -->
-        <div class="flex items-center">
-          <!-- Search -->
-          <div class="relative mx-4">
-            <input
-              type="text"
-              v-model="searchQuery"
-              @keyup.enter="handleSearch"
-              placeholder="Search products..."
-              class="w-64 px-4 py-2 rounded-lg bg-gray-800 text-gray-100 border border-gray-700 
-                     focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent
-                     placeholder-gray-400 search-input"
-            />
-            <button 
-              @click="handleSearch"
-              class="absolute right-0 top-0 mt-2 mr-3 text-gray-400 hover:text-gray-200 search-button"
-            >
-              <font-awesome-icon icon="fa-solid fa-search" />
-            </button>
-          </div>
-
-          <!-- Cart -->
-          <div 
-            class="relative"
-            @click="navigateToCart"
-            @mouseenter="showCartDropdown = true"
-            @mouseleave="showCartDropdown = false"
-          >
-            <div class="p-2 text-gray-400 hover:text-gray-200 flex items-center gap-2 cursor-pointer cart-icon">
-              <div class="relative">
-                <svg
-                  class="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                <span
-                  v-if="cartItemCount > 0"
-                  class="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center cart-count"
-                >
-                  {{ cartItemCount }}
-                </span>
-              </div>
-              <span class="font-medium">{{ formatPrice(cartTotal) }} €</span>
-            </div>
-
-            <!-- Cart Dropdown -->
-            <div v-show="showCartDropdown" class="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl z-50 glass-dropdown">
-              <CartDropdown />
-            </div>
-          </div>
-
-          <!-- Wishlist and compare -->
-          <router-link to="/wishlist" class="ml-4 relative text-gray-300 hover:text-amber-300" aria-label="Wishlist">
-            <font-awesome-icon icon="heart" />
-            <span v-if="wishlistStore.items.length" class="nav-badge">{{ wishlistStore.items.length }}</span>
+        <!-- Cart -->
+        <div class="relative" @mouseenter="cartPreview = true" @mouseleave="cartPreview = false">
+          <router-link to="/cart" class="nav-cart" :aria-label="`Cart, ${cartStore.itemCount} items`">
+            <font-awesome-icon icon="shopping-bag" />
+            <span class="tabular-nums">{{ cartStore.itemCount }}</span>
           </router-link>
-          <router-link v-if="compareStore.items.length" to="/compare" class="ml-4 relative text-gray-300 hover:text-amber-300" aria-label="Compare products">
-            <font-awesome-icon icon="code-compare" />
-            <span class="nav-badge">{{ compareStore.items.length }}</span>
-          </router-link>
-
-          <!-- User Menu -->
-          <div class="ml-4 relative flex items-center space-x-4">
-            <template v-if="!authStore.isAuthenticated">
-              <router-link
-                to="/login"
-                class="text-sm font-medium text-gray-300 hover:text-gray-100"
-              >
-                Sign in
-              </router-link>
-              <router-link
-                to="/register"
-                class="text-sm font-medium text-gray-300 hover:text-gray-100"
-              >
-                Sign up
-              </router-link>
-            </template>
-            <template v-else>
-              <!-- Admin Link -->
-              <router-link
-                v-if="authStore.isAdmin"
-                to="/admin"
-                class="text-sm font-medium text-gray-300 hover:text-gray-100"
-              >
-                Admin Dashboard
-              </router-link>
-
-              <!-- User Dropdown -->
-              <div class="relative">
-                <button
-                  @click="isUserMenuOpen = !isUserMenuOpen"
-                  class="flex items-center space-x-1 text-sm font-medium text-gray-300 hover:text-gray-100 focus:outline-none user-menu-button"
-                >
-                  <span>{{ authStore.user?.first_name || 'User' }}</span>
-                  <svg
-                    class="h-5 w-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </button>
-
-                <!-- Dropdown Menu -->
-                <div
-                  v-if="isUserMenuOpen"
-                  class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 dropdown-menu"
-                >
-                  <div
-                    class="py-1"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="user-menu"
-                  >
-                    <router-link
-                      to="/profile"
-                      class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 dropdown-item"
-                      role="menuitem"
-                      @click="isUserMenuOpen = false"
-                    >
-                      Your Profile
-                    </router-link>
-                    <router-link
-                      to="/orders"
-                      class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 dropdown-item"
-                      role="menuitem"
-                      @click="isUserMenuOpen = false"
-                    >
-                      Your Orders
-                    </router-link>
-                    <router-link
-                      to="/settings"
-                      class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 dropdown-item"
-                      role="menuitem"
-                      @click="isUserMenuOpen = false"
-                    >
-                      Settings
-                    </router-link>
-                    <a
-                      href="#"
-                      class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 dropdown-item"
-                      role="menuitem"
-                      @click.prevent="handleLogout"
-                    >
-                      Sign out
-                    </a>
+          <transition name="pop">
+            <div v-if="cartPreview && cartStore.items.length" class="nav-pop w-80 hidden md:block">
+              <ul class="max-h-72 overflow-auto">
+                <li v-for="item in cartStore.items.slice(0, 4)" :key="item.product.id" class="flex items-center gap-3 p-2">
+                  <img :src="item.product.image_url || item.product.image || PLACEHOLDER_IMAGE" alt="" class="h-12 w-12 object-contain" @error="applyImageFallback" />
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm text-cream">{{ item.product.name }}</p>
+                    <p class="text-xs text-cream-faint">{{ item.quantity }} × {{ formatEuro(item.product.price) }}</p>
                   </div>
-                </div>
+                </li>
+              </ul>
+              <p v-if="cartStore.items.length > 4" class="px-2 pb-2 text-xs text-cream-faint">+ {{ cartStore.items.length - 4 }} more</p>
+              <div class="mt-2 flex items-center justify-between border-t border-white/10 px-2 pt-3">
+                <span class="text-sm text-cream-muted">Total</span>
+                <span class="font-semibold text-crust-light">{{ formatEuro(cartStore.totalAmount) }}</span>
               </div>
-            </template>
-          </div>
+              <router-link to="/cart" class="btn-amber mt-3 w-full !py-2.5" @click="cartPreview = false">View cart</router-link>
+            </div>
+          </transition>
         </div>
+
+        <button type="button" class="nav-burger md:hidden" :aria-expanded="menuOpen" aria-controls="mobile-menu"
+                :aria-label="menuOpen ? 'Close menu' : 'Open menu'" @click="toggleMenu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Mobile menu -->
+    <div v-show="menuOpen" id="mobile-menu" ref="menuEl" class="mobile-menu" @keydown.escape="closeMenu">
+      <ul class="mobile-links">
+        <li v-for="(link, index) in mobileLinks" :key="link.to" class="overflow-hidden">
+          <router-link :to="link.to" class="mobile-link" @click="closeMenu">
+            <span class="mobile-index">0{{ index + 1 }}</span>{{ link.label }}
+          </router-link>
+        </li>
+      </ul>
+      <div class="mobile-foot">
+        <template v-if="authStore.isAuthenticated">
+          <router-link v-if="authStore.isAdmin" to="/admin" @click="closeMenu">Admin</router-link>
+          <router-link to="/profile" @click="closeMenu">Profile</router-link>
+          <router-link to="/orders" @click="closeMenu">Orders</router-link>
+          <button type="button" @click="logout">Sign out</button>
+        </template>
+        <template v-else>
+          <router-link to="/login" @click="closeMenu">Sign in</router-link>
+          <router-link to="/register" @click="closeMenu">Create account</router-link>
+        </template>
+        <p class="mt-4 w-full text-cream-faint">{{ business.street }}, {{ business.city }}<span v-if="business.transit"> · {{ business.transit }}</span></p>
       </div>
     </div>
-  </nav>
+
+    <!-- Search -->
+    <transition name="search">
+      <div v-if="searchOpen" class="search-layer" role="dialog" aria-label="Search products" @click.self="searchOpen = false"
+           @keydown.escape="searchOpen = false">
+        <form class="search-box" role="search" @submit.prevent="submitSearch">
+          <font-awesome-icon icon="search" class="text-crust text-xl" />
+          <input ref="searchInput" v-model="searchQuery" type="search" placeholder="Search croissants, Brezel, cakes…"
+                 aria-label="Search products" />
+          <button type="button" class="text-cream-faint hover:text-cream text-sm" @click="searchOpen = false">Esc</button>
+        </form>
+        <div class="search-hints">
+          <span class="text-cream-faint">Popular:</span>
+          <button v-for="hint in ['Brezel', 'Croissant', 'Sourdough', 'Macarons']" :key="hint" type="button" @click="searchQuery = hint; submitSearch()">
+            {{ hint }}
+          </button>
+        </div>
+      </div>
+    </transition>
+  </header>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
-import { storeToRefs } from 'pinia'
-import CartDropdown from '@/components/cart/CartDropdown.vue';
-import { business } from '@/config/business'
 import { useWishlistStore } from '@/stores/wishlistStore'
 import { useCompareStore } from '@/stores/compareStore'
+import { business } from '@/config/business'
+import { formatEuro } from '@/utils/money'
+import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
+import { gsap, lockScroll, prefersReducedMotion } from '@/motion'
 
+const route = useRoute()
+const router = useRouter()
+const cartStore = useCartStore()
+const authStore = useAuthStore()
 const wishlistStore = useWishlistStore()
 const compareStore = useCompareStore()
 
-const router = useRouter()
-const route = useRoute()
-const cartStore = useCartStore()
-const authStore = useAuthStore()
-const { items } = storeToRefs(cartStore)
-const { itemCount, totalAmount } = storeToRefs(cartStore);
-const showCartDropdown = ref(false)
-const searchQuery = ref('')
-const isUserMenuOpen = ref(false)
+const links = [
+  { label: 'Shop', to: '/products' },
+  { label: 'Seasonal', to: '/seasonal' },
+  { label: 'Journal', to: '/blog' },
+  { label: 'About', to: '/about' },
+  { label: 'Contact', to: '/contact' }
+]
+const mobileLinks = [{ label: 'Home', to: '/' }, ...links]
 
-const displayedItems = computed(() => {
-  return items.value?.slice(0, 3) || []
+const scrolled = ref(false)
+const hidden = ref(false)
+const menuOpen = ref(false)
+const menuEl = ref(null)
+const searchOpen = ref(false)
+const searchInput = ref(null)
+const searchQuery = ref('')
+const userMenuOpen = ref(false)
+const cartPreview = ref(false)
+
+const initials = computed(() => {
+  const user = authStore.user || {}
+  const letters = `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`
+  return (letters || user.email?.[0] || 'U').toUpperCase()
 })
 
-const cartItemCount = computed(() => itemCount.value);
-const cartTotal = computed(() => totalAmount.value);
+const isActive = (path) => route.path === path || route.path.startsWith(`${path}/`)
 
-const formatPrice = (price) => {
-  return Number(price || 0).toFixed(2)
+// Hide the bar while scrolling down, bring it back when scrolling up.
+let lastY = 0
+function onScroll() {
+  const y = window.scrollY
+  scrolled.value = y > 24
+  hidden.value = y > 320 && y > lastY
+  lastY = y
 }
 
-// Navigation functions
-const navigateToCart = () => {
-  showCartDropdown.value = false
-  router.push('/cart')
+function toggleMenu() {
+  menuOpen.value ? closeMenu() : openMenu()
 }
 
-const openDropdown = () => {
-  cartStore.showDropdown();
-};
-
-const closeDropdown = () => {
-  cartStore.hideDropdown();
-};
-
-// Navigation links
-const navigationLinks = [
-  { name: 'Home', path: '/' },
-  { name: 'Products', path: '/products' },
-  { name: 'About', path: '/about' },
-  { name: 'Contact', path: '/contact' }
-]
-
-// Check if route is active
-const isActive = (path) => {
-  if (path === '/') {
-    return route.path === '/'
-  }
-  return route.path.startsWith(path)
+async function openMenu() {
+  menuOpen.value = true
+  lockScroll(true)
+  await nextTick()
+  if (prefersReducedMotion()) return
+  gsap.fromTo(menuEl.value, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: 0.7, ease: 'expo.out' })
+  gsap.fromTo(menuEl.value.querySelectorAll('.mobile-link'), { yPercent: 110 },
+    { yPercent: 0, duration: 0.9, ease: 'expo.out', stagger: 0.05, delay: 0.1 })
 }
 
-// Handle search input
-const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    router.push({
-      path: '/products',
-      query: { search: searchQuery.value.trim() }
-    })
-  }
+function closeMenu() {
+  if (!menuOpen.value) return
+  menuOpen.value = false
+  lockScroll(false)
 }
 
-const handleLogout = async () => {
+async function openSearch() {
+  searchOpen.value = true
+  await nextTick()
+  searchInput.value?.focus()
+}
+
+function submitSearch() {
+  const query = searchQuery.value.trim()
+  if (!query) return
+  searchOpen.value = false
+  router.push({ path: '/products', query: { search: query } })
+}
+
+async function logout() {
+  userMenuOpen.value = false
+  closeMenu()
   try {
     await authStore.logout()
-    isUserMenuOpen.value = false
+  } finally {
     router.push('/login')
-  } catch (error) {
-    console.error('Logout failed:', error)
   }
 }
 
-// Fetch cart data on component mount
-onMounted(async () => {
-  try {
-    await cartStore.fetchCart()
-  } catch (error) {
-    console.error('Error loading cart:', error)
-    // Cart store will handle setting empty cart state
+const onDocumentClick = (event) => {
+  if (userMenuOpen.value && !event.target.closest('[aria-haspopup], .nav-pop')) userMenuOpen.value = false
+}
+const onKey = (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    openSearch()
   }
+}
+
+watch(() => route.fullPath, () => {
+  closeMenu()
+  userMenuOpen.value = false
+  cartPreview.value = false
+  hidden.value = false
 })
 
-// Watch for cart changes
-watch(
-  () => cartStore.items,
-  () => {
-    if (cartStore.error) {
-      console.error('Cart error:', cartStore.error)
-    }
-  }
-)
+onMounted(() => {
+  onScroll()
+  window.addEventListener('scroll', onScroll, { passive: true })
+  document.addEventListener('click', onDocumentClick)
+  window.addEventListener('keydown', onKey)
+  cartStore.fetchCart({ silent: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onScroll)
+  document.removeEventListener('click', onDocumentClick)
+  window.removeEventListener('keydown', onKey)
+  lockScroll(false)
+})
 </script>
 
 <style scoped>
-.nav-badge {
-  position: absolute;
-  top: -0.5rem;
-  right: -0.65rem;
-  min-width: 1.1rem;
-  height: 1.1rem;
-  padding: 0 0.25rem;
+.nav-wrap {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  padding: 0.85rem 1rem 0;
+  transition: transform 0.6s var(--ease-out-expo);
+}
+
+.nav-wrap.is-hidden {
+  transform: translateY(-120%);
+}
+
+.nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.55rem 0.6rem 0.55rem 1.4rem;
   border-radius: 9999px;
-  background: #f59e0b;
-  color: #111;
-  font-size: 0.7rem;
-  font-weight: 700;
-  line-height: 1.1rem;
-  text-align: center;
+  border: 1px solid transparent;
+  transition: background 0.5s, border-color 0.5s, box-shadow 0.5s;
 }
 
-nav {
-  @apply relative;
-  background: linear-gradient(
-    to bottom,
-    rgba(17, 17, 17, 0.95) 0%,
-    rgba(17, 17, 17, 0.85) 100%
-  );
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(245, 158, 11, 0.1);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06),
-    0 0 20px rgba(245, 158, 11, 0.1);
-  transform-style: preserve-3d;
-  perspective: 1000px;
+.is-scrolled .nav,
+.nav-wrap:has(.mobile-menu:not([style*='none'])) .nav {
+  background: rgba(21, 18, 15, 0.72);
+  border-color: rgba(244, 236, 225, 0.08);
+  box-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
 }
 
-nav::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at top center,
-    rgba(255, 215, 0, 0.15),
-    transparent 70%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.nav-logo {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: #f4ece1;
+  letter-spacing: -0.01em;
 }
 
-nav:hover::before {
-  opacity: 1;
+.nav-logo-mark {
+  font-style: italic;
+  color: #e6a15a;
 }
 
-.router-link-active {
-  @apply relative;
-  transform-style: preserve-3d;
+.nav-links {
+  display: none;
+  gap: 0.25rem;
+  margin: 0 auto;
 }
 
-.router-link-active::before {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 215, 0, 0.8),
-    transparent
-  );
-  transform: translateZ(20px);
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+@media (min-width: 768px) {
+  .nav-links {
+    display: flex;
+  }
 }
 
 .nav-link {
-  @apply relative inline-flex items-center px-3 py-2 text-sm font-medium 
-         transition-all duration-300;
-  transform-style: preserve-3d;
+  position: relative;
+  display: block;
+  padding: 0.5rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #b9ab98;
+  transition: color 0.3s, background 0.3s;
 }
 
-.nav-link span {
-  @apply text-gray-300 transition-all duration-300;
+.nav-link:hover {
+  color: #f4ece1;
+  background: rgba(244, 236, 225, 0.05);
 }
 
-.nav-link:hover span,
-.router-link-active span {
-  @apply text-transparent bg-clip-text;
-  background-image: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
+.nav-link.is-active {
+  color: #f4ece1;
 }
 
-.nav-link::after {
-  content: '';
-  @apply absolute bottom-0 left-1/2 w-0 h-0.5 transition-all duration-300 transform -translate-x-1/2;
-  background: linear-gradient(90deg, #FFD700, #FDB931, #B8860B);
-}
-
-.nav-link:hover::after,
-.router-link-active::after {
-  @apply w-full;
-}
-
-.navbar {
-  @apply flex items-center justify-between p-4 bg-gray-800 text-white;
-}
-
-.brand-logo .logo-text {
-  @apply font-bold text-transparent bg-clip-text;
-  background-image: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
-}
-
-.search-input:focus {
-  @apply outline-none;
-  background: rgba(23, 23, 23, 0.9);
-  border-color: #FFD700;
-  box-shadow: 
-    0 0 0 2px rgba(255, 215, 0, 0.1),
-    0 0 20px rgba(255, 215, 0, 0.2);
-}
-
-.dropdown-item {
-  @apply block w-full px-4 py-2 text-sm text-gray-300 transition-all duration-200;
-}
-
-.dropdown-item:hover {
-  @apply text-transparent bg-clip-text;
-  background-image: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
-  background-color: rgba(255, 215, 0, 0.1);
-}
-
-.cart-icon:hover {
-  @apply text-transparent;
-  background-image: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
-  -webkit-background-clip: text;
-}
-
-.cart-count {
-  background: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
-  border: 2px solid rgba(17, 17, 17, 0.95);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.cart-icon .cart-count {
-  @apply absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center;
-}
-
-.dropdown-menu {
-  @apply absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-xl z-50 glass-dropdown;
-}
-
-.user-menu-button:hover {
-  @apply text-transparent;
-  background-image: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
-  -webkit-background-clip: text;
-}
-
-.search-button {
-  @apply text-transparent;
-  background-image: linear-gradient(135deg, #FFD700, #FDB931, #B8860B);
-  -webkit-background-clip: text;
-}
-
-.search-button:hover {
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
-}
-
-nav::before {
+.nav-link.is-active::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at top center,
-    rgba(255, 215, 0, 0.15),
-    transparent 70%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  left: 50%;
+  bottom: 0.2rem;
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: #e6a15a;
+  transform: translateX(-50%);
 }
 
-nav:hover::before {
-  opacity: 1;
+.nav-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+@media (min-width: 768px) {
+  .nav-tools {
+    margin-left: 0;
+  }
+}
+
+.nav-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  color: #d9cfc2;
+  transition: background 0.3s, color 0.3s;
+}
+
+.nav-icon:hover {
+  color: #f4ece1;
+  background: rgba(244, 236, 225, 0.07);
+}
+
+.nav-avatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0e0c0a;
+  background: linear-gradient(135deg, #f2c48d, #d2603f);
+}
+
+.nav-badge {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.1rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.2rem;
+  border-radius: 9999px;
+  background: #e6a15a;
+  color: #0e0c0a;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1rem;
+  text-align: center;
+}
+
+.nav-signin {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #d9cfc2;
+}
+
+.nav-signin:hover {
+  color: #f4ece1;
+}
+
+.nav-cart {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 2.6rem;
+  padding: 0 1.1rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0e0c0a;
+  background: #e6a15a;
+  transition: background 0.3s;
+}
+
+.nav-cart:hover {
+  color: #0e0c0a;
+  background: #f2c48d;
+}
+
+.nav-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.75rem);
+  padding: 0.6rem;
+  border-radius: 1.25rem;
+  background: rgba(21, 18, 15, 0.92);
+  border: 1px solid rgba(244, 236, 225, 0.1);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+}
+
+.nav-pop::before {
+  /* Keeps the popover open while the pointer crosses the gap. */
+  content: '';
+  position: absolute;
+  inset: -0.8rem 0 auto;
+  height: 0.8rem;
+}
+
+.nav-pop-item {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  color: #d9cfc2;
+}
+
+.nav-pop-item:hover {
+  color: #f4ece1;
+  background: rgba(244, 236, 225, 0.06);
+}
+
+.nav-burger {
+  display: grid;
+  place-content: center;
+  gap: 0.35rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 9999px;
+  background: rgba(244, 236, 225, 0.07);
+}
+
+@media (min-width: 768px) {
+  .nav-burger {
+    display: none;
+  }
+}
+
+.nav-burger span {
+  display: block;
+  width: 1.1rem;
+  height: 1.5px;
+  background: #f4ece1;
+  transition: transform 0.4s var(--ease-out-expo);
+}
+
+.nav-burger[aria-expanded='true'] span:first-child {
+  transform: translateY(0.2rem) rotate(45deg);
+}
+
+.nav-burger[aria-expanded='true'] span:last-child {
+  transform: translateY(-0.2rem) rotate(-45deg);
+}
+
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 7rem 1.5rem 2rem;
+  background: #0e0c0a;
+  overflow-y: auto;
+}
+
+.mobile-link {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: clamp(2.8rem, 12vw, 4.5rem);
+  line-height: 1.1;
+  color: #f4ece1;
+}
+
+.mobile-index {
+  font-family: 'Manrope Variable', system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: #e6a15a;
+}
+
+.mobile-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(244, 236, 225, 0.1);
+  font-size: 0.95rem;
+}
+
+.mobile-foot a,
+.mobile-foot button {
+  color: #d9cfc2;
+}
+
+.search-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  padding: 6rem 1rem 0;
+  background: rgba(14, 12, 10, 0.75);
+  backdrop-filter: blur(16px);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.1rem 1.5rem;
+  border-radius: 1.5rem;
+  background: #1e1914;
+  border: 1px solid rgba(244, 236, 225, 0.12);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.9);
+}
+
+.search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 1.35rem;
+  color: #f4ece1;
+  outline: none;
+}
+
+.search-box input::placeholder {
+  color: #7d7061;
+}
+
+.search-hints {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 48rem;
+  margin: 1rem auto 0;
+  font-size: 0.85rem;
+}
+
+.search-hints button {
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  color: #d9cfc2;
+  border: 1px solid rgba(244, 236, 225, 0.14);
+}
+
+.search-hints button:hover {
+  color: #0e0c0a;
+  background: #e6a15a;
+}
+
+.pop-enter-active,
+.pop-leave-active {
+  transition: opacity 0.25s, transform 0.35s var(--ease-out-expo);
+}
+
+.pop-enter-from,
+.pop-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+}
+
+.search-enter-active,
+.search-leave-active {
+  transition: opacity 0.3s;
+}
+
+.search-enter-active .search-box {
+  transition: transform 0.6s var(--ease-out-expo);
+}
+
+.search-enter-from,
+.search-leave-to {
+  opacity: 0;
+}
+
+.search-enter-from .search-box {
+  transform: translateY(-24px);
 }
 </style>
