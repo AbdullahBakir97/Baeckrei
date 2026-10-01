@@ -1,17 +1,17 @@
 <template>
-  <div class="viewer" :class="{ 'is-ready': status === 'ready' }" role="img" :aria-label="`3D view of ${alt}`">
+  <div class="viewer" :class="{ 'is-ready': status === 'ready' }" role="img" :aria-label="$t('viewer.label', { name: alt })">
     <!-- The photo stays visible until the 3D model is ready, and replaces it on failure. -->
     <img v-if="status !== 'ready'" :src="image || PLACEHOLDER_IMAGE" :alt="alt" class="viewer-fallback"
          :class="{ 'is-loading': status === 'loading' }" @error="applyImageFallback" />
     <div ref="container" class="viewer-canvas" aria-hidden="true"></div>
 
     <div v-if="status === 'loading'" class="viewer-status">
-      <span class="viewer-spinner"></span> Preparing 3D view…
+      <span class="viewer-spinner"></span> {{ $t('viewer.preparing') }}
     </div>
     <p v-if="status === 'ready' && showHint" class="viewer-hint">
-      <font-awesome-icon icon="rotate" /> Drag to turn · scroll to zoom
+      <font-awesome-icon icon="rotate" /> {{ $t('viewer.hint') }}
     </p>
-    <button v-if="status === 'ready'" type="button" class="viewer-reset" aria-label="Reset view" @click="resetView">
+    <button v-if="status === 'ready'" type="button" class="viewer-reset" :aria-label="$t('viewer.reset')" @click="resetView">
       <font-awesome-icon icon="rotate" />
     </button>
   </div>

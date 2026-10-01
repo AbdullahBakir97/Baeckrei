@@ -4,7 +4,7 @@
     <section ref="hero" class="hero">
       <div class="hero-stage">
         <SplineScene v-if="business.splineScene && !splineFailed" :scene="business.splineScene"
-                     :label="`${business.name} bakery scene`" @error="splineFailed = true" />
+                     :label="$t('home.sceneLabel', { name: business.name })" @error="splineFailed = true" />
         <HeroScene v-else-if="use3d" @error="use3d = false" />
         <div v-else class="hero-fallback" aria-hidden="true">
           <img v-for="item in fallbackItems" :key="item.src" v-parallax="item.speed" :src="item.src" alt=""
@@ -15,35 +15,34 @@
 
       <div ref="heroContent" class="section hero-content">
         <p v-reveal="{ delay: 0.3 }" class="eyebrow">
-          <span class="hero-live"></span> Bakery · {{ business.street }}, {{ business.city }}
+          <span class="hero-live"></span> {{ $t('home.eyebrow', { street: business.street, city: business.city }) }}
         </p>
-        <h1 v-split.load="{ delay: 0.35 }" class="display-title hero-title">
-          Baked at dawn, <em>loved</em> all&nbsp;day.
-        </h1>
+        <i18n-t v-split.load="{ delay: 0.35 }" keypath="home.heroTitle" tag="h1" class="display-title hero-title" scope="global">
+          <template #loved><em>{{ $t('home.heroLoved') }}</em></template>
+        </i18n-t>
         <p v-reveal="{ delay: 0.7 }" class="hero-lede">
-          Brezeln, croissants, cakes and cookies from our oven on {{ business.street }}.
-          Pick them up on your way or have them delivered across {{ business.city }}.
+          {{ $t('home.lede', { street: business.street, city: business.city }) }}
         </p>
         <div v-reveal="{ delay: 0.85 }" class="mt-10 flex flex-wrap gap-3">
           <router-link v-magnetic="0.25" to="/products" class="btn-amber">
-            Shop the oven <font-awesome-icon icon="arrow-right" />
+            {{ $t('common.shopNow') }} <font-awesome-icon icon="arrow-right" />
           </router-link>
-          <a href="#visit" class="btn-ghost">Visit us</a>
+          <a href="#visit" class="btn-ghost">{{ $t('home.visitUs') }}</a>
         </div>
       </div>
 
       <div class="section hero-foot">
         <span class="hero-scroll"><span></span></span>
         <ul class="hero-facts">
-          <li>Pickup on {{ business.street }}</li>
-          <li>Delivery in {{ business.city }}</li>
-          <li>Cash or card</li>
+          <li>{{ $t('home.factPickup', { street: business.street }) }}</li>
+          <li>{{ $t('home.factDelivery', { city: business.city }) }}</li>
+          <li>{{ $t('home.factPayment') }}</li>
         </ul>
       </div>
     </section>
 
     <!-- Marquee -->
-    <section class="marquee" aria-label="What we bake">
+    <section class="marquee" :aria-label="$t('home.marqueeLabel')">
       <div ref="marquee" class="marquee-track">
         <span v-for="n in 2" :key="n" class="marquee-row" :aria-hidden="n === 2">
           <template v-for="word in marqueeWords" :key="word">
@@ -58,11 +57,11 @@
       <div class="featured-pin">
         <div class="section flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p v-reveal class="eyebrow">Fresh today</p>
-            <h2 v-split class="display-title text-5xl sm:text-7xl mt-3">From our oven</h2>
+            <p v-reveal class="eyebrow">{{ $t('common.freshToday') }}</p>
+            <h2 v-split class="display-title text-5xl sm:text-7xl mt-3">{{ $t('home.featuredTitle') }}</h2>
           </div>
           <router-link to="/products" class="btn-ghost">
-            See everything <font-awesome-icon icon="arrow-right" />
+            {{ $t('home.seeEverything') }} <font-awesome-icon icon="arrow-right" />
           </router-link>
         </div>
         <div ref="track" class="featured-track">
@@ -70,7 +69,7 @@
             <ProductCard :product="product" />
           </div>
           <router-link to="/products" class="featured-more lux-card">
-            <span class="display-title text-4xl">The whole<br><em class="text-crust">counter</em></span>
+            <span class="display-title text-4xl">{{ $t('home.wholeCounter1') }}<br><em class="text-crust">{{ $t('home.wholeCounter2') }}</em></span>
             <span class="featured-more-arrow"><font-awesome-icon icon="arrow-right" /></span>
           </router-link>
         </div>
@@ -97,8 +96,8 @@
 
       <div class="craft-steps">
         <div class="craft-intro">
-          <p v-reveal class="eyebrow">How we bake</p>
-          <h2 v-split class="display-title text-5xl sm:text-7xl mt-3">Slow dough,<br>early mornings.</h2>
+          <p v-reveal class="eyebrow">{{ $t('home.craftEyebrow') }}</p>
+          <h2 v-split class="display-title text-5xl sm:text-7xl mt-3">{{ $t('home.craftTitle1') }}<br>{{ $t('home.craftTitle2') }}</h2>
         </div>
         <article v-for="(step, index) in steps" :key="step.title" class="craft-step"
                  :class="{ 'is-active': activeStep === index }">
@@ -111,8 +110,8 @@
 
     <!-- Categories bento -->
     <section class="section mt-40">
-      <p v-reveal class="eyebrow">The counter</p>
-      <h2 v-split class="display-title text-5xl sm:text-7xl mt-3 max-w-3xl">Something for every hour of the day</h2>
+      <p v-reveal class="eyebrow">{{ $t('home.counterEyebrow') }}</p>
+      <h2 v-split class="display-title text-5xl sm:text-7xl mt-3 max-w-3xl">{{ $t('home.counterTitle') }}</h2>
       <div v-reveal.stagger class="bento">
         <router-link v-for="tile in tiles" :key="tile.slug" v-tilt="{ max: 6 }" :to="tile.to"
                      class="bento-tile lux-card" :class="tile.className">
@@ -130,8 +129,8 @@
     <!-- Visit -->
     <section id="visit" class="section visit">
       <div>
-        <p v-reveal class="eyebrow">Visit us</p>
-        <h2 v-split class="display-title text-6xl sm:text-8xl mt-3">Find us on {{ business.street }}.</h2>
+        <p v-reveal class="eyebrow">{{ $t('home.visitUs') }}</p>
+        <h2 v-split class="display-title text-6xl sm:text-8xl mt-3">{{ $t('home.visitTitle', { street: business.street }) }}</h2>
         <div v-reveal="{ delay: 0.1 }" class="visit-info">
           <p class="text-lg text-cream">{{ business.name }}<br>{{ address }}</p>
           <p v-if="business.transit" class="flex items-center gap-3">
@@ -145,14 +144,14 @@
         </div>
         <div v-reveal="{ delay: 0.2 }" class="mt-10 flex flex-wrap gap-3">
           <a v-magnetic="0.2" :href="mapUrl" target="_blank" rel="noopener" class="btn-amber">
-            <font-awesome-icon icon="location-dot" /> Get directions
+            <font-awesome-icon icon="location-dot" /> {{ $t('home.directions') }}
           </a>
-          <router-link to="/contact" class="btn-ghost">Contact us</router-link>
+          <router-link to="/contact" class="btn-ghost">{{ $t('common.contactUs') }}</router-link>
         </div>
       </div>
 
       <a v-reveal="{ delay: 0.15 }" v-tilt="{ max: 5 }" :href="mapUrl" target="_blank" rel="noopener"
-         class="visit-map lux-card" :aria-label="`Open ${business.street} in Google Maps`">
+         class="visit-map lux-card" :aria-label="$t('home.openMap', { street: business.street })">
         <span class="visit-grid" aria-hidden="true"></span>
         <span class="visit-street" data-depth="20" aria-hidden="true">{{ business.street }}</span>
         <span class="visit-pin" data-depth="60" aria-hidden="true"><span></span></span>
@@ -166,6 +165,7 @@
 
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
 import { business, streetLine, cityLine } from '@/config/business'
 import { gsap, ScrollTrigger, prefersReducedMotion } from '@/motion'
@@ -199,7 +199,8 @@ const activeStep = ref(0)
 const address = [streetLine(), cityLine()].filter(Boolean).join(', ')
 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([business.name, address].join(', '))}`
 
-const marqueeWords = ['Brezel', 'Croissant', 'Sourdough', 'Cinnamon buns', 'Macarons', 'Éclairs', 'Cookies', 'Seasonal cakes']
+const { t } = useI18n()
+const marqueeWords = t('home.marquee').split(',')
 
 const fallbackItems = [
   { src: croissantImg, speed: -0.2, style: 'right:8%;top:18%;width:min(40vw,520px)' },
@@ -209,19 +210,19 @@ const fallbackItems = [
 
 // Copy for the craft section; adjust to match how the bakery works.
 const steps = [
-  { title: 'Mix', image: pretzelImg, text: 'Flour, water, salt and time. Every dough starts slow and cold, the way good bread always has.' },
-  { title: 'Rest', image: eclairImg, text: 'Doughs rest overnight so the flavour can develop. Nothing is rushed to meet the morning.' },
-  { title: 'Shape', image: chocolateCroissantImg, text: 'Brezeln are twisted and croissants rolled by hand, one tray at a time.' },
-  { title: 'Bake', image: croissantImg, text: `Out of the oven in the early morning and onto the counter on ${business.street}.` }
+  { title: t('home.steps.mix.title'), image: pretzelImg, text: t('home.steps.mix.text') },
+  { title: t('home.steps.rest.title'), image: eclairImg, text: t('home.steps.rest.text') },
+  { title: t('home.steps.shape.title'), image: chocolateCroissantImg, text: t('home.steps.shape.text') },
+  { title: t('home.steps.bake.title'), image: croissantImg, text: t('home.steps.bake.text', { street: business.street }) }
 ]
 
 const tiles = [
-  { slug: 'breads', name: 'Breads', kicker: 'Brezel & loaves', image: pretzelImg, to: '/categories/breads', className: 'is-large' },
-  { slug: 'pastries', name: 'Pastries', kicker: 'Buttery layers', image: croissantImg, to: '/categories/pastries', className: 'is-wide' },
-  { slug: 'cakes', name: 'Cakes', kicker: 'By the slice', image: cupcakeImg, to: '/categories/cakes', className: '' },
-  { slug: 'cookies', name: 'Cookies', kicker: 'Still warm', image: cookieImg, to: '/categories/cookies', className: '' },
-  { slug: 'seasonal', name: 'Seasonal', kicker: 'For a short while', image: macaronsImg, to: '/seasonal', className: 'is-banner' }
-]
+  { slug: 'breads', image: pretzelImg, to: '/categories/breads', className: 'is-large' },
+  { slug: 'pastries', image: croissantImg, to: '/categories/pastries', className: 'is-wide' },
+  { slug: 'cakes', image: cupcakeImg, to: '/categories/cakes', className: '' },
+  { slug: 'cookies', image: cookieImg, to: '/categories/cookies', className: '' },
+  { slug: 'seasonal', image: macaronsImg, to: '/seasonal', className: 'is-banner' }
+].map(tile => ({ ...tile, name: t(`categories.${tile.slug}`), kicker: t(`home.tiles.${tile.slug}`) }))
 
 let ctx = null
 let mm = null
@@ -374,7 +375,7 @@ onBeforeUnmount(() => {
 .hero-title {
   margin-top: 1.25rem;
   max-width: 11ch;
-  font-size: clamp(3.6rem, 9.5vw, 9.5rem);
+  font-size: clamp(3.4rem, 8.4vw, 8.6rem);
   line-height: 0.9;
 }
 

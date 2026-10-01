@@ -74,3 +74,18 @@ def test_shop_hides_drafts_but_staff_can_list_everything(catalog):
 def test_inventory_reports_are_staff_only(catalog):
     assert APIClient().get('/api/products/report/').status_code in (401, 403)
     assert APIClient().get('/api/products/inventory_report/').status_code in (401, 403)
+
+
+def test_search_finds_products_by_their_english_name(db):
+    from decimal import Decimal
+    from apps.products.models import Category, Product
+    breads = Category.objects.get(slug='breads')
+    Product.objects.create(
+        name='Roggenbrot', name_en='Rye bread', description='Kräftig', category=breads,
+        price=Decimal('4.00'), stock=3, status='active', available=True, image='products/x.png',
+    )
+    from rest_framework.test import APIClient
+    names = [p['name'] for p in APIClient().get('/api/products/', {'search': 'rye'}).json()['results']]
+    assert names == ['Roggenbrot']
+    detail = APIClient().get('/api/products/', {'search': 'Roggen'}).json()['results'][0]
+    assert detail['name_en'] == 'Rye bread'

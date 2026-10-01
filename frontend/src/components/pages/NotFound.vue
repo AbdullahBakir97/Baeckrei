@@ -2,20 +2,19 @@
   <div class="section notfound">
     <img :src="pretzelImg" alt="" class="notfound-img" />
     <p class="notfound-code" aria-hidden="true">404</p>
-    <h1 v-split.load class="display-title text-5xl sm:text-7xl">This shelf is empty.</h1>
-    <p class="mt-4 max-w-md text-cream-muted">
-      We couldn't find <span class="font-mono text-cream break-all">{{ route.fullPath }}</span>.
-      Maybe it was moved, or the link is out of date.
-    </p>
+    <h1 v-split.load class="display-title text-5xl sm:text-7xl">{{ $t('notFound.title') }}</h1>
+    <i18n-t keypath="notFound.text" tag="p" class="mt-4 max-w-md text-cream-muted" scope="global">
+      <template #path><span class="font-mono text-cream break-all">{{ route.fullPath }}</span></template>
+    </i18n-t>
     <form class="notfound-search" role="search" @submit.prevent="search">
-      <label for="not-found-search" class="sr-only">Search products</label>
-      <input id="not-found-search" v-model.trim="query" placeholder="Search the shop…" />
-      <button type="submit" class="btn-amber !py-3 !px-6">Search</button>
+      <label for="not-found-search" class="sr-only">{{ $t('nav.searchProducts') }}</label>
+      <input id="not-found-search" v-model.trim="query" :placeholder="$t('notFound.searchPlaceholder')" />
+      <button type="submit" class="btn-amber !py-3 !px-6">{{ $t('common.search') }}</button>
     </form>
     <div class="mt-6 flex flex-wrap justify-center gap-3">
-      <router-link to="/" class="btn-ghost">Home</router-link>
-      <router-link to="/products" class="btn-ghost">Browse products</router-link>
-      <router-link to="/contact" class="btn-ghost">Contact us</router-link>
+      <router-link to="/" class="btn-ghost">{{ $t('nav.homeLink') }}</router-link>
+      <router-link to="/products" class="btn-ghost">{{ $t('common.browseProducts') }}</router-link>
+      <router-link to="/contact" class="btn-ghost">{{ $t('common.contactUs') }}</router-link>
     </div>
   </div>
 </template>

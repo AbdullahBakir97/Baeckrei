@@ -4,9 +4,9 @@
       <!-- Newsletter -->
       <div class="footer-news">
         <div>
-          <p v-reveal class="eyebrow">Newsletter</p>
+          <p v-reveal class="eyebrow">{{ $t('footer.newsletter') }}</p>
           <h2 v-split class="display-title text-5xl sm:text-6xl mt-4 max-w-xl">
-            Fresh news from the oven, once a month.
+            {{ $t('footer.newsletterTitle') }}
           </h2>
         </div>
         <div v-reveal="{ delay: 0.15 }" class="w-full max-w-md">
@@ -14,15 +14,15 @@
             {{ newsletterMessage }}
           </p>
           <form v-if="!newsletterOk" class="footer-form" @submit.prevent="subscribeNewsletter">
-            <label for="newsletter-email" class="sr-only">Email address</label>
-            <input id="newsletter-email" v-model.trim="email" type="email" placeholder="you@example.com" required autocomplete="email" />
+            <label for="newsletter-email" class="sr-only">{{ $t('footer.emailLabel') }}</label>
+            <input id="newsletter-email" v-model.trim="email" type="email" :placeholder="$t('footer.emailPlaceholder')" required autocomplete="email" />
             <button type="submit" class="btn-amber !py-3 !px-6" :disabled="subscribing">
-              {{ subscribing ? 'Sending…' : 'Subscribe' }}
+              {{ subscribing ? $t('footer.sending') : $t('footer.subscribe') }}
             </button>
           </form>
           <p class="mt-3 text-xs text-cream-faint">
-            New seasonal bakes and opening news. Unsubscribe any time. See our
-            <router-link to="/privacy" class="underline hover:text-cream">privacy policy</router-link>.
+            {{ $t('footer.newsletterNote') }}
+            <router-link to="/privacy" class="underline hover:text-cream">{{ $t('footer.privacyPolicy') }}</router-link>.
           </p>
         </div>
       </div>
@@ -30,23 +30,23 @@
       <!-- Links -->
       <div class="footer-cols">
         <div>
-          <h3 class="footer-head">Shop</h3>
+          <h3 class="footer-head">{{ $t('footer.shop') }}</h3>
           <ul>
-            <li><router-link to="/products">All products</router-link></li>
+            <li><router-link to="/products">{{ $t('common.allProducts') }}</router-link></li>
             <li v-for="category in categories" :key="category.slug">
-              <router-link :to="{ name: 'category', params: { category: category.slug } }">{{ category.name }}</router-link>
+              <router-link :to="{ name: 'category', params: { category: category.slug } }">{{ categoryName(category) }}</router-link>
             </li>
-            <li><router-link :to="{ name: 'seasonal' }">Seasonal</router-link></li>
+            <li><router-link :to="{ name: 'seasonal' }">{{ $t('common.seasonal') }}</router-link></li>
           </ul>
         </div>
         <div>
-          <h3 class="footer-head">Explore</h3>
+          <h3 class="footer-head">{{ $t('footer.explore') }}</h3>
           <ul>
-            <li v-for="link in exploreLinks" :key="link.to"><router-link :to="link.to">{{ link.label }}</router-link></li>
+            <li v-for="link in exploreLinks" :key="link.to"><router-link :to="link.to">{{ $t(link.label) }}</router-link></li>
           </ul>
         </div>
         <div>
-          <h3 class="footer-head">Visit</h3>
+          <h3 class="footer-head">{{ $t('footer.visit') }}</h3>
           <address class="not-italic space-y-2 text-cream-muted">
             <p>{{ business.name }}<br>{{ storeAddress }}</p>
             <p v-if="business.transit" class="flex items-center gap-2">
@@ -62,12 +62,12 @@
           </dl>
         </div>
         <div>
-          <h3 class="footer-head">Account</h3>
+          <h3 class="footer-head">{{ $t('footer.account') }}</h3>
           <ul>
-            <li><router-link to="/cart">Cart</router-link></li>
-            <li><router-link to="/wishlist">Wishlist</router-link></li>
-            <li><router-link to="/orders">Orders</router-link></li>
-            <li><router-link to="/profile">Profile</router-link></li>
+            <li><router-link to="/cart">{{ $t('footer.cart') }}</router-link></li>
+            <li><router-link to="/wishlist">{{ $t('nav.wishlist') }}</router-link></li>
+            <li><router-link to="/orders">{{ $t('nav.orders') }}</router-link></li>
+            <li><router-link to="/profile">{{ $t('nav.profile') }}</router-link></li>
           </ul>
           <div v-if="socialLinks.length" class="mt-6 flex gap-3">
             <a v-for="link in socialLinks" :key="link.icon" :href="link.url" class="footer-social"
@@ -80,12 +80,12 @@
 
       <!-- Bottom bar -->
       <div class="footer-bottom">
-        <p>© {{ year }} {{ business.name }} · Made in Berlin</p>
-        <nav class="flex flex-wrap gap-x-6 gap-y-2" aria-label="Legal">
-          <router-link to="/impressum">Impressum</router-link>
-          <router-link to="/privacy">Privacy</router-link>
-          <router-link to="/terms">Terms</router-link>
-          <router-link to="/cookie-policy">Cookies</router-link>
+        <p>© {{ year }} {{ business.name }} · {{ $t('footer.madeIn', { city: business.city }) }}</p>
+        <nav class="flex flex-wrap gap-x-6 gap-y-2" :aria-label="$t('footer.legal')">
+          <router-link to="/impressum">{{ $t('footer.impressum') }}</router-link>
+          <router-link to="/privacy">{{ $t('footer.privacy') }}</router-link>
+          <router-link to="/terms">{{ $t('footer.terms') }}</router-link>
+          <router-link to="/cookie-policy">{{ $t('footer.cookies') }}</router-link>
         </nav>
       </div>
     </div>
@@ -99,10 +99,13 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
 import { useProductStore } from '@/stores/productStore'
 import { business, streetLine, cityLine } from '@/config/business'
+import { categoryName } from '@/i18n/catalog'
 
+const { t } = useI18n()
 const email = ref('')
 const productStore = useProductStore()
 const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
@@ -116,11 +119,11 @@ const socialLinks = [
 ].filter(link => link.url)
 
 const exploreLinks = [
-  { label: 'Home', to: '/' },
-  { label: 'About us', to: '/about' },
-  { label: 'Journal', to: '/blog' },
-  { label: 'Contact', to: '/contact' },
-  { label: 'Compare', to: '/compare' }
+  { label: 'nav.homeLink', to: '/' },
+  { label: 'nav.about', to: '/about' },
+  { label: 'nav.journal', to: '/blog' },
+  { label: 'nav.contact', to: '/contact' },
+  { label: 'footer.compare', to: '/compare' }
 ]
 
 const categories = computed(() => productStore.categories.filter(c => c.is_active !== false))
@@ -140,10 +143,10 @@ const subscribeNewsletter = async () => {
   try {
     const response = await axios.post('/api/content/newsletter/', { email: email.value })
     newsletterOk.value = true
-    newsletterMessage.value = response.data.message
+    newsletterMessage.value = t('footer.subscribed')
     email.value = ''
   } catch (err) {
-    newsletterMessage.value = err.response?.data?.email?.[0] || 'Please try again later.'
+    newsletterMessage.value = err.response?.status === 400 ? t('footer.invalidEmail') : t('footer.tryLater')
   } finally {
     subscribing.value = false
   }

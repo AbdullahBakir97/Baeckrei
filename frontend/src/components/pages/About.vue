@@ -2,12 +2,8 @@
   <div ref="root" class="about">
     <!-- Statement: words light up as you scroll -->
     <section class="section pt-10">
-      <p v-reveal class="eyebrow">Our story</p>
-      <p ref="statement" class="statement">
-        Welcome to {{ business.name }}, your destination for artisanal baked goods and confectionery.
-        Our passion for quality ingredients and traditional baking methods is in everything that
-        leaves our oven on {{ business.street }}.
-      </p>
+      <p v-reveal class="eyebrow">{{ $t('about.eyebrow') }}</p>
+      <p ref="statement" class="statement">{{ $t('about.statement', { name: business.name, street: business.street }) }}</p>
     </section>
 
     <!-- Story with layered collage -->
@@ -19,23 +15,18 @@
         <img v-parallax="0.25" :src="macaronsImg" alt="" class="collage-c" />
       </div>
       <div>
-        <h2 v-split class="display-title text-5xl sm:text-7xl">Handmade, from the first bake.</h2>
+        <h2 v-split class="display-title text-5xl sm:text-7xl">{{ $t('about.storyTitle') }}</h2>
+        <p v-reveal class="story-text">{{ $t('about.story1', { name: business.name }) }}</p>
         <p v-reveal class="story-text">
-          {{ business.name }} was founded with a vision to create authentic, handcrafted baked goods.
-          Our commitment to quality drives us to keep exploring new flavours while honouring
-          traditional recipes.
-        </p>
-        <p v-reveal class="story-text">
-          You'll find us on {{ business.street }} in {{ business.city }}<span v-if="business.transit">, right by {{ business.transit }}</span>.
-          Pick up your order on the way, or have it delivered.
+          {{ business.transit ? $t('about.story2Transit', { street: business.street, city: business.city, transit: business.transit }) : $t('about.story2', { street: business.street, city: business.city }) }}
         </p>
       </div>
     </section>
 
     <!-- Values -->
     <section class="section mt-32">
-      <p v-reveal class="eyebrow">What we care about</p>
-      <h2 v-split class="display-title text-5xl sm:text-7xl mt-3 max-w-3xl">Four things we don't compromise on</h2>
+      <p v-reveal class="eyebrow">{{ $t('about.valuesEyebrow') }}</p>
+      <h2 v-split class="display-title text-5xl sm:text-7xl mt-3 max-w-3xl">{{ $t('about.valuesTitle') }}</h2>
       <div v-reveal.stagger class="values">
         <article v-for="(value, index) in values" :key="value.title" v-tilt="{ max: 6 }" class="value lux-card">
           <span class="value-num" data-depth="30">0{{ index + 1 }}</span>
@@ -48,16 +39,14 @@
 
     <!-- Promise -->
     <section class="section promise">
-      <p v-reveal class="eyebrow justify-center">Our promise</p>
+      <p v-reveal class="eyebrow justify-center">{{ $t('about.promiseEyebrow') }}</p>
       <h2 v-split class="display-title text-5xl sm:text-7xl mt-4">
-        Every bake is made with care, and <em>we stand behind it.</em>
+        {{ $t('about.promise1') }} <em>{{ $t('about.promise2') }}</em>
       </h2>
-      <p v-reveal class="mx-auto mt-6 max-w-xl text-lg text-cream-muted">
-        If something isn't right with your order, tell us. Your satisfaction is our priority.
-      </p>
+      <p v-reveal class="mx-auto mt-6 max-w-xl text-lg text-cream-muted">{{ $t('about.promiseText') }}</p>
       <div v-reveal class="mt-10 flex flex-wrap justify-center gap-3">
-        <router-link v-magnetic="0.2" to="/products" class="btn-amber">Shop the oven <font-awesome-icon icon="arrow-right" /></router-link>
-        <router-link to="/contact" class="btn-ghost">Get in touch</router-link>
+        <router-link v-magnetic="0.2" to="/products" class="btn-amber">{{ $t('common.shopNow') }} <font-awesome-icon icon="arrow-right" /></router-link>
+        <router-link to="/contact" class="btn-ghost">{{ $t('about.getInTouch') }}</router-link>
       </div>
     </section>
   </div>
@@ -66,6 +55,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { business } from '@/config/business'
+import { useI18n } from 'vue-i18n'
 import { gsap, SplitText, prefersReducedMotion } from '@/motion'
 import croissantImg from '@/assets/bakery/croissant-butter.png'
 import pretzelImg from '@/assets/bakery/pretzel.png'
@@ -74,12 +64,12 @@ import macaronsImg from '@/assets/bakery/macarons.png'
 const root = ref(null)
 const statement = ref(null)
 
-const values = [
-  { icon: 'wheat-awn', title: 'Good ingredients', text: 'Quality ingredients from suppliers we trust.' },
-  { icon: 'fire', title: 'Traditional methods', text: 'Time-honoured baking, with a little modern curiosity.' },
-  { icon: 'leaf', title: 'Less waste', text: 'Sustainable practices and packaging that makes sense.' },
-  { icon: 'store', title: 'Our neighbourhood', text: 'A bakery for the people around us, on our street.' }
-]
+const { t } = useI18n()
+const values = ['ingredients', 'methods', 'waste', 'neighbourhood'].map((key, index) => ({
+  icon: ['wheat-awn', 'fire', 'leaf', 'store'][index],
+  title: t(`about.values.${key}.title`),
+  text: t(`about.values.${key}.text`)
+}))
 
 let ctx = null
 let split = null

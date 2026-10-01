@@ -1,222 +1,208 @@
 <template>
-  <div class="section pt-6 pb-10">
-    <!-- Header Section -->
-    <PageHeader eyebrow="Account" title="Orders" subtitle="Track, view and cancel your orders" />
+  <div class="section max-w-4xl pb-10">
+    <PageHeader :eyebrow="$t('account.eyebrow')" :title="$t('orders.title')" :subtitle="$t('orders.subtitle')" />
 
-    <!-- Loading State -->
-    <div v-if="orderStore.loading" class="grid place-items-center h-96">
-      <div class="text-6xl text-primary-600">
-        <font-awesome-icon icon="spinner" class="animate-spin" />
-      </div>
-      <p class="mt-4 text-gray-400">Loading your orders...</p>
+    <div v-if="orderStore.loading && !orderStore.orders.length" class="grid gap-4" aria-busy="true">
+      <div v-for="n in 3" :key="n" class="skeleton h-40 rounded-3xl"></div>
     </div>
 
-    <!-- Error State -->
-    <div v-else-if="orderStore.error" class="text-center py-12">
-      <font-awesome-icon icon="circle-xmark" class="text-4xl text-red-500 mb-4" />
-      <p class="text-lg text-gray-600">{{ orderStore.error }}</p>
-      <button @click="loadOrders" class="btn btn-primary mt-4">
-        <font-awesome-icon icon="rotate" class="mr-2" />
-        Try Again
+    <div v-else-if="orderStore.error" class="glass-panel text-center py-12">
+      <p class="display-title text-4xl">{{ $t('orders.loadError') }}</p>
+      <button type="button" class="btn-ghost mt-6" @click="loadOrders">
+        <font-awesome-icon icon="rotate" /> {{ $t('common.tryAgain') }}
       </button>
     </div>
 
-    <!-- No Orders State -->
-    <div v-else-if="!orderStore.hasOrders" class="text-center py-12 bg-[rgba(23,23,23,0.7)] backdrop-blur-[10px] 
-                border border-white/10 rounded-xl p-6">
-      <font-awesome-icon icon="shopping-bag" class="text-6xl text-gray-400 mb-4" />
-      <h2 class="text-2xl font-semibold text-gray-300 mb-2">No Orders Yet</h2>
-      <p class="text-gray-400 mb-6">Start shopping to create your first order</p>
-      <router-link to="/products" class="btn btn-primary">
-        <font-awesome-icon icon="shopping-cart" class="mr-2" />
-        Browse Products
-      </router-link>
+    <div v-else-if="!orderStore.orders.length" class="empty lux-card">
+      <span class="empty-icon" aria-hidden="true"><font-awesome-icon icon="shopping-bag" /></span>
+      <h2 class="display-title text-5xl">{{ $t('orders.emptyTitle') }}</h2>
+      <p class="mt-3 text-cream-muted">{{ $t('orders.emptyText') }}</p>
+      <router-link to="/products" class="btn-amber mt-8">{{ $t('common.shopNow') }} <font-awesome-icon icon="arrow-right" /></router-link>
     </div>
 
-    <!-- Orders List -->
-    <div v-else class="space-y-6">
-      <div v-for="order in orderStore.orders" :key="order.id" 
-           class="bg-[rgba(23,23,23,0.7)] backdrop-blur-[10px] border border-white/10 
-                  rounded-xl p-6 transition-all duration-300 hover:border-amber-500/30
-                  hover:shadow-lg hover:shadow-amber-500/10">
-        <!-- Order Header -->
-        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
-          <div>
-            <h3 class="text-xl font-semibold text-gray-200">
-              <router-link :to="{ name: 'order-detail', params: { id: order.id } }" class="hover:text-amber-300">
-                Order #{{ order.order_number }}
-              </router-link>
-            </h3>
-            <p class="text-sm text-gray-400">
-              Placed on {{ formatDate(order.created_at) }}
-            </p>
+    <ul v-else v-reveal.stagger class="grid gap-5">
+      <li v-for="order in orderStore.orders" :key="order.id" class="order lux-card">
+        <div class="order-head">
+          <div class="min-w-0">
+            <router-link :to="{ name: 'order-detail', params: { id: order.id } }" class="order-number">
+              {{ order.order_number }}
+            </router-link>
+            <p class="text-sm text-cream-faint">{{ $t('order.placedOn', { date: formatDate(order.created_at) }) }}</p>
           </div>
-          <div class="flex items-center gap-4">
-            <span :class="[
-              'tag',
-              order.status === 'Completed' ? 'bg-green-500/20 text-green-300' :
-              order.status === 'Processing' ? 'bg-blue-500/20 text-blue-300' :
-              order.status === 'Canceled' ? 'bg-red-500/20 text-red-300' :
-              'bg-yellow-500/20 text-yellow-300'
-            ]">
-              {{ order.status }}
-            </span>
-            <span class="text-xl font-bold text-transparent bg-clip-text 
-                       bg-gradient-to-r from-amber-400 to-amber-600">
-              {{ formatPrice(order.total_price) }} €
-            </span>
+          <div class="flex items-center gap-3">
+            <span class="status" :class="`is-${order.status.toLowerCase()}`">{{ $t(`common.status.${order.status.toLowerCase()}`) }}</span>
+            <span class="order-total">{{ formatEuro(order.total_price) }}</span>
           </div>
         </div>
 
-        <!-- Order Items -->
-        <div class="py-4 space-y-4">
-          <div v-for="item in order.order_items" :key="item.id"
-               class="flex items-center gap-4 p-3 rounded-lg bg-[rgba(255,255,255,0.02)]
-                      hover:bg-[rgba(255,255,255,0.05)] transition-all duration-300">
-            <!-- Product Image -->
-            <div class="w-16 h-16 rounded-lg overflow-hidden bg-[rgba(255,255,255,0.02)]">
-              <img :src="getImageUrl(item.product.image)" 
-                   :alt="item.product.name"
-                   class="w-full h-full object-cover" />
-            </div>
-            
-            <!-- Product Info -->
-            <div class="flex-grow">
-              <h4 class="text-gray-200 font-medium">{{ item.product.name }}</h4>
-              <p class="text-sm text-gray-400">
-                Quantity: {{ item.quantity }} × {{ formatPrice(item.price_per_item) }} €
-              </p>
-            </div>
-            
-            <!-- Item Total -->
-            <div class="text-right">
-              <p class="font-medium text-amber-500">
-                {{ formatPrice(item.quantity * item.price_per_item) }} €
-              </p>
-            </div>
-          </div>
-        </div>
+        <ul class="order-items">
+          <li v-for="item in order.order_items" :key="item.id" class="order-item">
+            <img :src="imageUrl(item.product.image)" :alt="item.product.name" @error="applyImageFallback" />
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-cream">{{ item.product.name }}</span>
+              <span class="text-sm text-cream-faint">{{ item.quantity }} × {{ formatEuro(item.price_per_item) }}</span>
+            </span>
+            <span class="tabular-nums text-cream/80">{{ formatEuro(item.quantity * item.price_per_item) }}</span>
+          </li>
+        </ul>
 
-        <!-- Order Footer -->
-        <div class="pt-4 border-t border-white/10">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <!-- Shipping Info -->
-            <div class="text-sm text-gray-400">
-              <p class="flex items-center gap-2">
-                <font-awesome-icon :icon="order.fulfillment_method === 'pickup' ? 'store' : 'truck'" />
-                {{ order.fulfillment_method === 'pickup' ? 'Pickup in store' : 'Delivery' }}
-              </p>
-              <p v-if="order.requested_time" class="flex items-center gap-2 mt-1">
-                <font-awesome-icon icon="calendar" />
-                Requested for {{ formatDate(order.requested_time) }}
-              </p>
-            </div>
-            
-            <!-- Actions -->
-            <div class="flex items-center gap-3">
-              <button v-if="order.is_cancelable"
-                      @click="cancelOrder(order.id)"
-                      class="btn bg-red-500/20 text-red-300 hover:bg-red-500/30">
-                <font-awesome-icon icon="times" class="mr-2" />
-                Cancel Order
-              </button>
-              <router-link :to="{ name: 'order-detail', params: { id: order.id } }"
-                           class="btn bg-[rgba(255,255,255,0.05)] text-gray-300
-                                  hover:bg-[rgba(255,255,255,0.1)]">
-                <font-awesome-icon icon="location-dot" class="mr-2" />
-                View details
-              </router-link>
-            </div>
+        <div class="order-foot">
+          <p class="flex items-center gap-2 text-sm text-cream-muted">
+            <font-awesome-icon :icon="order.fulfillment_method === 'pickup' ? 'store' : 'truck'" class="text-crust" />
+            {{ order.fulfillment_method === 'pickup' ? $t('common.pickup') : $t('common.delivery') }}
+            <template v-if="order.requested_time"> · {{ $t('order.requestedFor', { time: formatDateTime(order.requested_time) }) }}</template>
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button v-if="order.is_cancelable" type="button" class="btn-ghost !py-2 !px-4 text-red-300" @click="cancelOrder(order.id)">
+              <font-awesome-icon icon="xmark" /> {{ $t('order.cancel') }}
+            </button>
+            <router-link :to="{ name: 'order-detail', params: { id: order.id } }" class="btn-ghost !py-2 !px-4">
+              {{ $t('orders.details') }} <font-awesome-icon icon="arrow-right" />
+            </router-link>
           </div>
         </div>
-      </div>
-    </div>
+      </li>
+    </ul>
   </div>
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/common/PageHeader.vue'
-import { PLACEHOLDER_IMAGE } from '@/utils/imageFallback'
-import { ref, onMounted } from 'vue'
+import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
+import { formatDate, formatDateTime, formatEuro } from '@/utils/money'
 import { useToast } from '@/composables/useToast'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useOrderStore } from '@/stores/orderStore'
 
-// Store
 const orderStore = useOrderStore()
 const { showToast } = useToast()
+const { t } = useI18n()
 
-// Methods
-const loadOrders = async () => {
-  try {
-    await orderStore.fetchOrders()
-  } catch (err) {
-    console.error('Error loading orders:', err)
-  }
-}
+const loadOrders = () => orderStore.fetchOrders().catch(() => {})
 
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
-
-const formatPrice = (price) => {
-  return Number(price).toFixed(2)
-}
-
-const getImageUrl = (path) => {
+const imageUrl = (path) => {
   if (!path) return PLACEHOLDER_IMAGE
   if (path.startsWith('http')) return path
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-  return `${API_URL}${path}`
+  return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}${path}`
 }
 
-const cancelOrder = async (orderId) => {
+async function cancelOrder(orderId) {
+  if (!window.confirm(t('order.confirmCancel'))) return
   try {
     await orderStore.cancelOrder(orderId)
-    showToast('Order cancelled successfully', 'success')
-  } catch (err) {
-    showToast('Failed to cancel order', 'error')
-    console.error('Error cancelling order:', err)
+    showToast(t('order.canceledToast'))
+  } catch {
+    showToast(t('order.cancelFailed'), 'error')
   }
 }
 
-// Lifecycle
-onMounted(() => {
-  loadOrders()
-})
+onMounted(loadOrders)
 </script>
 
 <style scoped>
-.tag {
-  @apply px-3 py-1 rounded-full text-sm font-medium;
+.order {
+  padding: 1.5rem;
 }
 
-.btn {
-  @apply px-4 py-2 rounded-lg font-medium transition-all duration-300
-         flex items-center justify-center gap-2;
+.order-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(244, 236, 225, 0.08);
 }
 
-.btn:disabled {
-  @apply opacity-50 cursor-not-allowed;
+.order-number {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  color: #f4ece1;
 }
 
-.info-card {
-  @apply bg-[rgba(23,23,23,0.7)] backdrop-blur-[10px] 
-         border border-white/10 rounded-xl p-6 
-         transition-all duration-500 ease-in-out;
-  
-  box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.5),
-              inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+.order-number:hover {
+  color: #f2c48d;
+}
 
-  &:hover {
-    @apply border-amber-500/30;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.1),
-      0 4px 8px rgba(245, 158, 11, 0.2);
-  }
+.order-total {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f2c48d;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-items {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 0;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.order-item img {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.9rem;
+  object-fit: contain;
+  background: rgba(244, 236, 225, 0.04);
+}
+
+.order-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(244, 236, 225, 0.08);
+}
+
+.status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f2c48d;
+  background: rgba(242, 196, 141, 0.12);
+}
+
+.status.is-processing { color: #9cc3f0; background: rgba(120, 170, 230, 0.12); }
+.status.is-completed { color: #9fd49a; background: rgba(159, 212, 154, 0.12); }
+.status.is-canceled { color: #f08f79; background: rgba(240, 143, 121, 0.12); }
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 1.5rem 3.5rem;
+  text-align: center;
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 9999px;
+  font-size: 1.8rem;
+  color: #e6a15a;
+  background: rgba(230, 161, 90, 0.12);
+}
+
+.skeleton {
+  background: linear-gradient(100deg, rgba(244, 236, 225, 0.04) 30%, rgba(244, 236, 225, 0.09) 50%, rgba(244, 236, 225, 0.04) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
 }
 </style>

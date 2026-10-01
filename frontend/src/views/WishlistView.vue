@@ -1,76 +1,45 @@
 <template>
-  <div class="min-h-screen py-12 px-4">
-    <div class="max-w-6xl mx-auto">
-      <PageHeader eyebrow="Saved for later" title="Wishlist" subtitle="Products you saved for later" icon="heart" />
+  <div class="section pb-10">
+    <PageHeader :eyebrow="$t('wishlist.eyebrow')" :title="$t('wishlist.title')" :subtitle="$t('wishlist.subtitle')" />
 
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white/20"></div>
-      </div>
-
-      <div v-else-if="!products.length" class="glass-panel text-center py-12">
-        <p class="text-lg text-white font-medium">Your wishlist is empty</p>
-        <p class="mt-2 text-gray-400">Tap the heart on a product to save it here.</p>
-        <router-link to="/products" class="btn-amber mt-6">Browse products</router-link>
-      </div>
-
-      <template v-else>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <article v-for="product in products" :key="product.id" class="glass-panel flex flex-col gap-4">
-            <router-link :to="{ name: 'product-detail', params: { id: product.id } }" class="block">
-              <img :src="product.image_url || product.image || PLACEHOLDER_IMAGE" :alt="product.name"
-                   class="h-48 w-full rounded-xl object-contain bg-white/5" @error="applyImageFallback" />
-            </router-link>
-            <div class="flex-1">
-              <router-link :to="{ name: 'product-detail', params: { id: product.id } }"
-                           class="text-lg font-semibold text-white hover:text-amber-300">{{ product.name }}</router-link>
-              <p class="text-amber-400 font-bold">{{ Number(product.price).toFixed(2) }} €</p>
-              <p v-if="!product.available || product.stock < 1" class="text-sm text-red-300">Currently unavailable</p>
-            </div>
-            <div class="flex gap-2">
-              <button type="button" class="btn-amber flex-1 py-2" :disabled="!product.available || product.stock < 1 || busyId === product.id"
-                      @click="addToCart(product)">
-                <font-awesome-icon icon="cart-plus" /> Add to cart
-              </button>
-              <button type="button" class="btn-ghost" :aria-label="`Remove ${product.name} from wishlist`" @click="remove(product.id)">
-                <font-awesome-icon icon="trash" />
-              </button>
-            </div>
-          </article>
-        </div>
-        <p v-if="missingIds.length" class="mt-6 text-sm text-gray-400">
-          {{ missingIds.length }} saved product(s) are no longer in the shop and were removed.
-        </p>
-      </template>
+    <div v-if="loading" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true">
+      <div v-for="n in 4" :key="n" class="skeleton aspect-[3/4] rounded-3xl"></div>
     </div>
+
+    <div v-else-if="!products.length" class="empty lux-card">
+      <span class="empty-heart" aria-hidden="true"><font-awesome-icon icon="heart" /></span>
+      <h2 class="display-title text-5xl">{{ $t('wishlist.emptyTitle') }}</h2>
+      <p class="mt-3 text-cream-muted">{{ $t('wishlist.emptyText') }}</p>
+      <router-link to="/products" class="btn-amber mt-8">{{ $t('common.browseProducts') }}</router-link>
+    </div>
+
+    <template v-else>
+      <div v-reveal.stagger class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div v-for="product in products" :key="product.id" class="relative">
+          <ProductCard :product="product" />
+          <button type="button" class="unsave" :aria-label="$t('wishlist.remove', { name: localized(product, 'name') })"
+                  @click="remove(product.id)">
+            <font-awesome-icon icon="xmark" />
+          </button>
+        </div>
+      </div>
+      <p v-if="missingIds.length" class="mt-6 text-sm text-cream-muted">
+        {{ $t('wishlist.missing', missingIds.length) }}
+      </p>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
+import ProductCard from '@/components/products/ProductCard.vue'
 import { useWishlistStore } from '@/stores/wishlistStore'
-import { useCartStore } from '@/stores/cartStore'
-import { useToast } from '@/composables/useToast'
 import { useFreshProducts } from '@/composables/useFreshProducts'
-import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
+import { localized } from '@/i18n/catalog'
 
 const wishlistStore = useWishlistStore()
-const cartStore = useCartStore()
-const { showToast } = useToast()
 const { products, missingIds, loading, load } = useFreshProducts()
-const busyId = ref(null)
-
-async function addToCart(product) {
-  busyId.value = product.id
-  try {
-    await cartStore.addItem(product.id, 1)
-    showToast(`${product.name} added to your cart`)
-  } catch (err) {
-    showToast(cartStore.error || 'Could not add to cart', 'error')
-  } finally {
-    busyId.value = null
-  }
-}
 
 function remove(id) {
   wishlistStore.removeItem(id)
@@ -83,3 +52,69 @@ onMounted(async () => {
   missingIds.value.forEach(id => wishlistStore.removeItem(id))
 })
 </script>
+
+<style scoped>
+.unsave {
+  position: absolute;
+  top: 1.35rem;
+  right: 1.35rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 9999px;
+  color: #f4ece1;
+  background: rgba(14, 12, 10, 0.6);
+  border: 1px solid rgba(244, 236, 225, 0.14);
+  backdrop-filter: blur(8px);
+  transition: background 0.25s, color 0.25s;
+}
+
+.unsave:hover {
+  color: #0e0c0a;
+  background: #f08f79;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 1.5rem 3.5rem;
+  text-align: center;
+}
+
+.empty-heart {
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 9999px;
+  font-size: 1.8rem;
+  color: #e6a15a;
+  background: rgba(230, 161, 90, 0.12);
+  animation: beat 2.4s ease-in-out infinite;
+}
+
+@keyframes beat {
+  0%, 60%, 100% { transform: scale(1); }
+  30% { transform: scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .empty-heart {
+    animation: none;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(100deg, rgba(244, 236, 225, 0.04) 30%, rgba(244, 236, 225, 0.09) 50%, rgba(244, 236, 225, 0.04) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+</style>

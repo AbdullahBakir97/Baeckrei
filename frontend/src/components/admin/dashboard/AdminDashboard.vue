@@ -6,15 +6,15 @@
     <section class="dash-hero admin-panel">
       <div>
         <p class="eyebrow">{{ greeting }}</p>
-        <h2 class="display-title text-4xl sm:text-5xl mt-2">
-          {{ stats.todayOrders || 0 }} {{ stats.todayOrders === 1 ? 'order' : 'orders' }} today,
-          <em class="text-crust">{{ formatEuro(stats.todayRevenue) }}</em> earned.
-        </h2>
-        <p class="mt-2 text-cream-muted">{{ stats.openOrders || 0 }} open {{ stats.openOrders === 1 ? 'order needs' : 'orders need' }} attention.</p>
+        <i18n-t keypath="admin.dashboard.headline" tag="h2" class="display-title text-4xl sm:text-5xl mt-2" scope="global">
+          <template #orders>{{ $t('admin.dashboard.ordersToday', stats.todayOrders || 0) }}</template>
+          <template #revenue><em class="text-crust">{{ formatEuro(stats.todayRevenue) }}</em></template>
+        </i18n-t>
+        <p class="mt-2 text-cream-muted">{{ $t('admin.dashboard.openAttention', stats.openOrders || 0) }}</p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <router-link :to="{ name: 'admin-orders' }" class="btn-amber !py-2.5 !px-5">Open orders <font-awesome-icon icon="arrow-right" /></router-link>
-        <router-link :to="{ name: 'admin-products' }" class="btn-ghost !py-2.5 !px-5">Products</router-link>
+        <router-link :to="{ name: 'admin-orders' }" class="btn-amber !py-2.5 !px-5">{{ $t('admin.dashboard.openOrders') }} <font-awesome-icon icon="arrow-right" /></router-link>
+        <router-link :to="{ name: 'admin-products' }" class="btn-ghost !py-2.5 !px-5">{{ $t('admin.nav.products') }}</router-link>
       </div>
     </section>
 
@@ -34,10 +34,10 @@
       <!-- Recent orders -->
       <section class="admin-panel overflow-hidden">
         <header class="dash-head">
-          <h2 class="display-title text-3xl">Recent orders</h2>
-          <router-link :to="{ name: 'admin-orders' }" class="text-sm text-crust hover:text-crust-light">All orders</router-link>
+          <h2 class="display-title text-3xl">{{ $t('admin.dashboard.recentOrders') }}</h2>
+          <router-link :to="{ name: 'admin-orders' }" class="text-sm text-crust hover:text-crust-light">{{ $t('admin.dashboard.allOrders') }}</router-link>
         </header>
-        <p v-if="!recentOrders.length" class="p-6 text-center text-cream-faint">No orders yet.</p>
+        <p v-if="!recentOrders.length" class="p-6 text-center text-cream-faint">{{ $t('admin.dashboard.noOrders') }}</p>
         <ul v-else>
           <li v-for="order in recentOrders" :key="order.id">
             <router-link :to="{ name: 'admin-orders', query: { order: order.id } }" class="dash-row">
@@ -45,12 +45,12 @@
               <span class="min-w-0 flex-1">
                 <span class="block truncate font-medium text-cream">{{ order.order_number }}</span>
                 <span class="block truncate text-sm text-cream-faint">
-                  {{ order.customer_email || 'Guest' }} · {{ order.fulfillment_method === 'pickup' ? 'Pickup' : 'Delivery' }}
+                  {{ order.customer_email || $t('admin.dashboard.guest') }} · {{ order.fulfillment_method === 'pickup' ? $t('common.pickup') : $t('common.delivery') }}
                 </span>
               </span>
               <span class="text-right">
                 <span class="block font-semibold text-cream tabular-nums">{{ formatEuro(order.total) }}</span>
-                <span class="status" :class="`is-${order.status.toLowerCase()}`">{{ order.status }}</span>
+                <span class="status" :class="`is-${order.status.toLowerCase()}`">{{ $t(`common.status.${order.status.toLowerCase()}`) }}</span>
               </span>
             </router-link>
           </li>
@@ -60,10 +60,10 @@
       <!-- Low stock -->
       <section class="admin-panel overflow-hidden">
         <header class="dash-head">
-          <h2 class="display-title text-3xl">Running low</h2>
-          <span class="text-sm text-cream-faint">{{ lowStockProducts.length }} products</span>
+          <h2 class="display-title text-3xl">{{ $t('admin.dashboard.runningLow') }}</h2>
+          <span class="text-sm text-cream-faint">{{ $t('common.products', lowStockProducts.length) }}</span>
         </header>
-        <p v-if="!lowStockProducts.length" class="p-6 text-center text-cream-faint">Everything is well stocked.</p>
+        <p v-if="!lowStockProducts.length" class="p-6 text-center text-cream-faint">{{ $t('admin.dashboard.wellStocked') }}</p>
         <ul v-else>
           <li v-for="product in lowStockProducts" :key="product.id" class="dash-row">
             <span class="dash-thumb">
@@ -74,10 +74,10 @@
               <span class="block truncate font-medium text-cream">{{ product.name }}</span>
               <span class="stock-bar"><span :style="{ width: `${Math.min(100, product.stock * 20)}%` }"></span></span>
               <span class="block text-xs" :class="product.stock ? 'text-crust-light' : 'text-red-300'">
-                {{ product.stock ? `${product.stock} left` : 'Sold out' }}
+                {{ product.stock ? $t('admin.dashboard.left', { n: product.stock }) : $t('admin.dashboard.soldOut') }}
               </span>
             </span>
-            <router-link :to="`/admin/products/${product.id}`" class="btn-ghost !py-2 !px-4 !text-sm">Restock</router-link>
+            <router-link :to="`/admin/products/${product.id}`" class="btn-ghost !py-2 !px-4 !text-sm">{{ $t('admin.dashboard.restock') }}</router-link>
           </li>
         </ul>
       </section>
@@ -87,22 +87,24 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
 import { formatEuro } from '@/utils/money'
 import { applyImageFallback } from '@/utils/imageFallback'
 
+const { t } = useI18n()
 const stats = ref({})
 const recentOrders = ref([])
 const lowStockProducts = ref([])
 
 const hour = new Date().getHours()
-const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+const greeting = t(`admin.dashboard.${hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'}`)
 
 const kpis = computed(() => [
-  { label: 'Revenue', value: formatEuro(stats.value.totalRevenue), note: 'Completed orders', icon: 'euro-sign' },
-  { label: 'Orders', value: stats.value.totalOrders || 0, note: `${stats.value.openOrders || 0} open`, icon: 'receipt' },
-  { label: 'Products', value: stats.value.totalProducts || 0, note: `${stats.value.lowStockCount || 0} low on stock`, icon: 'box-open' },
-  { label: 'Customers', value: stats.value.totalUsers || 0, note: `${stats.value.todayUsers || 0} joined today`, icon: 'users' }
+  { label: t('admin.dashboard.revenue'), value: formatEuro(stats.value.totalRevenue), note: t('admin.dashboard.revenueNote'), icon: 'euro-sign' },
+  { label: t('admin.dashboard.orders'), value: stats.value.totalOrders || 0, note: t('admin.dashboard.openCount', { n: stats.value.openOrders || 0 }), icon: 'receipt' },
+  { label: t('admin.dashboard.products'), value: stats.value.totalProducts || 0, note: t('admin.dashboard.lowStockCount', { n: stats.value.lowStockCount || 0 }), icon: 'box-open' },
+  { label: t('admin.dashboard.customers'), value: stats.value.totalUsers || 0, note: t('admin.dashboard.joinedToday', { n: stats.value.todayUsers || 0 }), icon: 'users' }
 ])
 
 const loadError = ref('')
@@ -137,7 +139,7 @@ const fetchDashboardData = async () => {
 
   const failed = [productsStats, ordersStats, usersStats, recentOrdersData, lowStockData]
     .filter(r => r.status === 'rejected').length
-  loadError.value = failed ? 'Some dashboard figures could not be loaded.' : ''
+  loadError.value = failed ? t('admin.dashboard.loadError') : ''
 }
 
 onMounted(() => {

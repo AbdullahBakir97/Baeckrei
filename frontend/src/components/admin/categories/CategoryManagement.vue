@@ -1,9 +1,9 @@
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <p class="text-sm text-cream-muted">Hidden categories and their products are not shown in the shop.</p>
+      <p class="text-sm text-cream-muted">{{ $t('admin.categories.intro') }}</p>
       <button type="button" class="px-4 py-2 text-sm font-medium rounded-full text-oven-950 bg-crust hover:bg-crust-light" @click="edit()">
-        Add category
+        {{ $t('admin.categories.add') }}
       </button>
     </div>
 
@@ -11,33 +11,48 @@
 
     <!-- Form -->
     <form v-if="form" class="admin-panel p-6 grid sm:grid-cols-2 gap-4 text-cream" @submit.prevent="save">
-      <h2 class="sm:col-span-2 text-lg font-semibold text-cream">{{ form.id ? 'Edit category' : 'New category' }}</h2>
+      <h2 class="sm:col-span-2 text-lg font-semibold text-cream">{{ form.id ? $t('admin.categories.editTitle') : $t('admin.categories.newTitle') }}</h2>
       <div>
-        <label for="cat-name" class="block text-sm font-medium text-cream/80">Name</label>
+        <label for="cat-name" class="block text-sm font-medium text-cream/80">{{ $t('admin.fields.name') }}</label>
         <input id="cat-name" v-model.trim="form.name" required maxlength="100"
                class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800" />
         <p v-if="fieldErrors.name" class="mt-1 text-sm text-red-300">{{ fieldErrors.name }}</p>
       </div>
       <div>
-        <label for="cat-order" class="block text-sm font-medium text-cream/80">Position</label>
+        <label for="cat-order" class="block text-sm font-medium text-cream/80">{{ $t('admin.categories.position') }}</label>
         <input id="cat-order" v-model.number="form.order" type="number" min="0"
                class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800" />
-        <p class="mt-1 text-xs text-cream-muted">Lower numbers are listed first.</p>
+        <p class="mt-1 text-xs text-cream-muted">{{ $t('admin.categories.positionHint') }}</p>
       </div>
       <div class="sm:col-span-2">
-        <label for="cat-description" class="block text-sm font-medium text-cream/80">Description</label>
-        <textarea id="cat-description" v-model.trim="form.description" rows="2"
+        <label for="cat-description" class="block text-sm font-medium text-cream/80">{{ $t('admin.fields.description') }}</label>
+        <textarea id="cat-description" v-model.trim="form.description" rows="2" aria-describedby="cat-german-hint"
                   class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800"></textarea>
+        <p id="cat-german-hint" class="mt-1 text-xs text-cream-muted">{{ $t('admin.fields.germanHint') }}</p>
+        <p v-if="fieldErrors.description" class="mt-1 text-sm text-red-300">{{ fieldErrors.description }}</p>
+      </div>
+      <div>
+        <label for="cat-name-en" class="block text-sm font-medium text-cream/80">{{ $t('admin.fields.nameEn') }} <span class="font-normal text-cream-muted">({{ $t('common.optional') }})</span></label>
+        <input id="cat-name-en" v-model.trim="form.name_en" lang="en" maxlength="100" aria-describedby="cat-english-hint"
+               class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800" />
+        <p v-if="fieldErrors.name_en" class="mt-1 text-sm text-red-300">{{ fieldErrors.name_en }}</p>
+      </div>
+      <div class="sm:col-span-2">
+        <label for="cat-description-en" class="block text-sm font-medium text-cream/80">{{ $t('admin.fields.descriptionEn') }} <span class="font-normal text-cream-muted">({{ $t('common.optional') }})</span></label>
+        <textarea id="cat-description-en" v-model.trim="form.description_en" lang="en" rows="2" aria-describedby="cat-english-hint"
+                  class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800"></textarea>
+        <p id="cat-english-hint" class="mt-1 text-xs text-cream-muted">{{ $t('admin.fields.englishHint') }}</p>
+        <p v-if="fieldErrors.description_en" class="mt-1 text-sm text-red-300">{{ fieldErrors.description_en }}</p>
       </div>
       <label class="flex items-center gap-2 text-sm text-cream/80">
         <input v-model="form.is_active" type="checkbox" class="rounded border-cream/15 text-crust" />
-        Show in the shop
+        {{ $t('admin.categories.showInShop') }}
       </label>
       <div class="sm:col-span-2 flex gap-3">
         <button type="submit" class="px-4 py-2 text-sm font-medium rounded-full text-oven-950 bg-crust hover:bg-crust-light" :disabled="saving">
-          {{ saving ? 'Saving…' : 'Save category' }}
+          {{ saving ? $t('common.saving') : $t('admin.categories.save') }}
         </button>
-        <button type="button" class="px-4 py-2 text-sm font-medium rounded-full text-cream/80 bg-cream/[0.05] hover:bg-cream/10" @click="form = null">Cancel</button>
+        <button type="button" class="px-4 py-2 text-sm font-medium rounded-full text-cream/80 bg-cream/[0.05] hover:bg-cream/10" @click="form = null">{{ $t('common.cancel') }}</button>
       </div>
     </form>
 
@@ -46,20 +61,20 @@
       <table class="min-w-full divide-y divide-cream/10 admin-table">
         <thead>
           <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Shop link</th>
-            <th scope="col" class="text-right">Products</th>
-            <th scope="col">Visible</th>
-            <th scope="col" class="text-right">Position</th>
-            <th scope="col"><span class="sr-only">Actions</span></th>
+            <th scope="col">{{ $t('admin.fields.name') }}</th>
+            <th scope="col">{{ $t('admin.categories.shopLink') }}</th>
+            <th scope="col" class="text-right">{{ $t('admin.categories.products') }}</th>
+            <th scope="col">{{ $t('admin.categories.visible') }}</th>
+            <th scope="col" class="text-right">{{ $t('admin.categories.position') }}</th>
+            <th scope="col"><span class="sr-only">{{ $t('admin.table.actions') }}</span></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-cream/10">
-          <tr v-if="loading"><td colspan="6" class="text-center text-cream-muted">Loading categories…</td></tr>
+          <tr v-if="loading"><td colspan="6" class="text-center text-cream-muted">{{ $t('admin.categories.loading') }}</td></tr>
           <tr v-for="category in categories" v-else :key="category.id">
             <td class="font-medium text-cream">
-              {{ category.name }}
-              <span v-if="category.description" class="block text-xs font-normal text-cream-muted truncate max-w-xs">{{ category.description }}</span>
+              {{ categoryName(category) }}
+              <span v-if="category.description" class="block text-xs font-normal text-cream-muted truncate max-w-xs">{{ categoryDescription(category) }}</span>
             </td>
             <td>
               <router-link :to="{ name: 'category', params: { category: category.slug } }" class="text-crust hover:underline">
@@ -69,21 +84,21 @@
             <td class="text-right tabular-nums">{{ category.product_count }}</td>
             <td>
               <span class="px-2 py-1 text-xs font-medium rounded-full" :class="category.is_active ? 'bg-emerald-400/10 text-emerald-300' : 'bg-cream/[0.05] text-cream-muted'">
-                {{ category.is_active ? 'Visible' : 'Hidden' }}
+                {{ category.is_active ? $t('admin.categories.visible') : $t('admin.categories.hidden') }}
               </span>
             </td>
             <td class="text-right tabular-nums">{{ category.order }}</td>
             <td class="text-right space-x-3">
               <template v-if="confirmDeleteId === category.id">
-                <button type="button" class="text-red-300 hover:text-red-300 bg-transparent font-medium" @click="remove(category)">Delete</button>
-                <button type="button" class="text-cream-muted hover:text-cream bg-transparent" @click="confirmDeleteId = null">Keep</button>
+                <button type="button" class="text-red-300 hover:text-red-300 bg-transparent font-medium" @click="remove(category)">{{ $t('common.delete') }}</button>
+                <button type="button" class="text-cream-muted hover:text-cream bg-transparent" @click="confirmDeleteId = null">{{ $t('admin.categories.keep') }}</button>
               </template>
               <template v-else>
-                <button type="button" class="text-crust hover:text-crust-light bg-transparent font-medium" @click="edit(category)">Edit</button>
+                <button type="button" class="text-crust hover:text-crust-light bg-transparent font-medium" @click="edit(category)">{{ $t('common.edit') }}</button>
                 <button type="button" class="text-cream-muted hover:text-cream bg-transparent" @click="toggleVisible(category)">
-                  {{ category.is_active ? 'Hide' : 'Show' }}
+                  {{ category.is_active ? $t('admin.categories.hide') : $t('admin.categories.show') }}
                 </button>
-                <button type="button" class="text-red-300 hover:text-red-300 bg-transparent" @click="confirmDeleteId = category.id">Delete</button>
+                <button type="button" class="text-red-300 hover:text-red-300 bg-transparent" @click="confirmDeleteId = category.id">{{ $t('common.delete') }}</button>
               </template>
             </td>
           </tr>
@@ -95,11 +110,14 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
 import { useProductStore } from '@/stores/productStore'
+import { categoryDescription, categoryName } from '@/i18n/catalog'
 
 const API = '/api/products/'
 const productStore = useProductStore()
+const { t } = useI18n()
 const categories = ref([])
 const loading = ref(false)
 const saving = ref(false)
@@ -114,7 +132,7 @@ async function load() {
     const response = await axios.get(`${API}categories/`, { params: { include_inactive: 'true' } })
     categories.value = response.data.results || []
   } catch (err) {
-    error.value = 'Categories could not be loaded.'
+    error.value = t('admin.categories.loadError')
   } finally {
     loading.value = false
   }
@@ -126,8 +144,16 @@ const refreshShop = () => productStore.fetchCategories()
 function edit(category) {
   Object.keys(fieldErrors).forEach(k => delete fieldErrors[k])
   form.value = category
-    ? { id: category.id, name: category.name, description: category.description, order: category.order, is_active: category.is_active }
-    : { name: '', description: '', order: 0, is_active: true }
+    ? {
+        id: category.id,
+        name: category.name,
+        name_en: category.name_en || '',
+        description: category.description,
+        description_en: category.description_en || '',
+        order: category.order,
+        is_active: category.is_active
+      }
+    : { name: '', name_en: '', description: '', description_en: '', order: 0, is_active: true }
 }
 
 async function save() {
@@ -144,7 +170,7 @@ async function save() {
   } catch (err) {
     const data = err.response?.data || {}
     for (const [key, value] of Object.entries(data)) fieldErrors[key] = [].concat(value)[0]
-    if (!Object.keys(fieldErrors).length) error.value = 'The category could not be saved.'
+    if (!Object.keys(fieldErrors).length) error.value = t('admin.categories.saveError')
   } finally {
     saving.value = false
   }
@@ -156,7 +182,7 @@ async function toggleVisible(category) {
     category.is_active = !category.is_active
     refreshShop()
   } catch (err) {
-    error.value = 'The category could not be updated.'
+    error.value = t('admin.categories.updateError')
   }
 }
 
@@ -167,7 +193,7 @@ async function remove(category) {
     categories.value = categories.value.filter(c => c.id !== category.id)
     refreshShop()
   } catch (err) {
-    error.value = err.response?.data?.detail || 'The category could not be deleted.'
+    error.value = err.response?.data?.detail || t('admin.categories.deleteError')
   } finally {
     confirmDeleteId.value = null
   }

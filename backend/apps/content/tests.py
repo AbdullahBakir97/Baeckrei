@@ -80,3 +80,19 @@ class BlogTests(TestCase):
     def test_slugs_are_unique(self):
         second = Post.objects.create(title='Our sourdough starter', body='Again')
         self.assertEqual(second.slug, 'our-sourdough-starter-2')
+
+
+class LanguageTests(TestCase):
+    """The API answers in the language the shop asks for."""
+
+    def test_messages_follow_accept_language(self):
+        client = APIClient()
+        german = client.post('/api/content/newsletter/', {'email': 'de@example.com'}, HTTP_ACCEPT_LANGUAGE='de')
+        self.assertEqual(german.json()['message'], 'Danke, du bist angemeldet!')
+        english = client.post('/api/content/newsletter/', {'email': 'en@example.com'}, HTTP_ACCEPT_LANGUAGE='en')
+        self.assertEqual(english.json()['message'], "You're subscribed. Thanks!")
+
+    def test_built_in_validation_messages_are_translated(self):
+        response = APIClient().post('/api/content/newsletter/', {}, HTTP_ACCEPT_LANGUAGE='de')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Dieses Feld ist erforderlich.', response.json()['email'])

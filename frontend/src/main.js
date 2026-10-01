@@ -10,12 +10,16 @@ import './style.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import './plugins/fontawesome'
 import { installMotion } from './motion/directives'
+import { i18n } from './i18n'
+import { createHead } from '@unhead/vue/client'
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
+app.use(i18n)
+app.use(createHead())
 installMotion(app)
 
 // Register global components

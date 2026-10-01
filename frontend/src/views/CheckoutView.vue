@@ -1,23 +1,23 @@
 <template>
   <div class="min-h-screen py-12 px-4">
     <div class="max-w-6xl mx-auto">
-      <PageHeader eyebrow="Almost there" title="Checkout" subtitle="Choose how you get your order and how you pay" icon="shopping-bag" />
+      <PageHeader :eyebrow="$t('checkout.eyebrow')" :title="$t('checkout.title')" :subtitle="$t('checkout.subtitle')" icon="shopping-bag" />
 
       <div v-if="loadingPage" class="flex justify-center py-12">
         <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white/20"></div>
       </div>
 
       <div v-else-if="!cartStore.items.length" class="glass-panel text-center py-12">
-        <p class="text-lg text-white font-medium">Your cart is empty</p>
-        <p class="mt-2 text-gray-400">Add something from the shop before checking out.</p>
-        <router-link to="/products" class="btn-amber mt-6">Browse products</router-link>
+        <p class="text-lg text-white font-medium">{{ $t('cart.emptyTitle') }}</p>
+        <p class="mt-2 text-gray-400">{{ $t('checkout.emptyText') }}</p>
+        <router-link to="/products" class="btn-amber mt-6">{{ $t('common.browseProducts') }}</router-link>
       </div>
 
       <form v-else class="grid lg:grid-cols-12 gap-8" @submit.prevent="submit" novalidate>
         <div class="lg:col-span-7 space-y-6">
           <!-- Fulfilment -->
           <section class="glass-panel space-y-4">
-            <h2 class="text-lg font-semibold text-white">1. Pickup or delivery</h2>
+            <h2 class="text-lg font-semibold text-white">{{ $t('checkout.step1') }}</h2>
             <div class="grid sm:grid-cols-2 gap-3">
               <button
                 v-for="method in fulfillmentMethods"
@@ -30,17 +30,17 @@
               >
                 <font-awesome-icon :icon="method.code === 'pickup' ? 'store' : 'truck'" class="mt-1 text-amber-400" />
                 <span>
-                  <span class="block font-medium text-white">{{ method.label }}</span>
+                  <span class="block font-medium text-white">{{ $t(`common.${method.code}`) }}</span>
                   <span class="block text-sm text-gray-400">
                     <template v-if="method.code === 'pickup'">{{ business.name }}, {{ storeAddress }}</template>
-                    <template v-else>{{ formatPrice(method.fee) }} € delivery fee</template>
+                    <template v-else>{{ $t('checkout.deliveryFee', { fee: formatEuro(method.fee) }) }}</template>
                   </span>
                 </span>
               </button>
             </div>
 
             <div v-if="isDelivery && addressStore.addresses.length" class="grid gap-3 pt-2">
-              <p class="field-label">Deliver to</p>
+              <p class="field-label">{{ $t('checkout.deliverTo') }}</p>
               <button
                 v-for="address in addressStore.addresses"
                 :key="address.id"
@@ -61,63 +61,63 @@
                 @click="selectedAddressId = null"
               >
                 <font-awesome-icon icon="plus" class="mt-1 text-amber-400" />
-                <span class="text-gray-200">A new address</span>
+                <span class="text-gray-200">{{ $t('checkout.newAddress') }}</span>
               </button>
             </div>
 
             <div v-if="isDelivery && selectedAddressId === null" class="grid sm:grid-cols-6 gap-4 pt-2">
               <div class="sm:col-span-6">
-                <label for="address_line_1" class="field-label">Street and house number</label>
+                <label for="address_line_1" class="field-label">{{ $t('address.street') }}</label>
                 <input id="address_line_1" v-model.trim="form.address.address_line_1" class="field-input" autocomplete="address-line1" required />
                 <p v-if="errors.address_line_1" class="field-error">{{ errors.address_line_1 }}</p>
               </div>
               <div class="sm:col-span-6">
-                <label for="address_line_2" class="field-label">Address line 2 <span class="text-gray-500">(optional)</span></label>
+                <label for="address_line_2" class="field-label">{{ $t('address.line2') }} <span class="text-gray-500">({{ $t('common.optional') }})</span></label>
                 <input id="address_line_2" v-model.trim="form.address.address_line_2" class="field-input" autocomplete="address-line2" />
               </div>
               <div class="sm:col-span-2">
-                <label for="postal_code" class="field-label">Postal code</label>
+                <label for="postal_code" class="field-label">{{ $t('address.postalCode') }}</label>
                 <input id="postal_code" v-model.trim="form.address.postal_code" class="field-input" autocomplete="postal-code" inputmode="numeric" required />
                 <p v-if="errors.postal_code" class="field-error">{{ errors.postal_code }}</p>
               </div>
               <div class="sm:col-span-4">
-                <label for="city" class="field-label">City</label>
+                <label for="city" class="field-label">{{ $t('address.city') }}</label>
                 <input id="city" v-model.trim="form.address.city" class="field-input" autocomplete="address-level2" required />
                 <p v-if="errors.city" class="field-error">{{ errors.city }}</p>
               </div>
               <label class="sm:col-span-6 flex items-center gap-2 text-gray-300">
                 <input v-model="form.save_address" type="checkbox" class="rounded border-white/20 bg-white/5 text-amber-500" />
-                Save this address for next time
+                {{ $t('checkout.saveAddress') }}
               </label>
             </div>
           </section>
 
           <!-- Time and contact -->
           <section class="glass-panel space-y-4">
-            <h2 class="text-lg font-semibold text-white">2. When and how to reach you</h2>
+            <h2 class="text-lg font-semibold text-white">{{ $t('checkout.step2') }}</h2>
             <div class="grid sm:grid-cols-2 gap-4">
               <div>
                 <label for="requested_time" class="field-label">
-                  {{ isDelivery ? 'Preferred delivery time' : 'Pickup time' }} <span class="text-gray-500">(optional)</span>
+                  {{ isDelivery ? $t('checkout.deliveryTime') : $t('checkout.pickupTime') }} <span class="text-gray-500">({{ $t('common.optional') }})</span>
                 </label>
                 <input id="requested_time" v-model="form.requested_time" type="datetime-local" :min="minTime" class="field-input" />
                 <p v-if="errors.requested_time" class="field-error">{{ errors.requested_time }}</p>
               </div>
               <div>
-                <label for="contact_phone" class="field-label">Phone <span class="text-gray-500">(optional)</span></label>
+                <label for="contact_phone" class="field-label">{{ $t('common.phone') }} <span class="text-gray-500">({{ $t('common.optional') }})</span></label>
                 <input id="contact_phone" v-model.trim="form.contact_phone" type="tel" class="field-input" autocomplete="tel" />
               </div>
             </div>
             <div>
-              <label for="notes" class="field-label">Notes for the bakery <span class="text-gray-500">(optional)</span></label>
+              <label for="notes" class="field-label">{{ $t('checkout.notes') }} <span class="text-gray-500">({{ $t('common.optional') }})</span></label>
               <textarea id="notes" v-model.trim="form.notes" rows="3" maxlength="1000" class="field-input"
-                        placeholder="e.g. please slice the bread"></textarea>
+                        :placeholder="$t('checkout.notesPlaceholder')"></textarea>
             </div>
           </section>
 
           <!-- Payment -->
           <section class="glass-panel space-y-4">
-            <h2 class="text-lg font-semibold text-white">3. Payment</h2>
+            <h2 class="text-lg font-semibold text-white">{{ $t('checkout.step3') }}</h2>
             <div class="grid gap-3">
               <button
                 v-for="method in paymentMethods"
@@ -131,9 +131,9 @@
               >
                 <font-awesome-icon :icon="paymentIcon(method.code)" class="mt-1 text-amber-400" />
                 <span>
-                  <span class="block font-medium text-white">{{ method.label }}</span>
+                  <span class="block font-medium text-white">{{ $t(`checkout.payment.${method.code}`) }}</span>
                   <span class="block text-sm text-gray-400">
-                    {{ method.available ? paymentHint(method.code) : 'Coming soon' }}
+                    {{ method.available ? $t(`checkout.paymentHint.${method.code}`) : $t('checkout.comingSoon') }}
                   </span>
                 </span>
               </button>
@@ -145,30 +145,30 @@
         <!-- Summary -->
         <aside class="lg:col-span-5">
           <div class="glass-panel sticky top-4 space-y-4">
-            <h2 class="text-lg font-semibold text-white">Your order</h2>
+            <h2 class="text-lg font-semibold text-white">{{ $t('cart.eyebrow') }}</h2>
             <ul class="divide-y divide-white/10">
               <li v-for="item in cartStore.items" :key="item.id" class="flex items-center gap-3 py-3">
                 <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="item.product.name"
                      class="h-12 w-12 rounded-lg object-cover bg-white/5" @error="applyImageFallback" />
                 <span class="flex-1 min-w-0">
                   <span class="block text-white truncate">{{ item.product.name }}</span>
-                  <span class="block text-sm text-gray-400">{{ item.quantity }} × {{ formatPrice(item.unitPrice) }} €</span>
+                  <span class="block text-sm text-gray-400">{{ item.quantity }} × {{ formatEuro(item.unitPrice) }}</span>
                 </span>
-                <span class="text-gray-200 tabular-nums">{{ formatPrice(item.totalPrice) }} €</span>
+                <span class="text-gray-200 tabular-nums">{{ formatEuro(item.totalPrice) }}</span>
               </li>
             </ul>
             <dl class="space-y-2 text-gray-300">
-              <div class="flex justify-between"><dt>Subtotal</dt><dd class="tabular-nums">{{ formatPrice(subtotal) }} €</dd></div>
+              <div class="flex justify-between"><dt>{{ $t('common.subtotal') }}</dt><dd class="tabular-nums">{{ formatEuro(subtotal) }}</dd></div>
               <div class="flex justify-between">
-                <dt>{{ isDelivery ? 'Delivery' : 'Pickup' }}</dt>
-                <dd class="tabular-nums">{{ deliveryFee > 0 ? `${formatPrice(deliveryFee)} €` : 'Free' }}</dd>
+                <dt>{{ isDelivery ? $t('common.delivery') : $t('common.pickup') }}</dt>
+                <dd class="tabular-nums">{{ deliveryFee > 0 ? formatEuro(deliveryFee) : $t('checkout.free') }}</dd>
               </div>
               <div class="h-px bg-white/10 my-2"></div>
               <div class="flex justify-between text-lg font-bold text-white">
-                <dt>Total</dt><dd class="tabular-nums text-amber-400">{{ formatPrice(total) }} €</dd>
+                <dt>{{ $t('common.total') }}</dt><dd class="tabular-nums text-amber-400">{{ formatEuro(total) }}</dd>
               </div>
               <div class="flex justify-between text-sm text-gray-500">
-                <dt>incl. {{ vatPercent }}% VAT</dt><dd class="tabular-nums">{{ formatPrice(vat) }} €</dd>
+                <dt>{{ $t('checkout.inclVat', { percent: vatPercent }) }}</dt><dd class="tabular-nums">{{ formatEuro(vat) }}</dd>
               </div>
             </dl>
 
@@ -178,11 +178,13 @@
 
             <button type="submit" class="btn-amber w-full" :disabled="submitting">
               <font-awesome-icon v-if="submitting" icon="spinner" spin />
-              {{ submitting ? 'Placing order…' : `Place order · ${formatPrice(total)} €` }}
+              {{ submitting ? $t('checkout.placing') : $t('checkout.place', { total: formatEuro(total) }) }}
             </button>
             <p class="text-xs text-gray-500">
-              By placing the order you accept our <router-link to="/terms" class="underline hover:text-gray-300">terms</router-link>
-              and <router-link to="/privacy" class="underline hover:text-gray-300">privacy policy</router-link>.
+              <i18n-t keypath="checkout.legal" scope="global">
+                <template #terms><router-link to="/terms" class="underline hover:text-gray-300">{{ $t('checkout.terms') }}</router-link></template>
+                <template #privacy><router-link to="/privacy" class="underline hover:text-gray-300">{{ $t('footer.privacyPolicy') }}</router-link></template>
+              </i18n-t>
             </p>
           </div>
         </aside>
@@ -200,8 +202,11 @@ import { useOrderStore } from '@/stores/orderStore'
 import { useAddressStore } from '@/stores/addressStore'
 import { business, streetLine, cityLine } from '@/config/business'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
+import { formatEuro } from '@/utils/money'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
 const addressStore = useAddressStore()
@@ -245,13 +250,7 @@ const minTime = (() => {
   return d.toISOString().slice(0, 16)
 })()
 
-const formatPrice = (value) => Number(value || 0).toFixed(2)
 const paymentIcon = (code) => ({ CA: 'money-bill', CC: 'credit-card', PP: 'lock' }[code] || 'credit-card')
-const paymentHint = (code) => ({
-  CA: 'Pay in cash when you pick up or receive your order',
-  CC: 'Pay by EC or credit card at pickup or delivery',
-  PP: 'Pay securely online'
-}[code] || '')
 
 // Clear a field's error as soon as it has a value again.
 watch(() => ({ ...form.address }), (address) => {
@@ -265,12 +264,12 @@ watch(() => form.requested_time, () => delete errors.requested_time)
 function validate() {
   Object.keys(errors).forEach(key => delete errors[key])
   if (isDelivery.value && selectedAddressId.value === null) {
-    if (!form.address.address_line_1) errors.address_line_1 = 'Enter your street and house number.'
-    if (!form.address.postal_code) errors.postal_code = 'Enter your postal code.'
-    if (!form.address.city) errors.city = 'Enter your city.'
+    if (!form.address.address_line_1) errors.address_line_1 = t('address.errors.street')
+    if (!form.address.postal_code) errors.postal_code = t('address.errors.postalCode')
+    if (!form.address.city) errors.city = t('address.errors.city')
   }
   const method = paymentMethods.value.find(m => m.code === form.payment_method)
-  if (!method?.available) errors.payment_method = 'Choose a payment method.'
+  if (!method?.available) errors.payment_method = t('checkout.errors.payment')
   return Object.keys(errors).length === 0
 }
 
@@ -326,7 +325,7 @@ onMounted(async () => {
     const firstAvailable = opts.payment_methods.find(m => m.available)
     if (firstAvailable) form.payment_method = firstAvailable.code
   } catch (err) {
-    orderStore.error = 'Checkout is unavailable right now. Please try again in a moment.'
+    orderStore.error = t('checkout.errors.unavailable')
   } finally {
     loadingPage.value = false
   }

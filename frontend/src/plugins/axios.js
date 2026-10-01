@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { currentLocale } from '@/i18n';
 
 // Function to get CSRF token from cookies
 function getCookie(name) {
@@ -29,6 +30,9 @@ const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
     (config) => {
+        // The API answers (messages, validation errors) in the shop's language.
+        config.headers['Accept-Language'] = currentLocale();
+
         // Add CSRF token to headers
         const csrftoken = getCookie('csrftoken');
         if (csrftoken) {

@@ -1,121 +1,120 @@
 <template>
-  <div class="min-h-screen py-12 px-4">
-    <div class="max-w-4xl mx-auto">
-      <router-link to="/orders" class="btn-ghost mb-6">
-        <font-awesome-icon icon="arrow-left" /> All orders
-      </router-link>
+  <div class="section max-w-4xl pb-10">
+    <router-link to="/orders" class="btn-ghost mb-8">
+      <font-awesome-icon icon="arrow-left" /> {{ $t('order.allOrders') }}
+    </router-link>
 
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white/20"></div>
+    <div v-if="loading" class="grid gap-4" aria-busy="true">
+      <div v-for="n in 3" :key="n" class="skeleton h-32 rounded-3xl"></div>
+    </div>
+
+    <div v-else-if="notFound" class="glass-panel text-center py-12">
+      <p class="display-title text-4xl">{{ $t('order.notFound') }}</p>
+      <p class="mt-2 text-cream-muted">{{ $t('order.notFoundText') }}</p>
+    </div>
+
+    <template v-else-if="order">
+      <div v-if="justPlaced" class="placed glass-panel mb-8" role="status">
+        <span class="placed-check" aria-hidden="true"><font-awesome-icon icon="check" /></span>
+        <div>
+          <p class="display-title text-4xl">{{ $t('order.thanks') }}</p>
+          <p class="mt-1 text-cream-muted">
+            <template v-if="order.fulfillment_method === 'pickup'">
+              {{ $t('order.readyAt', { name: business.name, address: storeAddress }) }}
+            </template>
+            <template v-else>{{ $t('order.willDeliver') }}</template>
+          </p>
+        </div>
       </div>
 
-      <div v-else-if="notFound" class="glass-panel text-center py-12">
-        <p class="text-lg text-white font-medium">We couldn't find this order</p>
-        <p class="mt-2 text-gray-400">It may belong to a different account.</p>
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div>
+          <p class="eyebrow">{{ $t('order.eyebrow') }}</p>
+          <h1 class="display-title text-5xl sm:text-6xl mt-2">{{ order.order_number }}</h1>
+          <p class="mt-2 text-cream-muted">{{ $t('order.placedOn', { date: formatDateTime(order.created_at) }) }}</p>
+        </div>
+        <span class="status-pill" :class="statusClass">{{ $t(`common.status.${order.status.toLowerCase()}`) }}</span>
       </div>
 
-      <template v-else-if="order">
-        <div v-if="justPlaced" class="glass-panel mb-6 flex items-start gap-3 border-green-500/30" role="status">
-          <font-awesome-icon icon="circle-check" class="mt-1 text-2xl text-green-400" />
-          <div>
-            <p class="text-lg font-semibold text-white">Thank you! Your order has been placed.</p>
-            <p class="text-gray-400">
-              <template v-if="order.fulfillment_method === 'pickup'">
-                We'll have it ready at {{ business.name }}, {{ storeAddress }}.
-              </template>
-              <template v-else>We'll deliver it to the address below.</template>
-            </p>
-          </div>
-        </div>
+      <!-- Progress -->
+      <ol v-if="order.status !== 'Canceled'" class="progress glass-panel mb-6" :aria-label="$t('order.progress')">
+        <li v-for="(step, index) in steps" :key="step.status" :class="{ 'is-done': index <= currentStep }">
+          <span class="progress-dot"></span>
+          <span>{{ $t(step.label) }}</span>
+        </li>
+      </ol>
+      <p v-else class="glass-panel mb-6 text-red-300">{{ $t('order.canceled') }}</p>
 
-        <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
-          <div>
-            <h1 class="text-3xl font-extrabold text-white">Order {{ order.order_number }}</h1>
-            <p class="text-gray-400">Placed on {{ formatDateTime(order.created_at) }}</p>
-          </div>
-          <span class="px-3 py-1 rounded-full text-sm font-medium" :class="statusClass">{{ order.status }}</span>
-        </div>
-
-        <!-- Progress -->
-        <ol v-if="order.status !== 'Canceled'" class="glass-panel grid grid-cols-3 gap-2 mb-6" aria-label="Order progress">
-          <li v-for="(step, index) in steps" :key="step.status" class="flex flex-col items-center text-center gap-2">
-            <span class="h-3 w-3 rounded-full" :class="index <= currentStep ? 'bg-amber-400' : 'bg-white/15'"></span>
-            <span class="text-sm" :class="index <= currentStep ? 'text-white' : 'text-gray-500'">{{ step.label }}</span>
-          </li>
-        </ol>
-        <p v-else class="glass-panel mb-6 text-red-300">This order was canceled.</p>
-
-        <div class="grid md:grid-cols-2 gap-6 mb-6">
-          <section class="glass-panel space-y-2">
-            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-              <font-awesome-icon :icon="order.fulfillment_method === 'pickup' ? 'store' : 'truck'" class="text-amber-400" />
-              {{ order.fulfillment_method === 'pickup' ? 'Pickup' : 'Delivery' }}
-            </h2>
-            <p v-if="order.fulfillment_method === 'pickup'" class="text-gray-300">
-              {{ business.name }}<br>{{ storeAddress }}<br>
-              <span v-if="business.transit" class="text-gray-400">{{ business.transit }}</span>
-            </p>
-            <p v-else-if="order.address" class="text-gray-300">
-              {{ order.address.address_line_1 }}<br>
-              <template v-if="order.address.address_line_2">{{ order.address.address_line_2 }}<br></template>
-              {{ order.address.postal_code }} {{ order.address.city }}
-            </p>
-            <p v-if="order.requested_time" class="text-gray-400">
-              <font-awesome-icon icon="clock" class="mr-1" /> Requested for {{ formatDateTime(order.requested_time) }}
-            </p>
-            <p v-if="order.shipping_tracking_number" class="text-gray-400">Tracking number: {{ order.shipping_tracking_number }}</p>
-          </section>
-
-          <section class="glass-panel space-y-2">
-            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-              <font-awesome-icon icon="credit-card" class="text-amber-400" /> Payment
-            </h2>
-            <p class="text-gray-300">{{ order.payment?.payment_method_display || '—' }}</p>
-            <p class="text-gray-400">Status: {{ order.payment?.status_display || 'Pending' }}</p>
-            <p v-if="order.notes" class="text-gray-400">Notes: {{ order.notes }}</p>
-          </section>
-        </div>
-
-        <section class="glass-panel">
-          <h2 class="text-lg font-semibold text-white mb-2">Items</h2>
-          <ul class="divide-y divide-white/10">
-            <li v-for="item in order.order_items" :key="item.id" class="flex items-center gap-4 py-3">
-              <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="item.product.name"
-                   class="h-14 w-14 rounded-lg object-cover bg-white/5" @error="applyImageFallback" />
-              <span class="flex-1 min-w-0">
-                <router-link :to="{ name: 'product-detail', params: { id: item.product.id } }" class="block text-white hover:text-amber-300 truncate">
-                  {{ item.product.name }}
-                </router-link>
-                <span class="text-sm text-gray-400">{{ item.quantity }} × {{ formatPrice(item.price_per_item) }} €</span>
-              </span>
-              <span class="text-gray-200 tabular-nums">{{ formatPrice(item.quantity * item.price_per_item) }} €</span>
-            </li>
-          </ul>
-          <dl class="mt-4 space-y-2 text-gray-300">
-            <div v-if="Number(order.delivery_fee) > 0" class="flex justify-between">
-              <dt>Delivery</dt><dd class="tabular-nums">{{ formatPrice(order.delivery_fee) }} €</dd>
-            </div>
-            <div class="flex justify-between text-lg font-bold text-white">
-              <dt>Total</dt><dd class="tabular-nums text-amber-400">{{ formatPrice(order.total_price) }} €</dd>
-            </div>
-            <div class="flex justify-between text-sm text-gray-500">
-              <dt>incl. VAT</dt><dd class="tabular-nums">{{ formatPrice(order.vat_amount) }} €</dd>
-            </div>
-          </dl>
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <section class="glass-panel space-y-2">
+          <h2 class="panel-title">
+            <font-awesome-icon :icon="order.fulfillment_method === 'pickup' ? 'store' : 'truck'" class="text-crust" />
+            {{ order.fulfillment_method === 'pickup' ? $t('common.pickup') : $t('common.delivery') }}
+          </h2>
+          <p v-if="order.fulfillment_method === 'pickup'" class="text-cream/80">
+            {{ business.name }}<br>{{ storeAddress }}<br>
+            <span v-if="business.transit" class="text-cream-muted">{{ business.transit }}</span>
+          </p>
+          <p v-else-if="order.address" class="text-cream/80">
+            {{ order.address.address_line_1 }}<br>
+            <template v-if="order.address.address_line_2">{{ order.address.address_line_2 }}<br></template>
+            {{ order.address.postal_code }} {{ order.address.city }}
+          </p>
+          <p v-if="order.requested_time" class="text-cream-muted">
+            <font-awesome-icon icon="clock" class="mr-1" /> {{ $t('order.requestedFor', { time: formatDateTime(order.requested_time) }) }}
+          </p>
+          <p v-if="order.shipping_tracking_number" class="text-cream-muted">{{ $t('order.tracking', { number: order.shipping_tracking_number }) }}</p>
         </section>
 
-        <div v-if="order.is_cancelable" class="mt-6 flex flex-wrap items-center gap-3">
-          <template v-if="confirmingCancel">
-            <span class="text-gray-300">Cancel this order?</span>
-            <button type="button" class="btn-ghost text-red-300" :disabled="canceling" @click="cancel">Yes, cancel it</button>
-            <button type="button" class="btn-ghost" @click="confirmingCancel = false">Keep order</button>
-          </template>
-          <button v-else type="button" class="btn-ghost text-red-300" @click="confirmingCancel = true">
-            <font-awesome-icon icon="xmark" /> Cancel order
-          </button>
-        </div>
-      </template>
-    </div>
+        <section class="glass-panel space-y-2">
+          <h2 class="panel-title">
+            <font-awesome-icon icon="credit-card" class="text-crust" /> {{ $t('order.payment') }}
+          </h2>
+          <p class="text-cream/80">{{ order.payment ? $t(`checkout.payment.${order.payment.payment_method}`) : '—' }}</p>
+          <p class="text-cream-muted">{{ $t('order.paymentStatus', { status: $t(`order.paymentStatuses.${(order.payment?.status || 'Pending').toLowerCase()}`) }) }}</p>
+          <p v-if="order.notes" class="text-cream-muted">{{ $t('order.notes', { notes: order.notes }) }}</p>
+        </section>
+      </div>
+
+      <section class="glass-panel">
+        <h2 class="panel-title mb-2">{{ $t('order.items') }}</h2>
+        <ul class="divide-y divide-white/10">
+          <li v-for="item in order.order_items" :key="item.id" class="flex items-center gap-4 py-3">
+            <img :src="item.product.image || PLACEHOLDER_IMAGE" :alt="item.product.name"
+                 class="h-14 w-14 rounded-xl object-contain bg-white/5" @error="applyImageFallback" />
+            <span class="flex-1 min-w-0">
+              <router-link :to="{ name: 'product-detail', params: { id: item.product.id } }" class="block text-cream hover:text-crust-light truncate">
+                {{ item.product.name }}
+              </router-link>
+              <span class="text-sm text-cream-muted">{{ item.quantity }} × {{ formatEuro(item.price_per_item) }}</span>
+            </span>
+            <span class="text-cream/80 tabular-nums">{{ formatEuro(item.quantity * item.price_per_item) }}</span>
+          </li>
+        </ul>
+        <dl class="mt-4 space-y-2 text-cream/80">
+          <div v-if="Number(order.delivery_fee) > 0" class="flex justify-between">
+            <dt>{{ $t('common.delivery') }}</dt><dd class="tabular-nums">{{ formatEuro(order.delivery_fee) }}</dd>
+          </div>
+          <div class="flex justify-between text-lg font-bold text-cream">
+            <dt>{{ $t('common.total') }}</dt><dd class="tabular-nums text-crust-light">{{ formatEuro(order.total_price) }}</dd>
+          </div>
+          <div class="flex justify-between text-sm text-cream-faint">
+            <dt>{{ $t('common.vatIncluded') }}</dt><dd class="tabular-nums">{{ formatEuro(order.vat_amount) }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <div v-if="order.is_cancelable" class="mt-6 flex flex-wrap items-center gap-3">
+        <template v-if="confirmingCancel">
+          <span class="text-cream/80">{{ $t('order.confirmCancel') }}</span>
+          <button type="button" class="btn-ghost text-red-300" :disabled="canceling" @click="cancel">{{ $t('order.yesCancel') }}</button>
+          <button type="button" class="btn-ghost" @click="confirmingCancel = false">{{ $t('order.keep') }}</button>
+        </template>
+        <button v-else type="button" class="btn-ghost text-red-300" @click="confirmingCancel = true">
+          <font-awesome-icon icon="xmark" /> {{ $t('order.cancel') }}
+        </button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -126,10 +125,13 @@ import { useOrderStore } from '@/stores/orderStore'
 import { useToast } from '@/composables/useToast'
 import { business, streetLine, cityLine } from '@/config/business'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
+import { formatEuro, formatDateTime } from '@/utils/money'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const orderStore = useOrderStore()
 const { showToast } = useToast()
+const { t } = useI18n()
 
 const loading = ref(true)
 const notFound = ref(false)
@@ -141,29 +143,21 @@ const justPlaced = computed(() => route.query.placed === '1')
 const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
 
 const steps = [
-  { status: 'Pending', label: 'Received' },
-  { status: 'Processing', label: 'Being prepared' },
-  { status: 'Completed', label: 'Done' }
+  { status: 'Pending', label: 'order.steps.received' },
+  { status: 'Processing', label: 'order.steps.preparing' },
+  { status: 'Completed', label: 'order.steps.done' }
 ]
 const currentStep = computed(() => Math.max(0, steps.findIndex(s => s.status === order.value?.status)))
-const statusClass = computed(() => ({
-  Completed: 'bg-green-500/20 text-green-300',
-  Processing: 'bg-blue-500/20 text-blue-300',
-  Canceled: 'bg-red-500/20 text-red-300'
-}[order.value?.status] || 'bg-amber-500/20 text-amber-300'))
+const statusClass = computed(() => `is-${(order.value?.status || 'pending').toLowerCase()}`)
 
-const formatPrice = (value) => Number(value || 0).toFixed(2)
-const formatDateTime = (value) => new Date(value).toLocaleString('de-DE', {
-  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-})
 
 async function cancel() {
   canceling.value = true
   try {
     await orderStore.cancelOrder(order.value.id)
-    showToast('Your order was canceled')
+    showToast(t('order.canceledToast'))
   } catch (err) {
-    showToast(orderStore.error || 'The order could not be canceled', 'error')
+    showToast(orderStore.error || t('order.cancelFailed'), 'error')
   } finally {
     canceling.value = false
     confirmingCancel.value = false
@@ -182,3 +176,94 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.placed {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  border-color: rgba(159, 212, 154, 0.25);
+}
+
+.placed-check {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  font-size: 1.4rem;
+  color: #0e0c0a;
+  background: #9fd49a;
+  animation: pop-in 0.7s var(--ease-out-expo) both;
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.3) rotate(-30deg); opacity: 0; }
+}
+
+.status-pill {
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f2c48d;
+  background: rgba(242, 196, 141, 0.12);
+}
+
+.status-pill.is-processing { color: #9cc3f0; background: rgba(120, 170, 230, 0.12); }
+.status-pill.is-completed { color: #9fd49a; background: rgba(159, 212, 154, 0.12); }
+.status-pill.is-canceled { color: #f08f79; background: rgba(240, 143, 121, 0.12); }
+
+.progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.progress li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #7d7061;
+}
+
+.progress li.is-done {
+  color: #f4ece1;
+}
+
+.progress-dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 9999px;
+  background: rgba(244, 236, 225, 0.15);
+}
+
+.is-done .progress-dot {
+  background: #e6a15a;
+  box-shadow: 0 0 0 5px rgba(230, 161, 90, 0.18);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: #f4ece1;
+}
+
+.skeleton {
+  background: linear-gradient(100deg, rgba(244, 236, 225, 0.04) 30%, rgba(244, 236, 225, 0.09) 50%, rgba(244, 236, 225, 0.04) 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+</style>

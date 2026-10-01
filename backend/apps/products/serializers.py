@@ -40,7 +40,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'image', 'image_url', 'is_active', 'order', 'product_count']
+        fields = ['id', 'name', 'name_en', 'slug', 'description', 'description_en', 'image', 'image_url', 'is_active', 'order', 'product_count']
 
     def get_product_count(self, obj):
         return obj.products.filter(status='active', available=True).count()
@@ -75,7 +75,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'slug', 'category', 'price',
+            'id', 'name', 'name_en', 'slug', 'category', 'price',
             'image', 'image_url', 'is_vegan', 'is_vegetarian',
             'is_gluten_free', 'is_seasonal', 'status', 'available', 'stock'
         ]
@@ -104,7 +104,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'slug', 'description', 'category',
+            'id', 'name', 'name_en', 'slug', 'description', 'description_en', 'category',
             'price', 'formatted_price', 'image', 'image_url', 'images', 'model_3d_url',
             'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
             'status', 'available', 'stock', 'stock_status', 'ingredients',
@@ -331,7 +331,7 @@ class AdminProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'description', 'category', 'price', 'stock', 'image', 'model_3d',
+            'id', 'name', 'name_en', 'description', 'description_en', 'category', 'price', 'stock', 'image', 'model_3d',
             'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
             'status', 'available',
         ]
@@ -355,7 +355,7 @@ class AdminCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'image', 'is_active', 'order', 'product_count']
+        fields = ['id', 'name', 'name_en', 'slug', 'description', 'description_en', 'image', 'is_active', 'order', 'product_count']
         read_only_fields = ['id', 'slug', 'product_count']
 
     def get_product_count(self, obj):

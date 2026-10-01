@@ -1,5 +1,6 @@
 import logging
 
+from django.utils.translation import gettext as _
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -32,7 +33,7 @@ class ContactMessageView(APIView):
         serializer.is_valid(raise_exception=True)
         if serializer.validated_data.pop('website', ''):
             # Honeypot filled in: pretend it worked, store nothing.
-            return Response({'message': 'Thanks! We will get back to you soon.'}, status=status.HTTP_201_CREATED)
+            return Response({'message': _('Thanks! We will get back to you soon.')}, status=status.HTTP_201_CREATED)
         message = serializer.save()
         if settings.SHOP_NOTIFICATION_EMAIL:
             try:
@@ -45,7 +46,7 @@ class ContactMessageView(APIView):
             except Exception:
                 # The message is saved and visible in the admin either way.
                 logger.exception('Could not send contact notification email')
-        return Response({'message': 'Thanks! We will get back to you soon.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': _('Thanks! We will get back to you soon.')}, status=status.HTTP_201_CREATED)
 
 
 class NewsletterSubscribeView(APIView):
@@ -62,7 +63,7 @@ class NewsletterSubscribeView(APIView):
             subscriber.unsubscribed_at = None
             subscriber.save(update_fields=['unsubscribed_at'])
         # Same answer whether or not the address was already subscribed.
-        return Response({'message': "You're subscribed. Thanks!"}, status=status.HTTP_201_CREATED)
+        return Response({'message': _("You're subscribed. Thanks!")}, status=status.HTTP_201_CREATED)
 
 
 class NewsletterUnsubscribeView(APIView):
@@ -76,8 +77,8 @@ class NewsletterUnsubscribeView(APIView):
         ).update(unsubscribed_at=timezone.now())
         exists = updated or NewsletterSubscriber.objects.filter(token=serializer.validated_data['token']).exists()
         if not exists:
-            return Response({'detail': 'This unsubscribe link is not valid.'}, status=status.HTTP_404_NOT_FOUND)
-        return Response({'message': "You've been unsubscribed from the newsletter."})
+            return Response({'detail': _('This unsubscribe link is not valid.')}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'message': _("You've been unsubscribed from the newsletter.")})
 
 
 class PostListView(generics.ListAPIView):

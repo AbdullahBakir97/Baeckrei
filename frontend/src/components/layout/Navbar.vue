@@ -1,27 +1,30 @@
 <template>
   <header class="nav-wrap" :class="{ 'is-scrolled': scrolled, 'is-hidden': hidden && !menuOpen && !searchOpen }">
-    <nav class="nav" aria-label="Main">
-      <router-link to="/" class="nav-logo" :aria-label="`${business.name} home`">
+    <nav class="nav" :aria-label="$t('nav.main')">
+      <router-link to="/" class="nav-logo" :aria-label="$t('nav.home', { name: business.name })">
         <span class="nav-logo-mark">{{ business.name.charAt(0) }}</span>{{ business.name.slice(1) }}
       </router-link>
 
       <ul class="nav-links">
         <li v-for="link in links" :key="link.to">
           <router-link :to="link.to" class="nav-link" :class="{ 'is-active': isActive(link.to) }">
-            {{ link.label }}
+            {{ $t(link.label) }}
           </router-link>
         </li>
       </ul>
 
       <div class="nav-tools">
-        <button type="button" class="nav-icon" aria-label="Search" @click="openSearch">
+        <button type="button" class="nav-lang" :aria-label="$t('nav.switchLanguage')" @click="toggleLocale">
+          {{ otherLocale.short }}
+        </button>
+        <button type="button" class="nav-icon" :aria-label="$t('nav.search')" @click="openSearch">
           <font-awesome-icon icon="search" />
         </button>
-        <router-link to="/wishlist" class="nav-icon hidden sm:grid" aria-label="Wishlist">
+        <router-link to="/wishlist" class="nav-icon hidden sm:grid" :aria-label="$t('nav.wishlist')">
           <font-awesome-icon icon="heart" />
           <span v-if="wishlistStore.items.length" class="nav-badge">{{ wishlistStore.items.length }}</span>
         </router-link>
-        <router-link v-if="compareStore.items.length" to="/compare" class="nav-icon hidden sm:grid" aria-label="Compare products">
+        <router-link v-if="compareStore.items.length" to="/compare" class="nav-icon hidden sm:grid" :aria-label="$t('nav.compare')">
           <font-awesome-icon icon="code-compare" />
           <span class="nav-badge">{{ compareStore.items.length }}</span>
         </router-link>
@@ -29,25 +32,25 @@
         <!-- Account -->
         <div v-if="authStore.isAuthenticated" class="relative hidden md:block" @keydown.escape="userMenuOpen = false">
           <button type="button" class="nav-icon" :aria-expanded="userMenuOpen" aria-haspopup="true"
-                  aria-label="Account menu" @click="userMenuOpen = !userMenuOpen">
+                  :aria-label="$t('nav.accountMenu')" @click="userMenuOpen = !userMenuOpen">
             <span class="nav-avatar">{{ initials }}</span>
           </button>
           <transition name="pop">
             <div v-if="userMenuOpen" class="nav-pop w-56" role="menu">
               <p class="px-3 pb-2 text-xs text-cream-faint truncate">{{ authStore.user?.email }}</p>
-              <router-link v-if="authStore.isAdmin" to="/admin" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">Admin dashboard</router-link>
-              <router-link to="/profile" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">Profile</router-link>
-              <router-link to="/orders" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">Orders</router-link>
-              <router-link to="/settings" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">Settings</router-link>
-              <button type="button" class="nav-pop-item w-full text-left" role="menuitem" @click="logout">Sign out</button>
+              <router-link v-if="authStore.isAdmin" to="/admin" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">{{ $t('nav.admin') }}</router-link>
+              <router-link to="/profile" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">{{ $t('nav.profile') }}</router-link>
+              <router-link to="/orders" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">{{ $t('nav.orders') }}</router-link>
+              <router-link to="/settings" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">{{ $t('nav.settings') }}</router-link>
+              <button type="button" class="nav-pop-item w-full text-left" role="menuitem" @click="logout">{{ $t('nav.signOut') }}</button>
             </div>
           </transition>
         </div>
-        <router-link v-else to="/login" class="nav-signin hidden md:inline-flex">Sign in</router-link>
+        <router-link v-else to="/login" class="nav-signin hidden md:inline-flex">{{ $t('nav.signIn') }}</router-link>
 
         <!-- Cart -->
         <div class="relative" @mouseenter="cartPreview = true" @mouseleave="cartPreview = false">
-          <router-link to="/cart" class="nav-cart" :aria-label="`Cart, ${cartStore.itemCount} items`">
+          <router-link to="/cart" class="nav-cart" :aria-label="$t('nav.cartLabel', { count: cartStore.itemCount })">
             <font-awesome-icon icon="shopping-bag" />
             <span class="tabular-nums">{{ cartStore.itemCount }}</span>
           </router-link>
@@ -62,18 +65,18 @@
                   </div>
                 </li>
               </ul>
-              <p v-if="cartStore.items.length > 4" class="px-2 pb-2 text-xs text-cream-faint">+ {{ cartStore.items.length - 4 }} more</p>
+              <p v-if="cartStore.items.length > 4" class="px-2 pb-2 text-xs text-cream-faint">{{ $t('nav.more', { count: cartStore.items.length - 4 }) }}</p>
               <div class="mt-2 flex items-center justify-between border-t border-white/10 px-2 pt-3">
-                <span class="text-sm text-cream-muted">Total</span>
+                <span class="text-sm text-cream-muted">{{ $t('common.total') }}</span>
                 <span class="font-semibold text-crust-light">{{ formatEuro(cartStore.totalAmount) }}</span>
               </div>
-              <router-link to="/cart" class="btn-amber mt-3 w-full !py-2.5" @click="cartPreview = false">View cart</router-link>
+              <router-link to="/cart" class="btn-amber mt-3 w-full !py-2.5" @click="cartPreview = false">{{ $t('nav.viewCart') }}</router-link>
             </div>
           </transition>
         </div>
 
         <button type="button" class="nav-burger md:hidden" :aria-expanded="menuOpen" aria-controls="mobile-menu"
-                :aria-label="menuOpen ? 'Close menu' : 'Open menu'" @click="toggleMenu">
+                :aria-label="menuOpen ? $t('nav.closeMenu') : $t('nav.openMenu')" @click="toggleMenu">
           <span></span><span></span>
         </button>
       </div>
@@ -84,38 +87,39 @@
       <ul class="mobile-links">
         <li v-for="(link, index) in mobileLinks" :key="link.to" class="overflow-hidden">
           <router-link :to="link.to" class="mobile-link" @click="closeMenu">
-            <span class="mobile-index">0{{ index + 1 }}</span>{{ link.label }}
+            <span class="mobile-index">0{{ index + 1 }}</span>{{ $t(link.label) }}
           </router-link>
         </li>
       </ul>
       <div class="mobile-foot">
         <template v-if="authStore.isAuthenticated">
-          <router-link v-if="authStore.isAdmin" to="/admin" @click="closeMenu">Admin</router-link>
-          <router-link to="/profile" @click="closeMenu">Profile</router-link>
-          <router-link to="/orders" @click="closeMenu">Orders</router-link>
-          <button type="button" @click="logout">Sign out</button>
+          <router-link v-if="authStore.isAdmin" to="/admin" @click="closeMenu">{{ $t('nav.admin') }}</router-link>
+          <router-link to="/profile" @click="closeMenu">{{ $t('nav.profile') }}</router-link>
+          <router-link to="/orders" @click="closeMenu">{{ $t('nav.orders') }}</router-link>
+          <button type="button" @click="logout">{{ $t('nav.signOut') }}</button>
         </template>
         <template v-else>
-          <router-link to="/login" @click="closeMenu">Sign in</router-link>
-          <router-link to="/register" @click="closeMenu">Create account</router-link>
+          <router-link to="/login" @click="closeMenu">{{ $t('nav.signIn') }}</router-link>
+          <router-link to="/register" @click="closeMenu">{{ $t('nav.createAccount') }}</router-link>
         </template>
+        <button type="button" @click="toggleLocale">{{ otherLocale.label }}</button>
         <p class="mt-4 w-full text-cream-faint">{{ business.street }}, {{ business.city }}<span v-if="business.transit"> · {{ business.transit }}</span></p>
       </div>
     </div>
 
     <!-- Search -->
     <transition name="search">
-      <div v-if="searchOpen" class="search-layer" role="dialog" aria-label="Search products" @click.self="searchOpen = false"
+      <div v-if="searchOpen" class="search-layer" role="dialog" :aria-label="$t('nav.searchProducts')" @click.self="searchOpen = false"
            @keydown.escape="searchOpen = false">
         <form class="search-box" role="search" @submit.prevent="submitSearch">
           <font-awesome-icon icon="search" class="text-crust text-xl" />
-          <input ref="searchInput" v-model="searchQuery" type="search" placeholder="Search croissants, Brezel, cakes…"
-                 aria-label="Search products" />
+          <input ref="searchInput" v-model="searchQuery" type="search" :placeholder="$t('nav.searchPlaceholder')"
+                 :aria-label="$t('nav.searchProducts')" />
           <button type="button" class="text-cream-faint hover:text-cream text-sm" @click="searchOpen = false">Esc</button>
         </form>
         <div class="search-hints">
-          <span class="text-cream-faint">Popular:</span>
-          <button v-for="hint in ['Brezel', 'Croissant', 'Sourdough', 'Macarons']" :key="hint" type="button" @click="searchQuery = hint; submitSearch()">
+          <span class="text-cream-faint">{{ $t('nav.popular') }}</span>
+          <button v-for="hint in searchHints" :key="hint" type="button" @click="searchQuery = hint; submitSearch()">
             {{ hint }}
           </button>
         </div>
@@ -135,6 +139,8 @@ import { business } from '@/config/business'
 import { formatEuro } from '@/utils/money'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { gsap, lockScroll, prefersReducedMotion } from '@/motion'
+import { useI18n } from 'vue-i18n'
+import { LOCALES, setLocale } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
@@ -144,13 +150,18 @@ const wishlistStore = useWishlistStore()
 const compareStore = useCompareStore()
 
 const links = [
-  { label: 'Shop', to: '/products' },
-  { label: 'Seasonal', to: '/seasonal' },
-  { label: 'Journal', to: '/blog' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' }
+  { label: 'nav.shop', to: '/products' },
+  { label: 'nav.seasonal', to: '/seasonal' },
+  { label: 'nav.journal', to: '/blog' },
+  { label: 'nav.about', to: '/about' },
+  { label: 'nav.contact', to: '/contact' }
 ]
-const mobileLinks = [{ label: 'Home', to: '/' }, ...links]
+const mobileLinks = [{ label: 'nav.homeLink', to: '/' }, ...links]
+
+const { locale, t } = useI18n()
+const searchHints = computed(() => t('nav.hints').split(','))
+const otherLocale = computed(() => LOCALES.find(l => l.code !== locale.value))
+const toggleLocale = () => setLocale(otherLocale.value.code)
 
 const scrolled = ref(false)
 const hidden = ref(false)
@@ -468,6 +479,24 @@ onBeforeUnmount(() => {
   background: rgba(244, 236, 225, 0.06);
 }
 
+.nav-lang {
+  display: grid;
+  place-items: center;
+  height: 2.5rem;
+  padding: 0 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #d9cfc2;
+  transition: background 0.25s, color 0.25s;
+}
+
+.nav-lang:hover {
+  color: #f4ece1;
+  background: rgba(244, 236, 225, 0.07);
+}
+
 .nav-burger {
   display: grid;
   place-content: center;
@@ -479,7 +508,25 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 768px) {
-  .nav-burger {
+  .nav-lang {
+  display: grid;
+  place-items: center;
+  height: 2.5rem;
+  padding: 0 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #d9cfc2;
+  transition: background 0.25s, color 0.25s;
+}
+
+.nav-lang:hover {
+  color: #f4ece1;
+  background: rgba(244, 236, 225, 0.07);
+}
+
+.nav-burger {
     display: none;
   }
 }

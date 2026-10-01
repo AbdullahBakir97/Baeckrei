@@ -24,6 +24,9 @@ class Category(TimeStampedModel):
     name = models.CharField(_('Name'), max_length=100, unique=True)
     slug = models.SlugField(_('Slug'), max_length=120, unique=True, blank=True)
     description = models.TextField(_('Description'), blank=True)
+    # Optional English versions; the main fields are shown in German.
+    name_en = models.CharField(_('Name (English)'), max_length=100, blank=True)
+    description_en = models.TextField(_('Description (English)'), blank=True)
     image = models.ImageField(_('Image'), upload_to='categories/', blank=True, null=True)
     is_active = models.BooleanField(_('Active'), default=True)
     order = models.PositiveIntegerField(_('Display Order'), default=0)
@@ -320,6 +323,9 @@ class Product(TimeStampedModel):
     name = models.CharField(_('Name'), max_length=200)
     slug = models.SlugField(_('Slug'), max_length=220, unique=True, blank=True)
     description = models.TextField(_('Description'))
+    # Optional English versions; the main fields are shown in German.
+    name_en = models.CharField(_('Name (English)'), max_length=200, blank=True)
+    description_en = models.TextField(_('Description (English)'), blank=True)
     category = models.ForeignKey(
         Category,
         verbose_name=_('Category'),

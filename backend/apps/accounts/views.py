@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -111,12 +112,12 @@ class UserViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             user = request.user
             if not user.check_password(serializer.validated_data['old_password']):
-                return Response({'error': 'Invalid old password'}, 
+                return Response({'error': _('Invalid old password')}, 
                             status=status.HTTP_400_BAD_REQUEST)
 
             user.set_password(serializer.validated_data['new_password'])
             user.save()
-            return Response({'message': 'Password updated successfully'})
+            return Response({'message': _('Password updated successfully')})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
@@ -125,7 +126,7 @@ class UserViewSet(viewsets.ModelViewSet):
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({'message': 'Successfully logged out'})
+            return Response({'message': _('Successfully logged out')})
         except Exception:
             return Response({'error': 'Invalid token'}, 
                           status=status.HTTP_400_BAD_REQUEST)
@@ -157,7 +158,7 @@ class AddressViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def _customer(self):
-        customer, _ = Customer.objects.get_or_create(
+        customer, _created = Customer.objects.get_or_create(
             user=self.request.user, defaults={'customer_id': uuid.uuid4().hex}
         )
         return customer
@@ -202,7 +203,7 @@ class PasswordResetRequestView(APIView):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
             )
-        return Response({'message': 'If an account exists for this email, we sent a reset link.'})
+        return Response({'message': _('If an account exists for this email, we sent a reset link.')})
 
 
 class PasswordResetConfirmView(APIView):
@@ -219,9 +220,9 @@ class PasswordResetConfirmView(APIView):
             user = None
         if user is None or not default_token_generator.check_token(user, data['token']):
             return Response(
-                {'detail': 'This reset link is invalid or has expired. Please request a new one.'},
+                {'detail': _('This reset link is invalid or has expired. Please request a new one.')},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         user.set_password(data['new_password'])
         user.save(update_fields=['password'])
-        return Response({'message': 'Your password has been changed. You can now sign in.'})
+        return Response({'message': _('Your password has been changed. You can now sign in.')})

@@ -6,7 +6,7 @@
           <input
             type="text"
             v-model="searchQuery"
-            placeholder="Search..."
+            :placeholder="$t('admin.table.search')"
             class="block w-full pl-10 pr-3 py-2 border border-cream/15 rounded-md leading-5 bg-oven-800 placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
           />
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -33,7 +33,7 @@
             </span>
           </div>
           <div v-if="hasActions" class="px-6 py-3 text-right text-xs font-medium text-cream-muted uppercase tracking-wider">
-            Actions
+            {{ $t('admin.table.actions') }}
           </div>
         </div>
       </div>
@@ -68,7 +68,7 @@
           class="mr-2 border-cream/15 rounded-md text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
         >
           <option v-for="size in pageSizes" :key="size" :value="size">
-            {{ size }} per page
+            {{ $t('admin.table.perPage', { n: size }) }}
           </option>
         </select>
       </div>
@@ -78,17 +78,17 @@
           @click="currentPage--"
           class="admin-panel relative inline-flex items-center px-4 py-2 border border-cream/15 text-sm font-medium text-cream/80 hover:bg-cream/[0.03] disabled:opacity-50"
         >
-          Previous
+          {{ $t('common.previous') }}
         </button>
         <span class="text-sm text-cream/80">
-          Page {{ currentPage }} of {{ totalPages }}
+          {{ $t('admin.table.pageOf', { page: currentPage, total: totalPages }) }}
         </span>
         <button
           :disabled="currentPage === totalPages"
           @click="currentPage++"
           class="admin-panel relative inline-flex items-center px-4 py-2 border border-cream/15 text-sm font-medium text-cream/80 hover:bg-cream/[0.03] disabled:opacity-50"
         >
-          Next
+          {{ $t('common.next') }}
         </button>
       </div>
     </div>
@@ -173,4 +173,4 @@ watch(pageSize, (newVal) => {
   emit('update:pageSize', newVal)
   currentPage.value = 1
 })
-</script>`
+</script>

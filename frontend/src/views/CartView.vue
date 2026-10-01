@@ -1,7 +1,7 @@
 <template>
   <div class="section pb-10">
-    <PageHeader eyebrow="Your order" title="Cart"
-                :subtitle="cartStore.items.length ? `${cartStore.itemCount} ${cartStore.itemCount === 1 ? 'item' : 'items'} ready for checkout` : ''" />
+    <PageHeader :eyebrow="$t('cart.eyebrow')" :title="$t('cart.title')"
+                :subtitle="cartStore.items.length ? $t('cart.subtitle', cartStore.itemCount) : ''" />
 
     <div v-if="loading && !cartStore.items.length" class="grid gap-4 lg:w-2/3" aria-busy="true">
       <div v-for="n in 3" :key="n" class="skeleton h-28 rounded-3xl"></div>
@@ -10,10 +10,10 @@
     <!-- Empty -->
     <div v-else-if="!cartStore.items.length" class="empty lux-card">
       <img :src="croissantImg" alt="" class="empty-img" />
-      <h2 class="display-title text-5xl">Your cart is empty.</h2>
-      <p class="mt-3 text-cream-muted">Everything on the counter is baked fresh today.</p>
+      <h2 class="display-title text-5xl">{{ $t('cart.emptyTitle') }}</h2>
+      <p class="mt-3 text-cream-muted">{{ $t('cart.emptyText') }}</p>
       <router-link v-magnetic="0.2" to="/products" class="btn-amber mt-8">
-        Shop the oven <font-awesome-icon icon="arrow-right" />
+        {{ $t('common.shopNow') }} <font-awesome-icon icon="arrow-right" />
       </router-link>
     </div>
 
@@ -29,22 +29,22 @@
               <router-link :to="{ name: 'product-detail', params: { id: item.product.id } }" class="line-name">
                 {{ item.product.name }}
               </router-link>
-              <p class="mt-1 text-sm text-cream-faint">{{ formatEuro(item.product.price) }} each</p>
+              <p class="mt-1 text-sm text-cream-faint">{{ $t('cart.each', { price: formatEuro(item.product.price) }) }}</p>
               <div class="mt-4 flex flex-wrap items-center gap-4">
-                <div class="stepper" role="group" :aria-label="`Quantity of ${item.product.name}`">
-                  <button type="button" :disabled="busy" aria-label="One less" @click="setQuantity(item, item.quantity - 1)">
+                <div class="stepper" role="group" :aria-label="$t('cart.quantityOf', { name: item.product.name })">
+                  <button type="button" :disabled="busy" :aria-label="$t('common.oneLess')" @click="setQuantity(item, item.quantity - 1)">
                     <font-awesome-icon icon="minus" />
                   </button>
                   <span class="tabular-nums" aria-live="polite">{{ item.quantity }}</span>
-                  <button type="button" :disabled="busy || item.quantity >= item.product.stock" aria-label="One more"
+                  <button type="button" :disabled="busy || item.quantity >= item.product.stock" :aria-label="$t('common.oneMore')"
                           @click="setQuantity(item, item.quantity + 1)">
                     <font-awesome-icon icon="plus" />
                   </button>
                 </div>
-                <button type="button" class="line-remove" :disabled="busy" @click="remove(item)">Remove</button>
+                <button type="button" class="line-remove" :disabled="busy" @click="remove(item)">{{ $t('common.remove') }}</button>
               </div>
               <p v-if="item.quantity >= item.product.stock" class="mt-2 text-xs text-crust-light">
-                That's all we have left today.
+                {{ $t('cart.lastOnes') }}
               </p>
             </div>
             <p class="line-total">{{ formatEuro(item.totalPrice) }}</p>
@@ -55,21 +55,21 @@
       <!-- Summary -->
       <aside class="summary">
         <div class="summary-card lux-card">
-          <h2 class="display-title text-4xl">Summary</h2>
+          <h2 class="display-title text-4xl">{{ $t('cart.summary') }}</h2>
           <dl class="summary-rows">
-            <div><dt>Subtotal</dt><dd>{{ formatEuro(cartStore.subtotal) }}</dd></div>
-            <div class="is-muted"><dt>Included VAT</dt><dd>{{ formatEuro(cartStore.tax) }}</dd></div>
-            <div class="is-total"><dt>Total</dt><dd>{{ formatEuro(cartStore.total) }}</dd></div>
+            <div><dt>{{ $t('common.subtotal') }}</dt><dd>{{ formatEuro(cartStore.subtotal) }}</dd></div>
+            <div class="is-muted"><dt>{{ $t('common.vatIncluded') }}</dt><dd>{{ formatEuro(cartStore.tax) }}</dd></div>
+            <div class="is-total"><dt>{{ $t('common.total') }}</dt><dd>{{ formatEuro(cartStore.total) }}</dd></div>
           </dl>
           <p class="text-xs text-cream-faint">
-            Pickup on {{ business.street }} is free. A delivery fee is shown at checkout if you choose delivery.
+            {{ $t('cart.feeNote', { street: business.street }) }}
           </p>
           <router-link v-magnetic="0.15" to="/checkout" class="btn-amber mt-6 w-full">
-            Checkout <font-awesome-icon icon="arrow-right" />
+            {{ $t('cart.checkout') }} <font-awesome-icon icon="arrow-right" />
           </router-link>
           <div class="mt-4 flex items-center justify-between text-sm">
-            <router-link to="/products" class="text-cream-muted hover:text-cream">Keep shopping</router-link>
-            <button type="button" class="text-cream-faint hover:text-red-300" :disabled="busy" @click="clear">Empty cart</button>
+            <router-link to="/products" class="text-cream-muted hover:text-cream">{{ $t('cart.keepShopping') }}</router-link>
+            <button type="button" class="text-cream-faint hover:text-red-300" :disabled="busy" @click="clear">{{ $t('cart.empty') }}</button>
           </div>
         </div>
       </aside>
@@ -83,12 +83,14 @@ import { useCartStore } from '@/stores/cartStore'
 import { useToast } from '@/composables/useToast'
 import { formatEuro } from '@/utils/money'
 import { business } from '@/config/business'
+import { useI18n } from 'vue-i18n'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import PageHeader from '@/components/common/PageHeader.vue'
 import croissantImg from '@/assets/bakery/croissant-chocolate.png'
 
 const cartStore = useCartStore()
 const { showToast } = useToast()
+const { t } = useI18n()
 const loading = ref(false)
 const busy = ref(false)
 
@@ -98,17 +100,17 @@ async function run(action, success) {
     await action()
     if (success) showToast(success)
   } catch {
-    showToast(cartStore.error || 'The cart could not be updated.', 'error')
+    showToast(t('common.cartError'), 'error')
   } finally {
     busy.value = false
   }
 }
 
 const setQuantity = (item, quantity) => run(() => cartStore.updateQuantity(item.product.id, quantity))
-const remove = (item) => run(() => cartStore.removeItem(item.product.id), `${item.product.name} removed`)
+const remove = (item) => run(() => cartStore.removeItem(item.product.id), t('common.removedFromCart', { name: item.product.name }))
 function clear() {
-  if (!window.confirm('Remove everything from your cart?')) return
-  run(() => cartStore.clearCart(), 'Your cart is empty')
+  if (!window.confirm(t('cart.confirmEmpty'))) return
+  run(() => cartStore.clearCart(), t('cart.emptied'))
 }
 
 onMounted(async () => {

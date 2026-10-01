@@ -13,10 +13,10 @@
 
     <!-- Error -->
     <section v-else-if="!product" class="section py-32 text-center">
-      <p class="eyebrow justify-center">Something went wrong</p>
-      <h1 class="display-title text-5xl mt-4">We couldn't load this product.</h1>
+      <p class="eyebrow justify-center">{{ $t('product.errorKicker') }}</p>
+      <h1 class="display-title text-5xl mt-4">{{ $t('product.errorTitle') }}</h1>
       <button type="button" class="btn-amber mt-8" @click="loadProduct">
-        <font-awesome-icon icon="rotate" /> Try again
+        <font-awesome-icon icon="rotate" /> {{ $t('common.tryAgain') }}
       </button>
     </section>
 
@@ -27,28 +27,28 @@
           <div class="pd-stage">
             <span class="pd-stage-glow" aria-hidden="true"></span>
             <ProductViewer3D v-if="view === '3d'" :key="product.id" :image="imageUrl" :model="product.model_3d_url || ''"
-                             :alt="product.name" @error="view = 'photo'" />
-            <img v-else :src="imageUrl" :alt="product.name" class="pd-photo" @error="applyImageFallback" />
+                             :alt="name" @error="view = 'photo'" />
+            <img v-else :src="imageUrl" :alt="name" class="pd-photo" @error="applyImageFallback" />
 
-            <div class="pd-toggle" role="group" aria-label="View">
+            <div class="pd-toggle" role="group" :aria-label="$t('product.view')">
               <button type="button" :class="{ 'is-active': view === '3d' }" :aria-pressed="view === '3d'" @click="view = '3d'">
                 <font-awesome-icon icon="cube" /> 3D
               </button>
               <button type="button" :class="{ 'is-active': view === 'photo' }" :aria-pressed="view === 'photo'" @click="view = 'photo'">
-                <font-awesome-icon icon="image" /> Photo
+                <font-awesome-icon icon="image" /> {{ $t('product.photo') }}
               </button>
             </div>
 
             <div class="pd-actions">
               <button type="button" class="pd-icon" :class="{ 'is-on': isInWishlist }"
-                      :aria-label="isInWishlist ? 'Remove from wishlist' : 'Save to wishlist'" :aria-pressed="isInWishlist" @click="toggleWishlist">
+                      :aria-label="isInWishlist ? $t('product.unsave') : $t('product.save')" :aria-pressed="isInWishlist" @click="toggleWishlist">
                 <font-awesome-icon :icon="[isInWishlist ? 'fas' : 'far', 'heart']" />
               </button>
               <button type="button" class="pd-icon" :class="{ 'is-on': isInCompare }"
-                      :aria-label="isInCompare ? 'Remove from compare' : 'Add to compare'" :aria-pressed="isInCompare" @click="toggleCompare">
+                      :aria-label="isInCompare ? $t('product.uncompare') : $t('product.compare')" :aria-pressed="isInCompare" @click="toggleCompare">
                 <font-awesome-icon icon="code-compare" />
               </button>
-              <button type="button" class="pd-icon" aria-label="Share" @click="shareProduct">
+              <button type="button" class="pd-icon" :aria-label="$t('product.share')" @click="shareProduct">
                 <font-awesome-icon icon="share-nodes" />
               </button>
             </div>
@@ -58,20 +58,20 @@
         <!-- Info -->
         <div class="pd-info">
           <nav aria-label="Breadcrumb" class="pd-crumbs">
-            <router-link to="/">Home</router-link>
+            <router-link to="/">{{ $t('nav.homeLink') }}</router-link>
             <span aria-hidden="true">/</span>
-            <router-link to="/products">Shop</router-link>
+            <router-link to="/products">{{ $t('nav.shop') }}</router-link>
             <template v-if="product.category?.slug">
               <span aria-hidden="true">/</span>
-              <router-link :to="{ name: 'category', params: { category: product.category.slug } }">{{ product.category.name }}</router-link>
+              <router-link :to="{ name: 'category', params: { category: product.category.slug } }">{{ categoryName(product.category) }}</router-link>
             </template>
           </nav>
 
           <p class="eyebrow mt-8">
-            {{ product.category?.name || 'Backlover' }}
-            <span v-if="product.is_seasonal" class="pd-chip is-seasonal">Seasonal</span>
+            {{ categoryName(product.category) || business.name }}
+            <span v-if="product.is_seasonal" class="pd-chip is-seasonal">{{ $t('common.seasonal') }}</span>
           </p>
-          <h1 :key="product.id" v-split.load class="display-title text-6xl sm:text-7xl mt-3">{{ product.name }}</h1>
+          <h1 :key="product.id" v-split.load class="display-title text-6xl sm:text-7xl mt-3">{{ name }}</h1>
 
           <div v-reveal="{ delay: 0.2 }" class="mt-6 flex flex-wrap items-center gap-4">
             <span class="pd-price">{{ formatEuro(product.price) }}</span>
@@ -80,7 +80,7 @@
             </span>
           </div>
 
-          <p v-reveal="{ delay: 0.3 }" class="pd-description">{{ product.description }}</p>
+          <p v-reveal="{ delay: 0.3 }" class="pd-description">{{ localized(product, 'description') }}</p>
 
           <div v-if="dietary.length" v-reveal="{ delay: 0.35 }" class="mt-5 flex flex-wrap gap-2">
             <span v-for="tag in dietary" :key="tag.label" class="pd-chip">
@@ -91,7 +91,7 @@
           <!-- Purchase -->
           <div v-reveal="{ delay: 0.4 }" class="pd-buy">
             <template v-if="cartItem">
-              <div class="pd-stepper" role="group" aria-label="Quantity in cart">
+              <div class="pd-stepper" role="group" :aria-label="$t('product.quantityInCart')">
                 <button type="button" :disabled="busy" aria-label="One less" @click="setCartQuantity(cartItem.quantity - 1)">
                   <font-awesome-icon icon="minus" />
                 </button>
@@ -101,11 +101,11 @@
                 </button>
               </div>
               <router-link to="/cart" class="btn-amber flex-1">
-                In your cart · Go to cart <font-awesome-icon icon="arrow-right" />
+                {{ $t('product.inCart') }} <font-awesome-icon icon="arrow-right" />
               </router-link>
             </template>
             <template v-else>
-              <div class="pd-stepper" role="group" aria-label="Quantity">
+              <div class="pd-stepper" role="group" :aria-label="$t('product.quantity')">
                 <button type="button" :disabled="quantity <= 1" aria-label="One less" @click="quantity--">
                   <font-awesome-icon icon="minus" />
                 </button>
@@ -115,29 +115,29 @@
                 </button>
               </div>
               <button v-magnetic="0.15" type="button" class="btn-amber flex-1" :disabled="busy || soldOut" @click="addToCart">
-                <template v-if="soldOut">Sold out today</template>
+                <template v-if="soldOut">{{ $t('common.soldOut') }}</template>
                 <template v-else>
                   <font-awesome-icon :icon="busy ? 'spinner' : 'cart-plus'" :spin="busy" />
-                  Add to cart<span class="hidden sm:inline"> · {{ formatEuro(product.price * quantity) }}</span>
+                  {{ $t('product.addToCart') }}<span class="hidden sm:inline"> · {{ formatEuro(product.price * quantity) }}</span>
                 </template>
               </button>
             </template>
           </div>
 
           <ul v-reveal.stagger="{ delay: 0.45 }" class="pd-service">
-            <li><font-awesome-icon icon="store" /> <span>Pick up at {{ business.street }}, {{ business.city }}<small v-if="business.transit"> · {{ business.transit }}</small></span></li>
-            <li><font-awesome-icon icon="truck" /> <span>Delivery across {{ business.city }}</span></li>
-            <li><font-awesome-icon icon="credit-card" /> <span>Pay cash or card on pickup or delivery</span></li>
+            <li><font-awesome-icon icon="store" /> <span>{{ $t('product.pickupAt', { street: business.street, city: business.city }) }}<small v-if="business.transit"> · {{ business.transit }}</small></span></li>
+            <li><font-awesome-icon icon="truck" /> <span>{{ $t('product.deliveryAcross', { city: business.city }) }}</span></li>
+            <li><font-awesome-icon icon="credit-card" /> <span>{{ $t('product.payment') }}</span></li>
           </ul>
 
           <!-- Details -->
           <div class="pd-details">
             <details v-if="product.ingredients?.length" open>
-              <summary>Ingredients <span>{{ product.ingredients.length }}</span></summary>
+              <summary>{{ $t('product.ingredients') }} <span>{{ product.ingredients.length }}</span></summary>
               <p class="pd-ingredients">{{ product.ingredients.map(i => i.name).join(', ') }}</p>
             </details>
             <details v-if="product.allergens?.length">
-              <summary>Allergens <span>{{ product.allergens.length }}</span></summary>
+              <summary>{{ $t('product.allergens') }} <span>{{ product.allergens.length }}</span></summary>
               <ul class="pd-allergens">
                 <li v-for="allergen in product.allergens" :key="allergen.id">
                   <strong>{{ allergen.name }}</strong>
@@ -146,7 +146,7 @@
               </ul>
             </details>
             <details v-if="nutrition.length">
-              <summary>Nutrition <span>per 100 g</span></summary>
+              <summary>{{ $t('product.nutrition') }} <span>{{ $t('product.per100g') }}</span></summary>
               <dl class="pd-nutrition">
                 <div v-for="row in nutrition" :key="row.label">
                   <dt>{{ row.label }}</dt>
@@ -162,11 +162,11 @@
       <section v-if="productStore.relatedProducts.length" class="section mt-32">
         <div class="flex items-end justify-between gap-6">
           <div>
-            <p v-reveal class="eyebrow">Also from the oven</p>
-            <h2 v-split class="display-title text-5xl mt-3">You might also like</h2>
+            <p v-reveal class="eyebrow">{{ $t('product.relatedKicker') }}</p>
+            <h2 v-split class="display-title text-5xl mt-3">{{ $t('product.relatedTitle') }}</h2>
           </div>
           <router-link to="/products" class="btn-ghost hidden sm:inline-flex">
-            All products <font-awesome-icon icon="arrow-right" />
+            {{ $t('common.allProducts') }} <font-awesome-icon icon="arrow-right" />
           </router-link>
         </div>
         <div v-reveal.stagger class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -188,6 +188,9 @@ import { useToast } from '@/composables/useToast'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { formatEuro } from '@/utils/money'
 import { business } from '@/config/business'
+import { useI18n } from 'vue-i18n'
+import { categoryName, localized } from '@/i18n/catalog'
+import { SITE_URL, absoluteUrl, usePageMeta } from '@/seo'
 import { webglAvailable } from '@/three/webgl'
 import ProductViewer3D from '@/components/three/ProductViewer3D.vue'
 import ProductCard from './ProductCard.vue'
@@ -198,6 +201,8 @@ const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 const compareStore = useCompareStore()
 const { showToast } = useToast()
+const { t } = useI18n()
+const name = computed(() => localized(product.value, 'name'))
 
 const quantity = ref(1)
 const busy = ref(false)
@@ -216,27 +221,27 @@ const isInCompare = computed(() => compareStore.items.some(item => item.id === p
 const soldOut = computed(() => !product.value?.available || product.value?.stock <= 0)
 
 const stockLabel = computed(() => {
-  if (soldOut.value) return 'Sold out today'
-  if (product.value.stock <= 5) return `Only ${product.value.stock} left`
-  return 'Fresh today'
+  if (soldOut.value) return t('common.soldOut')
+  if (product.value.stock <= 5) return t('common.onlyLeft', { count: product.value.stock })
+  return t('common.freshToday')
 })
 const stockTone = computed(() => (soldOut.value ? 'is-out' : product.value.stock <= 5 ? 'is-low' : 'is-in'))
 
 const dietary = computed(() => [
-  product.value.is_vegan && { label: 'Vegan', icon: 'leaf' },
-  !product.value.is_vegan && product.value.is_vegetarian && { label: 'Vegetarian', icon: 'seedling' },
-  product.value.is_gluten_free && { label: 'Gluten free', icon: 'wheat-awn' }
+  product.value.is_vegan && { label: t('common.vegan'), icon: 'leaf' },
+  !product.value.is_vegan && product.value.is_vegetarian && { label: t('common.vegetarian'), icon: 'seedling' },
+  product.value.is_gluten_free && { label: t('common.glutenFree'), icon: 'wheat-awn' }
 ].filter(Boolean))
 
 const nutrition = computed(() => {
   const info = product.value?.nutrition_info
   if (!info) return []
   return [
-    ['Energy', info.calories, 'kcal'],
-    ['Protein', info.proteins, 'g'],
-    ['Carbohydrates', info.carbohydrates, 'g'],
-    ['Fat', info.fats, 'g'],
-    ['Fibre', info.fiber, 'g']
+    [t('product.energy'), info.calories, 'kcal'],
+    [t('product.protein'), info.proteins, 'g'],
+    [t('product.carbs'), info.carbohydrates, 'g'],
+    [t('product.fat'), info.fats, 'g'],
+    [t('product.fibre'), info.fiber, 'g']
   ].filter(([, value]) => value !== null && value !== undefined)
     .map(([label, value, unit]) => ({ label, value: `${value} ${unit}` }))
 })
@@ -254,7 +259,7 @@ async function withBusy(action, success) {
     await action()
     if (success) showToast(success)
   } catch {
-    showToast(cartStore.error || 'The cart could not be updated.', 'error')
+    showToast(t('common.cartError'), 'error')
   } finally {
     busy.value = false
   }
@@ -262,47 +267,73 @@ async function withBusy(action, success) {
 
 const addToCart = () => withBusy(
   () => cartStore.addItem(product.value.id, quantity.value),
-  `${product.value.name} added to your cart`
+  t('common.addedToCart', { name: name.value })
 )
 const setCartQuantity = (value) => withBusy(() => cartStore.updateQuantity(product.value.id, value))
 
 function toggleWishlist() {
   if (isInWishlist.value) {
     wishlistStore.removeItem(product.value.id)
-    showToast('Removed from your wishlist')
+    showToast(t('product.unsaved'))
   } else {
     wishlistStore.addItem(product.value)
-    showToast('Saved to your wishlist')
+    showToast(t('product.saved'))
   }
 }
 
 function toggleCompare() {
   if (isInCompare.value) {
     compareStore.removeItem(product.value.id)
-    showToast('Removed from compare')
+    showToast(t('product.uncompared'))
   } else if (compareStore.items.length >= 4) {
-    showToast('You can compare up to 4 products', 'warning')
+    showToast(t('product.compareLimit'), 'warning')
   } else {
     compareStore.addItem(product.value)
-    showToast('Added to compare')
+    showToast(t('product.compared'))
   }
 }
 
 async function shareProduct() {
   try {
     if (navigator.share) {
-      await navigator.share({ title: product.value.name, url: window.location.href })
+      await navigator.share({ title: name.value, url: window.location.href })
     } else {
       await navigator.clipboard.writeText(window.location.href)
-      showToast('Link copied')
+      showToast(t('product.linkCopied'))
     }
   } catch (error) {
-    if (error?.name !== 'AbortError') showToast('Could not share this page', 'error')
+    if (error?.name !== 'AbortError') showToast(t('product.shareFailed'), 'error')
   }
 }
 
 watch(() => route.params.id, (id) => { if (id) loadProduct() }, { immediate: true })
-watch(product, (value) => { if (value) document.title = `${value.name} - ${business.name}` })
+// Title, share preview and a schema.org Product with price and stock for search results.
+usePageMeta(() => {
+  if (!product.value) return {}
+  const p = product.value
+  return {
+    title: name.value,
+    description: localized(p, 'description'),
+    image: imageUrl.value,
+    type: 'product',
+    jsonLd: {
+      '@type': 'Product',
+      name: name.value,
+      description: localized(p, 'description'),
+      image: [absoluteUrl(imageUrl.value)],
+      category: categoryName(p.category) || undefined,
+      brand: { '@type': 'Brand', name: business.name },
+      offers: {
+        '@type': 'Offer',
+        price: Number(p.price).toFixed(2),
+        priceCurrency: 'EUR',
+        availability: soldOut.value ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+        url: absoluteUrl(route.path),
+        seller: { '@id': `${SITE_URL}/#bakery` }
+      }
+    }
+  }
+})
 </script>
 
 <style scoped>

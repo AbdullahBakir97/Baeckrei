@@ -5,7 +5,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.1/topics/http/urls/
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import (
@@ -16,6 +16,8 @@ from rest_framework_simplejwt.views import (
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+
+from apps.core import seo
 
 # Configure Swagger documentation
 schema_view = get_schema_view(
@@ -33,7 +35,11 @@ schema_view = get_schema_view(
 
 # Configure API URLs
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(settings.DJANGO_ADMIN_PATH, admin.site.urls),
+
+    # Search engines
+    path('robots.txt', seo.robots_txt, name='robots-txt'),
+    path('sitemap.xml', seo.sitemap_xml, name='sitemap-xml'),
     
     # JWT Authentication
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -56,3 +62,9 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Everything else is a storefront page: serve the built app with the page's
+# meta tags (only when FRONTEND_INDEX_FILE is configured, i.e. in production).
+if settings.FRONTEND_INDEX_FILE:
+    urlpatterns += [
+        re_path(r'^(?!api/|static/|media/|swagger/|redoc/)(?P<path>.*)$', seo.spa_index, name='storefront'),
+    ]

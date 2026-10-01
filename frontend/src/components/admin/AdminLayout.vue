@@ -1,24 +1,27 @@
 <template>
   <div class="admin-shell">
     <!-- Sidebar -->
-    <aside class="admin-side" :class="{ 'is-open': drawerOpen }" aria-label="Admin">
+    <aside class="admin-side" :class="{ 'is-open': drawerOpen }" :aria-label="$t('admin.layout.sidebar')">
       <router-link to="/admin" class="admin-brand">
         <span><em>{{ business.name.charAt(0) }}</em>{{ business.name.slice(1) }}</span>
         <small>Studio</small>
       </router-link>
 
       <nav class="admin-nav">
-        <p class="admin-nav-label">Manage</p>
+        <p class="admin-nav-label">{{ $t('admin.layout.manage') }}</p>
         <router-link v-for="item in navItems" :key="item.path" :to="item.path" class="admin-link"
                      :class="{ 'is-active': isActive(item) }" @click="drawerOpen = false">
           <font-awesome-icon :icon="item.icon" class="w-4" />
-          <span>{{ item.name }}</span>
+          <span>{{ $t(`admin.nav.${item.key}`) }}</span>
         </router-link>
       </nav>
 
       <div class="admin-side-foot">
+        <button type="button" class="admin-link" :lang="otherLocale.code" @click="toggleLocale">
+          <font-awesome-icon icon="globe" class="w-4" /> <span>{{ otherLocale.label }}</span>
+        </button>
         <router-link to="/" class="admin-link">
-          <font-awesome-icon icon="store" class="w-4" /> <span>View shop</span>
+          <font-awesome-icon icon="store" class="w-4" /> <span>{{ $t('admin.layout.viewShop') }}</span>
         </router-link>
         <div class="admin-user">
           <span class="admin-avatar">{{ initials }}</span>
@@ -26,7 +29,7 @@
             <p class="truncate text-sm text-cream">{{ displayName }}</p>
             <p class="truncate text-xs text-cream-faint">{{ authStore.user?.email }}</p>
           </div>
-          <button type="button" class="admin-icon-btn" aria-label="Sign out" title="Sign out" @click="handleLogout">
+          <button type="button" class="admin-icon-btn" :aria-label="$t('admin.layout.signOut')" :title="$t('admin.layout.signOut')" @click="handleLogout">
             <font-awesome-icon icon="right-from-bracket" />
           </button>
         </div>
@@ -37,7 +40,7 @@
     <!-- Main -->
     <div class="admin-main">
       <header class="admin-top">
-        <button type="button" class="admin-icon-btn lg:hidden" aria-label="Open menu" @click="drawerOpen = true">
+        <button type="button" class="admin-icon-btn lg:hidden" :aria-label="$t('admin.layout.openMenu')" @click="drawerOpen = true">
           <font-awesome-icon icon="bars" />
         </button>
         <div class="min-w-0">
@@ -62,22 +65,32 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useI18n } from 'vue-i18n'
 import { business } from '@/config/business'
+import { LOCALES, intlLocale, setLocale } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const drawerOpen = ref(false)
+const { t, te, locale } = useI18n()
 
 const navItems = [
-  { name: 'Dashboard', path: '/admin', icon: 'chart-pie' },
-  { name: 'Products', path: '/admin/products', icon: 'box-open' },
-  { name: 'Categories', path: '/admin/categories', icon: 'layer-group' },
-  { name: 'Orders', path: '/admin/orders', icon: 'receipt' },
-  { name: 'Users', path: '/admin/users', icon: 'users' }
+  { key: 'dashboard', path: '/admin', icon: 'chart-pie' },
+  { key: 'products', path: '/admin/products', icon: 'box-open' },
+  { key: 'categories', path: '/admin/categories', icon: 'layer-group' },
+  { key: 'orders', path: '/admin/orders', icon: 'receipt' },
+  { key: 'users', path: '/admin/users', icon: 'users' }
 ]
 
-const today = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())
+const today = computed(() => {
+  // Reading locale.value keeps the date in step with the chosen language.
+  void locale.value
+  return new Intl.DateTimeFormat(intlLocale(), { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())
+})
+
+const otherLocale = computed(() => LOCALES.find(l => l.code !== locale.value))
+const toggleLocale = () => setLocale(otherLocale.value.code)
 
 const displayName = computed(() => {
   const user = authStore.user || {}
@@ -95,7 +108,10 @@ onMounted(() => {
 // '/admin' must only be active on the dashboard itself, not on every admin page.
 const isActive = (item) => (item.path === '/admin' ? route.path === '/admin' : route.path.startsWith(item.path))
 
-const currentPageTitle = computed(() => route.meta.title || 'Dashboard')
+const currentPageTitle = computed(() => {
+  const key = `admin.titles.${String(route.name)}`
+  return te(key) ? t(key) : (route.meta.title || t('admin.titles.admin-dashboard'))
+})
 
 watch(() => route.fullPath, () => { drawerOpen.value = false })
 
@@ -282,6 +298,11 @@ const handleLogout = async () => {
   font-weight: 500;
   color: #b9ab98;
   transition: background 0.25s, color 0.25s;
+}
+
+button.admin-link {
+  width: 100%;
+  text-align: left;
 }
 
 .admin-link:hover {

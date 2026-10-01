@@ -3,38 +3,38 @@
     <!-- Filters -->
     <form class="admin-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 p-4" @submit.prevent="fetchOrders">
       <div class="lg:col-span-2">
-        <label for="order-search" class="block text-sm font-medium text-cream/80">Search</label>
-        <input id="order-search" v-model.trim="filters.search" type="search" placeholder="Order number, name or email"
+        <label for="order-search" class="block text-sm font-medium text-cream/80">{{ $t('common.search') }}</label>
+        <input id="order-search" v-model.trim="filters.search" type="search" :placeholder="$t('admin.orders.searchPlaceholder')"
                class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm focus:border-crust focus:ring-crust sm:text-sm text-cream bg-oven-800" />
       </div>
       <div>
-        <label for="order-status" class="block text-sm font-medium text-cream/80">Status</label>
+        <label for="order-status" class="block text-sm font-medium text-cream/80">{{ $t('admin.fields.status') }}</label>
         <select id="order-status" v-model="filters.status"
                 class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm focus:border-crust focus:ring-crust sm:text-sm text-cream bg-oven-800">
-          <option value="">All</option>
-          <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
+          <option value="">{{ $t('admin.filters.all') }}</option>
+          <option v-for="s in statuses" :key="s" :value="s">{{ $t(`common.status.${s.toLowerCase()}`) }}</option>
         </select>
       </div>
       <div>
-        <label for="order-fulfillment" class="block text-sm font-medium text-cream/80">Pickup / delivery</label>
+        <label for="order-fulfillment" class="block text-sm font-medium text-cream/80">{{ $t('admin.orders.fulfillment') }}</label>
         <select id="order-fulfillment" v-model="filters.fulfillment_method"
                 class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm focus:border-crust focus:ring-crust sm:text-sm text-cream bg-oven-800">
-          <option value="">All</option>
-          <option value="pickup">Pickup</option>
-          <option value="delivery">Delivery</option>
+          <option value="">{{ $t('admin.filters.all') }}</option>
+          <option value="pickup">{{ $t('common.pickup') }}</option>
+          <option value="delivery">{{ $t('common.delivery') }}</option>
         </select>
       </div>
       <div class="flex items-end gap-2">
-        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-full text-oven-950 bg-crust hover:bg-crust-light">Filter</button>
-        <button type="button" class="px-4 py-2 text-sm font-medium rounded-full text-cream/80 bg-cream/[0.05] hover:bg-cream/10" @click="resetFilters">Reset</button>
+        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-full text-oven-950 bg-crust hover:bg-crust-light">{{ $t('admin.filters.filter') }}</button>
+        <button type="button" class="px-4 py-2 text-sm font-medium rounded-full text-cream/80 bg-cream/[0.05] hover:bg-cream/10" @click="resetFilters">{{ $t('admin.filters.reset') }}</button>
       </div>
       <div>
-        <label for="order-from" class="block text-sm font-medium text-cream/80">From</label>
+        <label for="order-from" class="block text-sm font-medium text-cream/80">{{ $t('admin.orders.from') }}</label>
         <input id="order-from" v-model="filters.start_date" type="date"
                class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800" />
       </div>
       <div>
-        <label for="order-to" class="block text-sm font-medium text-cream/80">To</label>
+        <label for="order-to" class="block text-sm font-medium text-cream/80">{{ $t('admin.orders.to') }}</label>
         <input id="order-to" v-model="filters.end_date" type="date"
                class="mt-1 block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800" />
       </div>
@@ -47,30 +47,30 @@
       <table class="min-w-full divide-y divide-cream/10 admin-table">
         <thead class="bg-cream/[0.03]">
           <tr>
-            <th scope="col">Order</th>
-            <th scope="col">Customer</th>
-            <th scope="col">Placed</th>
-            <th scope="col">Pickup / delivery</th>
-            <th scope="col">Status</th>
-            <th scope="col" class="text-right">Total</th>
-            <th scope="col"><span class="sr-only">Actions</span></th>
+            <th scope="col">{{ $t('admin.orders.order') }}</th>
+            <th scope="col">{{ $t('admin.orders.customer') }}</th>
+            <th scope="col">{{ $t('admin.orders.placed') }}</th>
+            <th scope="col">{{ $t('admin.orders.fulfillment') }}</th>
+            <th scope="col">{{ $t('admin.fields.status') }}</th>
+            <th scope="col" class="text-right">{{ $t('common.total') }}</th>
+            <th scope="col"><span class="sr-only">{{ $t('admin.table.actions') }}</span></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-cream/10">
-          <tr v-if="loading"><td colspan="7" class="text-center text-cream-muted">Loading orders…</td></tr>
-          <tr v-else-if="!orders.length"><td colspan="7" class="text-center text-cream-muted">No orders match these filters.</td></tr>
+          <tr v-if="loading"><td colspan="7" class="text-center text-cream-muted">{{ $t('admin.orders.loading') }}</td></tr>
+          <tr v-else-if="!orders.length"><td colspan="7" class="text-center text-cream-muted">{{ $t('admin.orders.empty') }}</td></tr>
           <tr v-for="order in orders" v-else :key="order.id">
             <td class="font-medium text-cream">{{ order.order_number }}</td>
             <td>{{ order.customer_name || '—' }}</td>
             <td>{{ formatDateTime(order.created_at) }}</td>
             <td>
-              {{ order.fulfillment_method === 'pickup' ? 'Pickup' : 'Delivery' }}
-              <span v-if="order.requested_time" class="block text-xs text-cream-muted">for {{ formatDateTime(order.requested_time) }}</span>
+              {{ order.fulfillment_method === 'pickup' ? $t('common.pickup') : $t('common.delivery') }}
+              <span v-if="order.requested_time" class="block text-xs text-cream-muted">{{ $t('admin.orders.forTime', { time: formatDateTime(order.requested_time) }) }}</span>
             </td>
-            <td><span class="px-2 py-1 text-xs font-medium rounded-full" :class="statusClass(order.status)">{{ order.status }}</span></td>
-            <td class="text-right tabular-nums">{{ formatPrice(order.total_price) }} €</td>
+            <td><span class="px-2 py-1 text-xs font-medium rounded-full" :class="statusClass(order.status)">{{ statusLabel(order.status) }}</span></td>
+            <td class="text-right tabular-nums">{{ formatEuro(order.total_price) }}</td>
             <td class="text-right">
-              <button type="button" class="text-crust hover:text-crust-light bg-transparent font-medium" @click="openOrder(order.id)">Details</button>
+              <button type="button" class="text-crust hover:text-crust-light bg-transparent font-medium" @click="openOrder(order.id)">{{ $t('admin.orders.details') }}</button>
             </td>
           </tr>
         </tbody>
@@ -79,40 +79,40 @@
 
     <!-- Detail drawer -->
     <div v-if="selected" class="fixed inset-0 z-50 flex justify-end bg-oven-950/70" @click.self="closeOrder">
-      <aside class="h-full w-full max-w-xl overflow-y-auto bg-oven-800 p-6 shadow-xl text-cream" role="dialog" aria-modal="true" :aria-label="`Order ${selected.order_number}`">
+      <aside class="h-full w-full max-w-xl overflow-y-auto bg-oven-800 p-6 shadow-xl text-cream" role="dialog" aria-modal="true" :aria-label="$t('admin.orders.orderLabel', { number: selected.order_number })">
         <div class="flex items-start justify-between gap-4">
           <div>
             <h2 class="text-xl font-semibold text-cream">{{ selected.order_number }}</h2>
-            <p class="text-sm text-cream-muted">Placed {{ formatDateTime(selected.created_at) }}</p>
+            <p class="text-sm text-cream-muted">{{ $t('admin.orders.placedAt', { date: formatDateTime(selected.created_at) }) }}</p>
           </div>
-          <button type="button" class="rounded p-1 text-cream-muted hover:text-cream/80 bg-transparent" aria-label="Close" @click="closeOrder">✕</button>
+          <button type="button" class="rounded p-1 text-cream-muted hover:text-cream/80 bg-transparent" :aria-label="$t('common.close')" @click="closeOrder">✕</button>
         </div>
 
-        <span class="mt-3 inline-block px-2 py-1 text-xs font-medium rounded-full" :class="statusClass(selected.status)">{{ selected.status }}</span>
+        <span class="mt-3 inline-block px-2 py-1 text-xs font-medium rounded-full" :class="statusClass(selected.status)">{{ statusLabel(selected.status) }}</span>
 
         <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
           <div>
-            <dt class="font-medium text-cream-muted">Customer</dt>
+            <dt class="font-medium text-cream-muted">{{ $t('admin.orders.customer') }}</dt>
             <dd>{{ selected.customer_name || '—' }}</dd>
             <dd v-if="selected.contact_phone">{{ selected.contact_phone }}</dd>
           </div>
           <div>
-            <dt class="font-medium text-cream-muted">{{ selected.fulfillment_method === 'pickup' ? 'Pickup' : 'Delivery to' }}</dt>
-            <dd v-if="selected.fulfillment_method === 'pickup'">In store</dd>
+            <dt class="font-medium text-cream-muted">{{ selected.fulfillment_method === 'pickup' ? $t('common.pickup') : $t('admin.orders.deliveryTo') }}</dt>
+            <dd v-if="selected.fulfillment_method === 'pickup'">{{ $t('admin.orders.inStore') }}</dd>
             <dd v-else-if="selected.address">
               {{ selected.address.address_line_1 }}<br>
               <template v-if="selected.address.address_line_2">{{ selected.address.address_line_2 }}<br></template>
               {{ selected.address.postal_code }} {{ selected.address.city }}
             </dd>
-            <dd v-if="selected.requested_time" class="text-cream-muted">Requested {{ formatDateTime(selected.requested_time) }}</dd>
+            <dd v-if="selected.requested_time" class="text-cream-muted">{{ $t('admin.orders.requested', { time: formatDateTime(selected.requested_time) }) }}</dd>
           </div>
           <div>
-            <dt class="font-medium text-cream-muted">Payment</dt>
-            <dd>{{ selected.payment?.payment_method_display || '—' }}</dd>
-            <dd class="text-cream-muted">{{ selected.payment?.status_display || '' }}</dd>
+            <dt class="font-medium text-cream-muted">{{ $t('admin.orders.payment') }}</dt>
+            <dd>{{ paymentMethodLabel(selected.payment) }}</dd>
+            <dd class="text-cream-muted">{{ paymentStatusLabel(selected.payment) }}</dd>
           </div>
           <div v-if="selected.notes">
-            <dt class="font-medium text-cream-muted">Notes</dt>
+            <dt class="font-medium text-cream-muted">{{ $t('admin.orders.notes') }}</dt>
             <dd>{{ selected.notes }}</dd>
           </div>
         </dl>
@@ -120,21 +120,21 @@
         <ul class="mt-6 divide-y divide-cream/10 border-y border-cream/10">
           <li v-for="item in selected.items" :key="item.id" class="flex justify-between py-2 text-sm">
             <span>{{ item.quantity }} × {{ item.product_name }}</span>
-            <span class="tabular-nums">{{ formatPrice(item.subtotal) }} €</span>
+            <span class="tabular-nums">{{ formatEuro(item.subtotal) }}</span>
           </li>
           <li v-if="Number(selected.delivery_fee) > 0" class="flex justify-between py-2 text-sm">
-            <span>Delivery fee</span><span class="tabular-nums">{{ formatPrice(selected.delivery_fee) }} €</span>
+            <span>{{ $t('admin.orders.deliveryFee') }}</span><span class="tabular-nums">{{ formatEuro(selected.delivery_fee) }}</span>
           </li>
           <li class="flex justify-between py-2 font-semibold">
-            <span>Total</span><span class="tabular-nums">{{ formatPrice(selected.total_price) }} €</span>
+            <span>{{ $t('common.total') }}</span><span class="tabular-nums">{{ formatEuro(selected.total_price) }}</span>
           </li>
         </ul>
 
         <div v-if="selected.fulfillment_method === 'delivery' && selected.is_cancelable" class="mt-6">
-          <label for="tracking" class="block text-sm font-medium text-cream/80">Tracking or driver note <span class="text-cream-faint">(optional)</span></label>
+          <label for="tracking" class="block text-sm font-medium text-cream/80">{{ $t('admin.orders.tracking') }} <span class="text-cream-faint">({{ $t('common.optional') }})</span></label>
           <div class="mt-1 flex gap-2">
             <input id="tracking" v-model.trim="tracking" class="block w-full rounded-md border border-cream/15 px-3 py-2 shadow-sm sm:text-sm text-cream bg-oven-800" />
-            <button type="button" class="px-3 py-2 text-sm rounded-full text-cream/80 bg-cream/[0.05] hover:bg-cream/10" :disabled="!tracking || busy" @click="saveTracking">Save</button>
+            <button type="button" class="px-3 py-2 text-sm rounded-full text-cream/80 bg-cream/[0.05] hover:bg-cream/10" :disabled="!tracking || busy" @click="saveTracking">{{ $t('common.save') }}</button>
           </div>
         </div>
 
@@ -145,7 +145,7 @@
                   class="px-4 py-2 text-sm font-medium rounded-full"
                   :class="action.status === 'Canceled' ? 'text-red-300 bg-red-400/10 hover:bg-red-400/15' : 'text-oven-950 bg-crust hover:bg-crust-light'"
                   @click="setStatus(action.status)">
-            {{ action.label }}
+            {{ $t(action.label) }}
           </button>
         </div>
       </aside>
@@ -156,18 +156,21 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
+import { formatDateTime, formatEuro } from '@/utils/money'
 
 const API = '/api/orders/orders/'
 const statuses = ['Pending', 'Processing', 'Completed', 'Canceled']
 // Mirrors OrderService.ALLOWED_STATUS_TRANSITIONS on the backend.
 const transitions = {
-  Pending: [{ status: 'Processing', label: 'Start preparing' }, { status: 'Canceled', label: 'Cancel order' }],
-  Processing: [{ status: 'Completed', label: 'Mark as handed over' }, { status: 'Canceled', label: 'Cancel order' }],
+  Pending: [{ status: 'Processing', label: 'admin.orders.startPreparing' }, { status: 'Canceled', label: 'admin.orders.cancelOrder' }],
+  Processing: [{ status: 'Completed', label: 'admin.orders.markHandedOver' }, { status: 'Canceled', label: 'admin.orders.cancelOrder' }],
   Completed: [],
   Canceled: []
 }
 
+const { t, te } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const orders = ref([])
@@ -183,10 +186,20 @@ const filters = reactive({ ...emptyFilters })
 
 const nextActions = computed(() => (selected.value ? transitions[selected.value.status] || [] : []))
 
-const formatPrice = (value) => Number(value || 0).toFixed(2)
-const formatDateTime = (value) => new Date(value).toLocaleString('de-DE', {
-  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-})
+const statusLabel = (status) => {
+  const key = `common.status.${String(status).toLowerCase()}`
+  return te(key) ? t(key) : status
+}
+const paymentMethodLabel = (payment) => {
+  if (!payment) return '—'
+  const key = `checkout.payment.${payment.payment_method}`
+  return te(key) ? t(key) : (payment.payment_method_display || '—')
+}
+const paymentStatusLabel = (payment) => {
+  if (!payment?.status) return ''
+  const key = `order.paymentStatuses.${payment.status.toLowerCase()}`
+  return te(key) ? t(key) : (payment.status_display || '')
+}
 const statusClass = (status) => ({
   Pending: 'bg-amber-300/10 text-amber-200',
   Processing: 'bg-sky-400/10 text-sky-300',
@@ -202,7 +215,7 @@ async function fetchOrders() {
     const response = await axios.get(API, { params })
     orders.value = Array.isArray(response.data) ? response.data : response.data.results || []
   } catch (err) {
-    error.value = 'Orders could not be loaded.'
+    error.value = t('admin.orders.loadError')
   } finally {
     loading.value = false
   }
@@ -220,7 +233,7 @@ async function openOrder(id) {
     selected.value = response.data
     tracking.value = response.data.shipping_tracking_number || ''
   } catch (err) {
-    error.value = 'That order could not be loaded.'
+    error.value = t('admin.orders.loadOneError')
   }
 }
 
@@ -242,7 +255,7 @@ async function setStatus(status) {
     const response = await axios.post(`${API}${selected.value.id}/update_status/`, { status })
     replaceOrder(response.data)
   } catch (err) {
-    actionError.value = err.response?.data?.error || 'The status could not be changed.'
+    actionError.value = err.response?.data?.error || t('admin.orders.statusError')
   } finally {
     busy.value = false
   }
@@ -255,7 +268,7 @@ async function saveTracking() {
     const response = await axios.post(`${API}${selected.value.id}/add_tracking/`, { tracking_number: tracking.value })
     replaceOrder(response.data)
   } catch (err) {
-    actionError.value = err.response?.data?.error || 'The note could not be saved.'
+    actionError.value = err.response?.data?.error || t('admin.orders.noteError')
   } finally {
     busy.value = false
   }

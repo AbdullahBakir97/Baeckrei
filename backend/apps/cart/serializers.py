@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 from decimal import Decimal
 from .models import Cart, CartItem
@@ -41,7 +42,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     def validate_quantity(self, value):
         """Validate quantity against product stock and business rules."""
         if value < 1:
-            raise serializers.ValidationError("Quantity must be at least 1")
+            raise serializers.ValidationError(_("Quantity must be at least 1"))
 
         # Get current instance if we're updating
         instance = self.instance
@@ -227,7 +228,7 @@ class CartOperationSerializer(serializers.Serializer):
             product_id = uuid.UUID(str(value))
             product = Product.objects.get(id=product_id)
             if not product.available:
-                raise serializers.ValidationError("Product is not available")
+                raise serializers.ValidationError(_("Product is not available"))
             return value
         except (ValueError, Product.DoesNotExist):
             raise serializers.ValidationError("Invalid product ID")
@@ -235,7 +236,7 @@ class CartOperationSerializer(serializers.Serializer):
     def validate_quantity(self, value):
         """Validate quantity value."""
         if value is not None and value < 1:
-            raise serializers.ValidationError("Quantity must be at least 1")
+            raise serializers.ValidationError(_("Quantity must be at least 1"))
         return value
 
     def validate(self, data):
@@ -258,7 +259,7 @@ class CartOperationSerializer(serializers.Serializer):
             return data
             
         except Product.DoesNotExist:
-            raise serializers.ValidationError("Product not found")
+            raise serializers.ValidationError(_("Product not found"))
         except ValueError:
             raise serializers.ValidationError("Invalid product ID format")
 
@@ -270,12 +271,12 @@ class AddToCartSerializer(serializers.Serializer):
         try:
             product = Product.objects.get(id=value, status='active')
             if not product.available:
-                raise serializers.ValidationError("Product is not available")
+                raise serializers.ValidationError(_("Product is not available"))
             if product.stock <= 0:
-                raise serializers.ValidationError("Product is out of stock")
+                raise serializers.ValidationError(_("Product is out of stock"))
             return value
         except Product.DoesNotExist:
-            raise serializers.ValidationError("Product not found or inactive")
+            raise serializers.ValidationError(_("Product not found or inactive"))
 
     def validate(self, data):
         """Validate the entire operation."""
@@ -296,5 +297,5 @@ class UpdateCartItemSerializer(serializers.Serializer):
     def validate_quantity(self, value):
         """Validate quantity value."""
         if value < 1:
-            raise serializers.ValidationError("Quantity must be at least 1")
+            raise serializers.ValidationError(_("Quantity must be at least 1"))
         return value
