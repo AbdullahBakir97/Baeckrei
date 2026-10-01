@@ -85,7 +85,9 @@
             <circle ref="ring" cx="100" cy="100" r="92" class="craft-ring-fill" pathLength="1" />
           </svg>
           <div class="craft-core" aria-hidden="true"></div>
-          <transition name="swap" mode="out-in">
+          <!-- A live 3D croissant rises, turns and bakes with the scroll. -->
+          <BakeScene v-if="use3d && !reducedMotion" :progress="bakeProgress" @error="use3d = false" />
+          <transition v-else name="swap" mode="out-in">
             <img :key="activeStep" :src="steps[activeStep].image" alt="" class="craft-img" />
           </transition>
           <p class="craft-num" aria-hidden="true">0{{ activeStep + 1 }}</p>
@@ -171,6 +173,7 @@ import { business, streetLine, cityLine } from '@/config/business'
 import { gsap, ScrollTrigger, prefersReducedMotion } from '@/motion'
 import { webglAvailable } from '@/three/webgl'
 import HeroScene from '@/components/three/HeroScene.vue'
+import BakeScene from '@/components/three/BakeScene.vue'
 import SplineScene from '@/components/three/SplineScene.vue'
 import ProductCard from '@/components/products/ProductCard.vue'
 import croissantImg from '@/assets/bakery/croissant-butter.png'
@@ -195,6 +198,8 @@ const use3d = ref(webglAvailable())
 const splineFailed = ref(false)
 const featured = ref([])
 const activeStep = ref(0)
+const bakeProgress = ref(0)
+const reducedMotion = prefersReducedMotion()
 
 const address = [streetLine(), cityLine()].filter(Boolean).join(', ')
 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([business.name, address].join(', '))}`
@@ -267,7 +272,13 @@ function setupMotion() {
     gsap.fromTo(ring.value, { strokeDashoffset: 1 }, {
       strokeDashoffset: 0,
       ease: 'none',
-      scrollTrigger: { trigger: craftEl.value, start: 'top 60%', end: 'bottom 70%', scrub: true }
+      scrollTrigger: {
+        trigger: craftEl.value,
+        start: 'top 60%',
+        end: 'bottom 70%',
+        scrub: true,
+        onUpdate: (self) => { bakeProgress.value = self.progress }
+      }
     })
   }, root.value)
 

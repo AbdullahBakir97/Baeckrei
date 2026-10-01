@@ -5,6 +5,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { gsap, ScrollTrigger, prefersReducedMotion, isCoarsePointer } from '@/motion'
+import { quality } from '@/three/quality'
 import croissant from '@/assets/bakery/croissant-butter.png'
 import pretzel from '@/assets/bakery/pretzel.png'
 import donut from '@/assets/bakery/donut.png'
@@ -55,14 +56,26 @@ function layout(item) {
 }
 
 async function build() {
-  const [{ createStage }, { buildSilhouetteMesh }] = await Promise.all([
+  const [{ createStage }, { buildSilhouetteMesh }, effects] = await Promise.all([
     import('@/three/stage'),
-    import('@/three/silhouette')
+    import('@/three/silhouette'),
+    import('@/three/effects')
   ])
   if (disposed) return
-  stage = createStage(container.value, { fov: 35, cameraZ: 9, shadow: false, exposure: 1 })
+  const q = quality()
+  stage = createStage(container.value, { fov: 35, cameraZ: 9, shadow: false, exposure: 1, pixelRatio: q.pixelRatio })
   const { THREE, scene, camera } = stage
   const reduced = prefersReducedMotion()
+
+  // Depth: far bakes sink into the dark, flour dust drifts in the light,
+  // and the main croissant steams in front of a warm glow.
+  scene.fog = new THREE.Fog('#0e0c0a', 8.5, 17)
+  const dust = q.dust && !reduced ? effects.createFlourDust({ count: q.dust, width: 20, height: 12, depth: 9 }) : null
+  if (dust) scene.add(dust)
+  const glow = effects.createGlow({ color: '#ff9f55', size: 6, opacity: 0.32 })
+  scene.add(glow)
+  const steam = q.steam && !reduced ? effects.createSteam({ width: 1.4, height: 3 }) : null
+  if (steam) scene.add(steam)
 
   // Re-place the bakes when the canvas changes shape.
   let lastAspect = 0
@@ -82,6 +95,19 @@ async function build() {
       camera.position.y = pointer.sy * 0.3
       camera.lookAt(0, 0, 0)
     }
+
+    dust?.userData.update(delta, t)
+    // The glow and steam follow the main croissant.
+    const hero = items.find(item => item.def.src === ITEMS[0].src)
+    if (hero) {
+      glow.position.set(hero.mesh.position.x, hero.mesh.position.y - 0.2, hero.mesh.position.z - 0.8)
+      glow.material.opacity = 0.32 * hero.intro * (1 - scrollSmooth)
+      if (steam) {
+        steam.position.set(hero.mesh.position.x - 0.1, hero.mesh.position.y + hero.scale * 0.35, hero.mesh.position.z + 0.2)
+        steam.userData.strength = hero.intro * (1 - scrollSmooth * 1.5)
+      }
+    }
+    steam?.userData.update(delta, t, camera)
 
     for (const item of items) {
       const { mesh, base, phase } = item
@@ -105,10 +131,10 @@ async function build() {
   })
 
   // Build one bake at a time so the page stays responsive.
-  for (const [index, def] of ITEMS.entries()) {
+  for (const [index, def] of ITEMS.slice(0, q.items).entries()) {
     let mesh
     try {
-      mesh = await buildSilhouetteMesh(def.src, { depth: 0.26, maskSize: 200, textureSize: 512 })
+      mesh = await buildSilhouetteMesh(def.src, { depth: 0.26, maskSize: 200, textureSize: q.textureSize })
     } catch (err) {
       console.warn('Skipping hero item:', err.message)
       continue
