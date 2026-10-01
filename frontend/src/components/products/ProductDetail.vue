@@ -39,6 +39,8 @@
               </button>
             </div>
 
+            <ArButton v-if="product.model_3d_url" class="pd-ar" :model="product.model_3d_url" :name="name" />
+
             <div class="pd-actions">
               <button type="button" class="pd-icon" :class="{ 'is-on': isInWishlist }"
                       :aria-label="isInWishlist ? $t('product.unsave') : $t('product.save')" :aria-pressed="isInWishlist" @click="toggleWishlist">
@@ -194,6 +196,7 @@ import { categoryName, localized } from '@/i18n/catalog'
 import { SITE_URL, absoluteUrl, usePageMeta } from '@/seo'
 import { webglAvailable } from '@/three/webgl'
 import ProductViewer3D from '@/components/three/ProductViewer3D.vue'
+import ArButton from '@/components/three/ArButton.vue'
 import ProductCard from './ProductCard.vue'
 
 const route = useRoute()
@@ -440,6 +443,13 @@ usePageMeta(() => {
 .pd-toggle button.is-active {
   color: #0e0c0a;
   background: #e6a15a;
+}
+
+.pd-ar {
+  position: absolute;
+  right: 1rem;
+  bottom: 4rem;
+  z-index: 2;
 }
 
 .pd-actions {

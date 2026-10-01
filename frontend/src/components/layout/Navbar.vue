@@ -20,11 +20,11 @@
         <button type="button" class="nav-icon" :aria-label="$t('nav.search')" @click="openSearch">
           <font-awesome-icon icon="search" />
         </button>
-        <router-link to="/wishlist" class="nav-icon hidden sm:grid" :aria-label="$t('nav.wishlist')">
+        <router-link to="/wishlist" class="nav-icon nav-icon-wide" :aria-label="$t('nav.wishlist')">
           <font-awesome-icon icon="heart" />
           <span v-if="wishlistStore.items.length" class="nav-badge">{{ wishlistStore.items.length }}</span>
         </router-link>
-        <router-link v-if="compareStore.items.length" to="/compare" class="nav-icon hidden sm:grid" :aria-label="$t('nav.compare')">
+        <router-link v-if="compareStore.items.length" to="/compare" class="nav-icon nav-icon-wide" :aria-label="$t('nav.compare')">
           <font-awesome-icon icon="code-compare" />
           <span class="nav-badge">{{ compareStore.items.length }}</span>
         </router-link>
@@ -92,6 +92,8 @@
         </li>
       </ul>
       <div class="mobile-foot">
+        <router-link to="/wishlist" @click="closeMenu">{{ $t('nav.wishlist') }}</router-link>
+        <router-link v-if="compareStore.items.length" to="/compare" @click="closeMenu">{{ $t('nav.compare') }}</router-link>
         <template v-if="authStore.isAuthenticated">
           <router-link v-if="authStore.isAdmin" to="/admin" @click="closeMenu">{{ $t('nav.admin') }}</router-link>
           <router-link to="/profile" @click="closeMenu">{{ $t('nav.profile') }}</router-link>
@@ -381,6 +383,17 @@ onBeforeUnmount(() => {
   border-radius: 9999px;
   color: #d9cfc2;
   transition: background 0.3s, color 0.3s;
+}
+
+/* Wishlist and compare live in the mobile menu on small phones. */
+.nav-icon-wide {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .nav-icon-wide {
+    display: grid;
+  }
 }
 
 .nav-icon:hover {
