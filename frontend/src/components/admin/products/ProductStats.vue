@@ -59,7 +59,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useProductStore } from '@/stores/productStore'
+import axios from '@/plugins/axios'
 import {
   CurrencyDollarIcon,
   ShoppingBagIcon,
@@ -69,7 +69,6 @@ import {
   ArrowDownIcon
 } from '@heroicons/vue/24/outline'
 
-const productStore = useProductStore()
 const emit = defineEmits(['view-details'])
 
 const stats = ref([
@@ -95,9 +94,9 @@ const stats = ref([
     iconColor: 'text-yellow-500'
   },
   {
-    type: 'revenue',
-    name: 'Total Revenue',
-    value: '$0',
+    type: 'stock_value',
+    name: 'Stock value',
+    value: '0.00 €',
     icon: CurrencyDollarIcon,
     iconColor: 'text-blue-500'
   }
@@ -105,21 +104,14 @@ const stats = ref([
 
 const loadStats = async () => {
   try {
-    const report = await productStore.fetchReport()
-    stats.value = stats.value.map(stat => {
-      switch (stat.type) {
-        case 'total':
-          return { ...stat, value: report.total_products }
-        case 'active':
-          return { ...stat, value: report.active_products }
-        case 'low_stock':
-          return { ...stat, value: report.low_stock_items }
-        case 'revenue':
-          return { ...stat, value: `$${report.total_revenue.toLocaleString()}` }
-        default:
-          return stat
-      }
-    })
+    const { data } = await axios.get('/api/products/dashboard_stats/')
+    const values = {
+      total: data.total_products,
+      active: data.active_products,
+      low_stock: data.low_stock_count,
+      stock_value: `${Number(data.stock_value).toFixed(2)} €`
+    }
+    stats.value = stats.value.map(stat => ({ ...stat, value: values[stat.type] ?? stat.value }))
   } catch (error) {
     console.error('Error loading stats:', error)
   }

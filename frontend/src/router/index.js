@@ -9,6 +9,7 @@ import Settings from '../components/account/Settings.vue'
 import Login from '../components/auth/LoginForm.vue'
 import { adminRoutes } from '@/router/admin.routers.js'
 import { useAuthStore } from '@/stores/authStore'
+import { business } from '@/config/business'
 
 const routes = [
   {
@@ -31,8 +32,7 @@ const routes = [
     path: '/categories/:category',
     name: 'category',
     component: ProductList,
-    props: true,
-    meta: { title: 'Category Products', requiresAuth: false }
+    meta: { title: 'Category', requiresAuth: false }
   },
   {
     path: '/blog',
@@ -40,46 +40,94 @@ const routes = [
     component: () => import('@/components/pages/Blog.vue'),
     meta: { title: 'Blog', requiresAuth: false }
   },
-  {
-    path: '/breads',
-    name: 'breads',
-    component: ProductList,
-    props: { category: 'breads' },
-    meta: { title: 'Breads', requiresAuth: false }
-  },
-  {
-    path: '/pastries',
-    name: 'pastries',
-    component: ProductList,
-    props: { category: 'pastries' },
-    meta: { title: 'Pastries', requiresAuth: false }
-  },
-  {
-    path: '/cakes',
-    name: 'cakes',
-    component: ProductList,
-    props: { category: 'cakes' },
-    meta: { title: 'Cakes', requiresAuth: false }
-  },
-  {
-    path: '/cookies',
-    name: 'cookies',
-    component: ProductList,
-    props: { category: 'cookies' },
-    meta: { title: 'Cookies', requiresAuth: false }
-  },
+  // Old category paths from the footer; the categories now live under /categories/.
+  ...['breads', 'pastries', 'cakes', 'cookies'].map(slug => ({
+    path: `/${slug}`,
+    redirect: { name: 'category', params: { category: slug } }
+  })),
   {
     path: '/seasonal',
     name: 'seasonal',
     component: ProductList,
-    props: { category: 'seasonal' },
-    meta: { title: 'Seasonal Products', requiresAuth: false }
+    meta: { title: 'Seasonal Specials', requiresAuth: false, seasonal: true }
+  },
+  {
+    path: '/wishlist',
+    name: 'wishlist',
+    component: () => import('@/views/WishlistView.vue'),
+    meta: { title: 'Wishlist' }
+  },
+  {
+    path: '/compare',
+    name: 'compare',
+    component: () => import('@/views/CompareView.vue'),
+    meta: { title: 'Compare Products' }
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@/components/auth/ForgotPassword.vue'),
+    meta: { title: 'Forgot Password' }
+  },
+  {
+    path: '/reset-password/:uid/:token',
+    name: 'reset-password',
+    component: () => import('@/components/auth/ResetPassword.vue'),
+    meta: { title: 'Reset Password' }
+  },
+  {
+    path: '/blog/:slug',
+    name: 'blog-post',
+    component: () => import('@/components/pages/BlogPost.vue'),
+    meta: { title: 'Blog' }
+  },
+  {
+    path: '/newsletter/unsubscribe',
+    name: 'newsletter-unsubscribe',
+    component: () => import('@/components/pages/NewsletterUnsubscribe.vue'),
+    meta: { title: 'Newsletter' }
+  },
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('@/components/pages/Privacy.vue'),
+    meta: { title: 'Privacy Policy' }
+  },
+  {
+    path: '/terms',
+    name: 'terms',
+    component: () => import('@/components/pages/Terms.vue'),
+    meta: { title: 'Terms and Conditions' }
+  },
+  {
+    path: '/cookie-policy',
+    name: 'cookie-policy',
+    component: () => import('@/components/pages/CookiePolicy.vue'),
+    meta: { title: 'Cookie Policy' }
+  },
+  {
+    path: '/impressum',
+    name: 'impressum',
+    component: () => import('@/components/pages/Impressum.vue'),
+    meta: { title: 'Impressum' }
   },
   {
     path: '/cart',
     name: 'cart',
     component: () => import('@/views/CartView.vue'),
     meta: { requiresAuth: true, title: 'Shopping Cart' }
+  },
+  {
+    path: '/checkout',
+    name: 'checkout',
+    component: () => import('@/views/CheckoutView.vue'),
+    meta: { requiresAuth: true, title: 'Checkout' }
+  },
+  {
+    path: '/orders/:id(\\d+)',
+    name: 'order-detail',
+    component: () => import('@/views/OrderDetailView.vue'),
+    meta: { requiresAuth: true, title: 'Order Details' }
   },
   {
     path: '/about',
@@ -107,6 +155,7 @@ const routes = [
   },
   {
     path: '/settings',
+    name: 'settings',
     component: Settings,
     meta: { requiresAuth: true, title: 'Settings' }
   },
@@ -122,6 +171,13 @@ const routes = [
     name: 'register',
     component: () => import('@/components/auth/RegisterForm.vue'),
     meta: { title: 'Register', requiresAuth: false }
+  },
+  // Must stay last: anything that matched no other route.
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/components/pages/NotFound.vue'),
+    meta: { title: 'Page not found' }
   },
 ]
 
@@ -187,7 +243,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // Update document title
-    document.title = to.meta.title ? `${to.meta.title} - Beackrei` : 'Beackrei'
+    document.title = to.meta.title ? `${to.meta.title} - ${business.name}` : business.name
     
     next()
   } catch (error) {

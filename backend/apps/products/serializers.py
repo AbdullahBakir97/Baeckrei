@@ -63,7 +63,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'description', 'price', 'stock',
             'category', 'category_name', 'image', 'status',
-            'is_vegan', 'is_vegetarian', 'is_gluten_free',
+            'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
             'available', 'created_at', 'modified_at'
         )
         read_only_fields = ('id', 'created_at', 'modified_at')
@@ -77,7 +77,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'category', 'price',
             'image', 'image_url', 'is_vegan', 'is_vegetarian',
-            'is_gluten_free', 'available', 'stock'
+            'is_gluten_free', 'is_seasonal', 'status', 'available', 'stock'
         ]
 
     def get_image_url(self, obj):
@@ -105,8 +105,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'description', 'category',
             'price', 'formatted_price', 'image', 'image_url', 'images',
-            'is_vegan', 'is_vegetarian', 'is_gluten_free',
-            'available', 'stock', 'stock_status', 'ingredients', 
+            'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
+            'status', 'available', 'stock', 'stock_status', 'ingredients',
             'allergens', 'nutrition_info', 'created_at', 'modified_at'
         ]
 
@@ -175,7 +175,7 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             'name', 'slug', 'description', 'category',
             'price', 'stock', 'image', 'ingredients',
             'nutrition_info', 'is_vegan', 'is_vegetarian',
-            'is_gluten_free', 'status', 'available'
+            'is_gluten_free', 'is_seasonal', 'status', 'available'
         ]
 
     def create(self, validated_data):
@@ -285,3 +285,55 @@ class SimilarProductSerializer(serializers.Serializer):
         child=serializers.DecimalField(max_digits=5, decimal_places=1),
         required=False
     )
+
+
+ALLOWED_IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.webp')
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+
+def validate_upload_image(image):
+    name = (image.name or '').lower()
+    if not name.endswith(ALLOWED_IMAGE_EXTENSIONS):
+        raise serializers.ValidationError('Upload a JPG, PNG or WebP image.')
+    if image.size > MAX_IMAGE_SIZE:
+        raise serializers.ValidationError('The image must be 5 MB or smaller.')
+    return image
+
+
+class AdminProductSerializer(serializers.ModelSerializer):
+    """Create and edit products from the admin pages."""
+    image = serializers.ImageField(required=False, validators=[validate_upload_image])
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'description', 'category', 'price', 'stock', 'image',
+            'is_vegan', 'is_vegetarian', 'is_gluten_free', 'is_seasonal',
+            'status', 'available',
+        ]
+        read_only_fields = ['id']
+
+    def validate_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('The price must be greater than 0.')
+        return value
+
+    def validate(self, attrs):
+        if self.instance is None and not attrs.get('image'):
+            raise serializers.ValidationError({'image': 'A product image is required.'})
+        return attrs
+
+
+class AdminCategorySerializer(serializers.ModelSerializer):
+    """Create and edit categories from the admin pages."""
+    image = serializers.ImageField(required=False, allow_null=True, validators=[validate_upload_image])
+    product_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'description', 'image', 'is_active', 'order', 'product_count']
+        read_only_fields = ['id', 'slug', 'product_count']
+
+    def get_product_count(self, obj):
+        return obj.products.count()
+

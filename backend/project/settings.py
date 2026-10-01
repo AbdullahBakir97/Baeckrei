@@ -65,6 +65,7 @@ BACKEND_APPS = [
     'apps.products',
     'apps.cart',
     'apps.orders',
+    'apps.content',
 ]
 
 INSTALLED_APPS = [
@@ -198,6 +199,12 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
     ],
     'URL_FORMAT_OVERRIDE': None,  # Disable format suffixes
+    # Applied only to views that set throttle_scope (ScopedRateThrottle).
+    'DEFAULT_THROTTLE_RATES': {
+        'password_reset': '5/hour',
+        'contact': '10/hour',
+        'newsletter': '10/hour',
+    },
 }
 
 # Swagger settings
@@ -283,6 +290,29 @@ LOGGING = {
         },
     },
 }
+
+# Shop settings. Prices are stored and shown including VAT (gross).
+from decimal import Decimal  # noqa: E402
+VAT_RATE = Decimal(os.environ.get('SHOP_VAT_RATE', '0.19'))
+DELIVERY_FEE = Decimal(os.environ.get('SHOP_DELIVERY_FEE', '3.50'))
+# Online payment providers need credentials; until configured, only cash
+# and card on pickup/delivery are offered.
+PAYPAL_ENABLED = _env_bool('SHOP_PAYPAL_ENABLED', False)
+
+# Email (password reset, contact form). Printed to the console unless an
+# SMTP server is configured.
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@localhost')
+SHOP_NOTIFICATION_EMAIL = os.environ.get('SHOP_NOTIFICATION_EMAIL', '')
+if os.environ.get('EMAIL_HOST'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ['EMAIL_HOST']
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # HTTPS hardening outside local development
 if not DEBUG:

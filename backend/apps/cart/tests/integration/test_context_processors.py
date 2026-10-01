@@ -84,9 +84,8 @@ class TestCartContextProcessor:
 
         assert context['cart_items_count'] == 2  # Quantity is 2
         # Subtotal is €20.00 (1 item with quantity=2 at €10.00 each)
-        # Tax is 19% of €20.00 = €3.80
-        # Total is €23.80
-        assert context['cart_total'] == Decimal('23.80')
+        # Prices include 19% VAT, so the total equals the subtotal
+        assert context['cart_total'] == Decimal('20.00')
         assert len(context['cart'].items.all()) == 1  # One item with quantity=2
 
     def test_cart_context_format(self, rf, middleware_stack, test_cart_with_item):
@@ -102,9 +101,8 @@ class TestCartContextProcessor:
         assert isinstance(context['cart_total'], Decimal)
         assert isinstance(context['cart_items_count'], int)
         # Subtotal is €20.00 (2 items at €10.00 each)
-        # Tax is 19% of €20.00 = €3.80
-        # Total is €23.80
-        assert context['cart_total'] == Decimal('23.80')
+        # Prices include 19% VAT, so the total equals the subtotal
+        assert context['cart_total'] == Decimal('20.00')
 
     def test_cart_context_empty_cart(self, rf, middleware_stack, empty_cart):
         """Test cart context with empty cart."""

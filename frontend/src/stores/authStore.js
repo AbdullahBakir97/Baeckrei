@@ -57,6 +57,12 @@ export const useAuthStore = defineStore('auth', () => {
       setAuthToken(null)
       user.value = null
       loading.value = false
+      // Don't show the previous user's cart or addresses to the next person.
+      const [{ useCartStore }, { useAddressStore }] = await Promise.all([
+        import('./cartStore'), import('./addressStore')
+      ])
+      useCartStore().$reset()
+      useAddressStore().reset()
     }
   }
 
@@ -75,6 +81,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Turn a DRF error response into one readable sentence.
+  const apiErrorMessage = (err, fallback) => {
+    const data = err.response?.data
+    if (!data) return fallback
+    if (typeof data === 'string') return fallback
+    if (data.detail) return data.detail
+    if (data.error) return data.error
+    const first = Object.values(data)[0]
+    return Array.isArray(first) ? first[0] : (first || fallback)
+  }
+
   const register = async (userData) => {
     try {
       loading.value = true
@@ -85,9 +102,9 @@ export const useAuthStore = defineStore('auth', () => {
         email: userData.email,
         password: userData.password
       })
-    } catch (error) {
-      error.value = error.response?.data?.detail || 'Failed to register'
-      throw error
+    } catch (err) {
+      error.value = apiErrorMessage(err, 'Registration failed. Please check your details.')
+      throw err
     } finally {
       loading.value = false
     }
@@ -100,9 +117,9 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await axios.patch('/api/accounts/users/me/', userData)
       user.value = response.data
       return response.data
-    } catch (error) {
-      error.value = error.response?.data?.detail || 'Failed to update profile'
-      throw error
+    } catch (err) {
+      error.value = apiErrorMessage(err, 'Your profile could not be saved.')
+      throw err
     } finally {
       loading.value = false
     }
@@ -112,13 +129,29 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
       error.value = null
-      await axios.post('/api/accounts/users/change-password/', passwords)
+      await axios.post('/api/accounts/users/change_password/', passwords)
       return true
-    } catch (error) {
-      error.value = error.response?.data?.detail || 'Failed to change password'
-      throw error
+    } catch (err) {
+      error.value = apiErrorMessage(err, 'Your password could not be changed.')
+      throw err
     } finally {
       loading.value = false
+    }
+  }
+
+  const requestPasswordReset = async (email) => {
+    const response = await axios.post('/api/accounts/password-reset/', { email })
+    return response.data.message
+  }
+
+  const confirmPasswordReset = async ({ uid, token, newPassword }) => {
+    try {
+      const response = await axios.post('/api/accounts/password-reset/confirm/', {
+        uid, token, new_password: newPassword
+      })
+      return response.data.message
+    } catch (err) {
+      throw new Error(apiErrorMessage(err, 'Your password could not be reset.'))
     }
   }
 
@@ -153,6 +186,9 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     updateProfile,
     changePassword,
+    requestPasswordReset,
+    confirmPasswordReset,
+    apiErrorMessage,
     initializeAuth,
     fetchCurrentUser
   }

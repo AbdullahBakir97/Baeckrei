@@ -10,26 +10,30 @@
       <p class="mt-4 text-gray-400">Loading product details...</p>
     </div>
 
+    <div v-else-if="loadError" class="rounded-lg bg-red-50 p-6 text-red-700" role="alert">
+      {{ loadError }}
+      <router-link to="/admin/products" class="ml-2 underline">Back to products</router-link>
+    </div>
+
     <template v-else>
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-white">{{ product.name }}</h1>
-          <p class="mt-1 text-sm text-gray-400">ID: {{ product.id }}</p>
+          <h1 class="text-2xl font-bold text-gray-900">{{ product.name }}</h1>
+          <p class="mt-1 text-sm text-gray-500">ID: {{ product.id }}</p>
         </div>
         <div class="flex items-center gap-4">
           <button
             @click="router.push('/admin/products')"
             class="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white bg-[#1A2642] hover:bg-[#1E2A4A] rounded-lg transition-colors"
           >
-            <i class="fas fa-arrow-left mr-2"></i>
+            <font-awesome-icon icon="arrow-left" class="mr-2" />
             Back to Products
           </button>
           <button
             @click="handleEdit"
             class="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
           >
-            <i class="fas fa-edit mr-2"></i>
             Edit Product
           </button>
         </div>
@@ -54,7 +58,7 @@
                   class="w-full h-full object-cover"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center">
-                  <i class="fas fa-image text-4xl text-gray-700"></i>
+                  <font-awesome-icon icon="box-open" class="text-4xl text-gray-700" />
                 </div>
               </div>
 
@@ -62,11 +66,11 @@
               <div class="grid grid-cols-2 gap-6">
                 <div>
                   <label class="block text-sm font-medium text-gray-400">Category</label>
-                  <p class="mt-1 text-white">{{ product.category.name }}</p>
+                  <p class="mt-1 text-white">{{ product.category?.name || '—' }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-400">Price</label>
-                  <p class="mt-1 text-white">${{ formatPrice(product.price) }}</p>
+                  <p class="mt-1 text-white">{{ formatPrice(product.price) }} €</p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-400">Stock</label>
@@ -90,21 +94,21 @@
                   v-if="product.is_vegan"
                   class="px-3 py-1 text-sm font-medium text-green-500 bg-green-500/10 rounded-full"
                 >
-                  <i class="fas fa-leaf mr-1"></i>
+                  <font-awesome-icon icon="leaf" class="mr-1" />
                   Vegan
                 </span>
                 <span
                   v-if="product.is_vegetarian"
                   class="px-3 py-1 text-sm font-medium text-green-500 bg-green-500/10 rounded-full"
                 >
-                  <i class="fas fa-seedling mr-1"></i>
+                  <font-awesome-icon icon="seedling" class="mr-1" />
                   Vegetarian
                 </span>
                 <span
                   v-if="product.is_gluten_free"
                   class="px-3 py-1 text-sm font-medium text-yellow-500 bg-yellow-500/10 rounded-full"
                 >
-                  <i class="fas fa-wheat-alt mr-1"></i>
+                  <font-awesome-icon icon="wheat-alt" class="mr-1" />
                   Gluten Free
                 </span>
               </div>
@@ -230,6 +234,14 @@
         </div>
       </div>
     </template>
+    <ProductFormModal
+      v-if="showForm && product"
+      :product="product"
+      :saving="saving"
+      :server-errors="formErrors"
+      @close="showForm = false"
+      @save="saveProduct"
+    />
   </div>
 </template>
 
@@ -237,6 +249,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from '@/plugins/axios'
+import ProductFormModal from './ProductFormModal.vue'
+import { useProductStore } from '@/stores/productStore'
+import { useToast } from '@/composables/useToast'
+
+const productStore = useProductStore()
+const { showToast } = useToast()
 
 const router = useRouter()
 const route = useRoute()
@@ -265,13 +283,21 @@ const getStatusColor = computed(() => {
   return colors[status] || 'text-gray-400'
 })
 
+const loadError = ref('')
+const showForm = ref(false)
+const saving = ref(false)
+const formErrors = ref({})
+
 const fetchProduct = async () => {
   try {
     loading.value = true
-    const response = await axios.get(`/api/admin/products/${route.params.id}/`)
+    loadError.value = ''
+    const response = await axios.get(`/api/products/${route.params.id}/`)
     product.value = response.data
   } catch (error) {
-    console.error('Error fetching product:', error)
+    loadError.value = error.response?.status === 404
+      ? 'This product does not exist.'
+      : 'The product could not be loaded.'
   } finally {
     loading.value = false
   }
@@ -279,18 +305,34 @@ const fetchProduct = async () => {
 
 const updateStock = async () => {
   try {
-    await axios.patch(`/api/admin/products/${product.value.id}/`, {
+    const response = await axios.patch(`/api/products/${product.value.id}/`, {
       stock: stockQuantity.value
     })
-    product.value.stock = stockQuantity.value
+    product.value = response.data
     stockQuantity.value = null
+    showToast('Stock updated')
   } catch (error) {
-    console.error('Error updating stock:', error)
+    showToast('The stock could not be updated', 'error')
   }
 }
 
 const handleEdit = () => {
-  router.push(`/admin/products/${product.value.id}/edit`)
+  formErrors.value = {}
+  showForm.value = true
+}
+
+const saveProduct = async (data) => {
+  saving.value = true
+  formErrors.value = {}
+  try {
+    product.value = await productStore.updateProduct(data)
+    showForm.value = false
+    showToast('Product saved')
+  } catch (error) {
+    formErrors.value = error.response?.data || { general: 'The product could not be saved.' }
+  } finally {
+    saving.value = false
+  }
 }
 
 onMounted(() => {

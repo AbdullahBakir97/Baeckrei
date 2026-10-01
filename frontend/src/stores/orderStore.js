@@ -210,6 +210,36 @@ export const useOrderStore = defineStore('orders', () => {
     }
   }
 
+  const checkoutOptions = ref(null)
+
+  const fetchCheckoutOptions = async () => {
+    const response = await axios.get(`${API_PATH}/checkout_options/`)
+    checkoutOptions.value = response.data
+    return response.data
+  }
+
+  // Place an order from the current cart. Errors are returned as a readable
+  // message plus field errors so the checkout form can show them inline.
+  const placeOrder = async (payload) => {
+    try {
+      loading.value = true
+      error.value = null
+      const response = await axios.post(`${API_PATH}/checkout/`, payload)
+      const order = normalizeOrder(response.data)
+      currentOrder.value = order
+      return order
+    } catch (err) {
+      const data = err.response?.data || {}
+      error.value = data.detail?.message ||
+        (typeof data.detail === 'string' ? data.detail : null) ||
+        'Your order could not be placed. Please try again.'
+      err.fieldErrors = data.detail ? {} : data
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Admin actions
   const updateOrderStatus = async (orderId, status) => {
     try {
@@ -296,8 +326,12 @@ export const useOrderStore = defineStore('orders', () => {
     completedOrders,
     canceledOrders,
 
+    checkoutOptions,
+
     // Actions
     fetchOrders,
+    fetchCheckoutOptions,
+    placeOrder,
     fetchOrderById,
     cancelOrder,
     trackOrder,

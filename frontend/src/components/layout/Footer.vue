@@ -5,21 +5,20 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div class="col-span-1">
           <div class="brand-logo mb-4">
-            <span class="text-2xl font-bold logo-text">B</span>
-            <span class="text-xl font-semibold logo-text ml-2">eackrei</span>
+            <span class="text-2xl font-bold logo-text">{{ business.name.charAt(0) }}</span>
+            <span class="text-xl font-semibold logo-text">{{ business.name.slice(1) }}</span>
           </div>
           <p class="text-gray-300 text-sm mb-4">
             Your trusted source for quality baked goods and confectionery products.
           </p>
-          <div class="flex space-x-4">
-            <a href="#" class="nav-link">
-              <font-awesome-icon :icon="['fab', 'facebook']" size="lg" />
-            </a>
-            <a href="#" class="nav-link">
-              <font-awesome-icon :icon="['fab', 'twitter']" size="lg" />
-            </a>
-            <a href="#" class="nav-link">
-              <font-awesome-icon :icon="['fab', 'instagram']" size="lg" />
+          <address class="not-italic text-gray-300 text-sm mb-4 space-y-1">
+            <p class="flex items-center gap-2"><font-awesome-icon icon="store" class="text-amber-500/80" /> {{ business.name }}, {{ storeAddress }}</p>
+            <p v-if="business.transit" class="flex items-center gap-2"><font-awesome-icon icon="train-subway" class="text-amber-500/80" /> {{ business.transit }}</p>
+          </address>
+          <div v-if="socialLinks.length" class="flex space-x-4">
+            <a v-for="link in socialLinks" :key="link.icon" :href="link.url" class="nav-link"
+               target="_blank" rel="noopener" :aria-label="link.label">
+              <font-awesome-icon :icon="['fab', link.icon]" size="lg" />
             </a>
           </div>
         </div>
@@ -40,10 +39,13 @@
         <div class="col-span-1">
           <h3 class="text-gray-200 font-semibold text-lg mb-4">Categories</h3>
           <ul class="space-y-2">
-            <li v-for="category in categories" :key="category.path">
-              <router-link :to="category.path" class="nav-link">
+            <li v-for="category in categories" :key="category.slug">
+              <router-link :to="{ name: 'category', params: { category: category.slug } }" class="nav-link">
                 {{ category.name }}
               </router-link>
+            </li>
+            <li>
+              <router-link :to="{ name: 'seasonal' }" class="nav-link">Seasonal</router-link>
             </li>
           </ul>
         </div>
@@ -54,21 +56,28 @@
           <p class="text-gray-300 text-sm mb-4">
             Subscribe to our newsletter for updates and special offers.
           </p>
-          <div class="flex">
-            <input 
-              type="email" 
-              v-model="email" 
-              placeholder="Enter your email" 
-              class="search-input flex-1 rounded-r-none"
+          <p v-if="newsletterMessage" class="text-sm" :class="newsletterOk ? 'text-green-300' : 'text-red-300'" role="status">
+            {{ newsletterMessage }}
+          </p>
+          <form v-if="!newsletterOk" class="flex" @submit.prevent="subscribeNewsletter">
+            <label for="newsletter-email" class="sr-only">Email address</label>
+            <input
+              id="newsletter-email"
+              type="email"
+              v-model.trim="email"
+              placeholder="Enter your email"
+              required
+              class="search-input flex-1 min-w-0 rounded-r-none"
             >
-            <button 
-              @click="subscribeNewsletter"
-              class="px-4 py-2 bg-amber-500 text-white rounded-r-lg hover:bg-amber-600 
-                     transition duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            <button
+              type="submit"
+              :disabled="subscribing"
+              class="px-4 py-2 bg-amber-500 text-white rounded-r-lg hover:bg-amber-600
+                     transition duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:opacity-50"
             >
               Subscribe
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -76,13 +85,14 @@
       <div class="mt-12 pt-8 border-t border-gray-800">
         <div class="flex flex-col md:flex-row justify-between items-center">
           <p class="text-gray-300 text-sm">
-            {{ new Date().getFullYear() }} Beackrei. All rights reserved.
+            © {{ new Date().getFullYear() }} {{ business.name }}. All rights reserved.
           </p>
-          <div class="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" class="nav-link text-sm">Privacy Policy</a>
-            <a href="#" class="nav-link text-sm">Terms of Service</a>
-            <a href="#" class="nav-link text-sm">Cookie Policy</a>
-          </div>
+          <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4 md:mt-0" aria-label="Legal">
+            <router-link to="/impressum" class="nav-link text-sm">Impressum</router-link>
+            <router-link to="/privacy" class="nav-link text-sm">Privacy Policy</router-link>
+            <router-link to="/terms" class="nav-link text-sm">Terms</router-link>
+            <router-link to="/cookie-policy" class="nav-link text-sm">Cookie Policy</router-link>
+          </nav>
         </div>
       </div>
     </div>
@@ -90,9 +100,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import axios from '@/plugins/axios'
+import { useProductStore } from '@/stores/productStore'
+import { business, streetLine, cityLine } from '@/config/business'
 
 const email = ref('')
+const productStore = useProductStore()
+const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
+
+// Only show social icons that have a real URL in src/config/business.js.
+const socialLinks = [
+  { icon: 'instagram', label: 'Instagram', url: business.social.instagram },
+  { icon: 'facebook', label: 'Facebook', url: business.social.facebook },
+  { icon: 'twitter', label: 'Twitter', url: business.social.twitter }
+].filter(link => link.url)
+
+const categories = computed(() => productStore.categories.filter(c => c.is_active !== false))
+
+onMounted(() => {
+  if (!productStore.categories.length) productStore.fetchCategories()
+})
 
 const quickLinks = [
   { name: 'Home', path: '/' },
@@ -102,17 +130,24 @@ const quickLinks = [
   { name: 'Blog', path: '/blog' }
 ]
 
-const categories = [
-  { name: 'Breads', path: '/breads' },
-  { name: 'Pastries', path: '/pastries' },
-  { name: 'Cakes', path: '/cakes' },
-  { name: 'Cookies', path: '/cookies' },
-  { name: 'Seasonal', path: '/seasonal' }
-]
+const subscribing = ref(false)
+const newsletterOk = ref(false)
+const newsletterMessage = ref('')
 
-const subscribeNewsletter = () => {
-  console.log('Subscribing email:', email.value)
-  email.value = ''
+const subscribeNewsletter = async () => {
+  if (!email.value) return
+  subscribing.value = true
+  newsletterMessage.value = ''
+  try {
+    const response = await axios.post('/api/content/newsletter/', { email: email.value })
+    newsletterOk.value = true
+    newsletterMessage.value = response.data.message
+    email.value = ''
+  } catch (err) {
+    newsletterMessage.value = err.response?.data?.email?.[0] || 'Please try again later.'
+  } finally {
+    subscribing.value = false
+  }
 }
 </script>
 
@@ -145,6 +180,8 @@ const subscribeNewsletter = () => {
   );
   opacity: 0;
   transition: opacity 0.3s ease;
+  /* Decoration only; it covers the footer and must not block its form. */
+  pointer-events: none;
 }
 
 .footer-nav:hover::before {
@@ -184,7 +221,7 @@ const subscribeNewsletter = () => {
 }
 
 .brand-logo {
-  @apply flex items-center space-x-2 px-4 py-2 rounded-lg
+  @apply flex items-baseline px-4 py-2 rounded-lg
          transition-all duration-300 w-fit;
   background: linear-gradient(
     135deg,

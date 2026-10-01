@@ -15,7 +15,6 @@ from ..constants import (
 )
 import uuid
 import logging
-import time
 
 if TYPE_CHECKING:
     from apps.cart.models import CartItem, Cart
@@ -44,12 +43,8 @@ class BaseQuantityStrategy(VersionOperation[T, Optional[T]]):
             raise ValueError("new_quantity must be an integer")
             
         try:
-            # Lock product and validate availability
-            product = cart_item.product.__class__.objects.select_for_update().get(pk=cart_item.product.pk)
-            
-            # Add a small delay to simulate real-world conditions
-            time.sleep(0.1)
-            
+            product = cart_item.product.__class__.objects.get(pk=cart_item.product.pk)
+
             # Validate product status
             if self.event_type != CART_EVENT_ITEM_REMOVED and (not product.available or product.status != 'active'):
                 raise ValidationError(f"Product {product.name} is not available for purchase")
@@ -58,18 +53,13 @@ class BaseQuantityStrategy(VersionOperation[T, Optional[T]]):
             current_quantity = cart_item.quantity if cart_item.pk else 0
             quantity_change = self._calculate_change(current_quantity, new_quantity)
             
-            # Validate stock levels
-            if self.event_type != CART_EVENT_ITEM_REMOVED:
-                if quantity_change > 0 and quantity_change > product.stock:
-                    raise InsufficientStockError(
-                        f"Not enough stock. Additional requested: {quantity_change}, Available: {product.stock}"
-                    )
-            
-            # Update product stock
-            old_stock = product.stock
-            new_stock = old_stock - quantity_change
-            product.stock = new_stock
-            product.save(update_fields=['stock'])
+            # Stock is only deducted at checkout; the cart just must not ask
+            # for more than is currently available.
+            if self.event_type != CART_EVENT_ITEM_REMOVED and new_quantity > product.stock:
+                raise InsufficientStockError(
+                    f"Not enough stock. Requested: {new_quantity}, Available: {product.stock}",
+                    available_stock=product.stock
+                )
             
             # Update cart item
             if new_quantity > 0:
@@ -97,9 +87,7 @@ class BaseQuantityStrategy(VersionOperation[T, Optional[T]]):
                 product=product,
                 quantity=abs(quantity_change),
                 details={
-                    'old_stock': old_stock,
-                    'new_stock': new_stock,
-                    'delta': -quantity_change,
+                    'delta': quantity_change,
                     'operation_id': str(uuid.uuid4()),
                     'source': 'quantity_strategy',
                     'timestamp': timezone.now().isoformat()

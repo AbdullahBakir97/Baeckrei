@@ -45,6 +45,7 @@ urlpatterns = [
     path('api/products/', include('apps.products.urls')),
     path('api/shopping-cart/', include('apps.cart.urls', namespace='cart')),
     path('api/orders/', include('apps.orders.urls')),
+    path('api/content/', include('apps.content.urls')),
     
     # API Documentation (using drf-yasg)
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

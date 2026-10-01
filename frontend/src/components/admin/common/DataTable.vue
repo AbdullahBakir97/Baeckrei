@@ -1,4 +1,4 @@
-`<template>
+<template>
   <div class="overflow-x-auto">
     <div class="flex items-center justify-between mb-4 px-6 pt-6">
       <div class="flex items-center space-x-4">
@@ -10,12 +10,12 @@
             class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
           />
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <i class="fas fa-search text-gray-400"></i>
+            <font-awesome-icon icon="search" class="text-gray-400" />
           </div>
         </div>
         <slot name="filters"></slot>
       </div>
-      <slot name="actions"></slot>
+      <slot name="toolbar"></slot>
     </div>
 
     <div class="min-w-full divide-y divide-gray-200">
@@ -158,8 +158,11 @@ const sort = (key) => {
   emit('update:sort', { key: sortKey.value, order: sortOrder.value })
 }
 
+// Wait until typing pauses instead of searching on every keystroke.
+let searchTimer = null
 watch(searchQuery, (newVal) => {
-  emit('search', newVal)
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => emit('search', newVal), 300)
 })
 
 watch(currentPage, (newVal) => {

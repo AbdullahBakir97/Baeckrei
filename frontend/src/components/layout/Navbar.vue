@@ -5,8 +5,8 @@
         <!-- Logo and Brand -->
         <div class="flex items-center">
           <router-link to="/" class="flex-shrink-0 flex items-center brand-logo">
-            <span class="text-2xl font-bold text-amber-400 logo-text">B</span>
-            <span class="text-xl font-semibold text-gray-200 ml-2 logo-text">eackrei</span>
+            <span class="text-2xl font-bold text-amber-400 logo-text">{{ business.name.charAt(0) }}</span>
+            <span class="text-xl font-semibold text-gray-200 logo-text">{{ business.name.slice(1) }}</span>
           </router-link>
           
           <!-- Navigation Links -->
@@ -86,6 +86,16 @@
             </div>
           </div>
 
+          <!-- Wishlist and compare -->
+          <router-link to="/wishlist" class="ml-4 relative text-gray-300 hover:text-amber-300" aria-label="Wishlist">
+            <font-awesome-icon icon="heart" />
+            <span v-if="wishlistStore.items.length" class="nav-badge">{{ wishlistStore.items.length }}</span>
+          </router-link>
+          <router-link v-if="compareStore.items.length" to="/compare" class="ml-4 relative text-gray-300 hover:text-amber-300" aria-label="Compare products">
+            <font-awesome-icon icon="code-compare" />
+            <span class="nav-badge">{{ compareStore.items.length }}</span>
+          </router-link>
+
           <!-- User Menu -->
           <div class="ml-4 relative flex items-center space-x-4">
             <template v-if="!authStore.isAuthenticated">
@@ -160,11 +170,19 @@
                     >
                       Your Orders
                     </router-link>
+                    <router-link
+                      to="/settings"
+                      class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 dropdown-item"
+                      role="menuitem"
+                      @click="isUserMenuOpen = false"
+                    >
+                      Settings
+                    </router-link>
                     <a
                       href="#"
                       class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 dropdown-item"
                       role="menuitem"
-                      @click="handleLogout"
+                      @click.prevent="handleLogout"
                     >
                       Sign out
                     </a>
@@ -186,6 +204,12 @@ import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import CartDropdown from '@/components/cart/CartDropdown.vue';
+import { business } from '@/config/business'
+import { useWishlistStore } from '@/stores/wishlistStore'
+import { useCompareStore } from '@/stores/compareStore'
+
+const wishlistStore = useWishlistStore()
+const compareStore = useCompareStore()
 
 const router = useRouter()
 const route = useRoute()
@@ -280,6 +304,22 @@ watch(
 </script>
 
 <style scoped>
+.nav-badge {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.65rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 9999px;
+  background: #f59e0b;
+  color: #111;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
 nav {
   @apply relative;
   background: linear-gradient(

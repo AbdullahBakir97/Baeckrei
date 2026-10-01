@@ -100,6 +100,79 @@
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
+  /* Shared building blocks for account, checkout and content pages */
+  .glass-panel {
+    @apply rounded-2xl p-6 shadow-xl border;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .field-label {
+    @apply block text-sm font-medium text-gray-300 mb-1;
+  }
+
+  .field-input {
+    @apply w-full rounded-lg px-3 py-2 text-gray-100 placeholder-gray-500
+           focus:outline-none focus:ring-2 focus:ring-amber-500/60;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .field-error {
+    @apply mt-1 text-sm text-red-400;
+  }
+
+  .btn-amber {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-medium
+           bg-gradient-to-r from-amber-500/90 to-amber-600/90 hover:from-amber-500 hover:to-amber-600
+           shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium
+           text-gray-300 hover:text-white transition-colors duration-200 border
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .choice-card {
+    @apply flex w-full items-start gap-3 rounded-xl p-4 text-left border transition-colors duration-200 cursor-pointer;
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .choice-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .choice-card.is-selected {
+    @apply border-amber-500/70;
+    background: rgba(245, 158, 11, 0.08);
+  }
+
+  .choice-card.is-disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  .prose-dark {
+    @apply text-gray-300 leading-relaxed space-y-4;
+  }
+
+  .prose-dark h2 {
+    @apply text-xl font-semibold text-white pt-4;
+  }
+
+  .prose-dark a {
+    @apply text-amber-400 hover:text-amber-300 underline;
+  }
+
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
   }

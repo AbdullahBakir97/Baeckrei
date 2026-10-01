@@ -2,7 +2,10 @@
   <div class="container py-8">
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-200">Our Products</h1>
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-200">{{ heading.title }}</h1>
+        <p v-if="heading.subtitle" class="mt-1 text-gray-400">{{ heading.subtitle }}</p>
+      </div>
       
     </div>
 
@@ -142,7 +145,7 @@
               <option value="name">Name</option>
               <option value="price_asc">Price: Low to High</option>
               <option value="price_desc">Price: High to Low</option>
-              <option value="popularity">Popularity</option>
+              <option value="newest">Newest</option>
             </select>
           </div>
 
@@ -238,7 +241,8 @@ const route = useRoute()
 const viewMode = ref('grid')
 const sortBy = ref('name')
 const selectedCategories = ref([])
-const priceRange = ref([0, 1000])
+const maxPriceLimit = 1000
+const priceRange = ref([0, maxPriceLimit])
 const filters = ref({
   dietary: {
     isVegan: false,
@@ -270,21 +274,40 @@ const maxPrice = computed(() => {
   return Math.max(...productStore.products.map(p => p.price))
 })
 
-const totalPages = computed(() => {
-  return Math.ceil(productStore.pagination.total / productStore.pagination.pageSize)
+const currentPage = ref(1)
+const totalPages = computed(() => productStore.pagination.total_pages || 1)
+
+// Category pages (/categories/:category), the seasonal page and search
+// results reuse this list with a fixed filter from the route.
+const routeCategory = computed(() => route.params.category || '')
+const isSeasonal = computed(() => Boolean(route.meta.seasonal))
+const searchQuery = computed(() => (route.query.search || '').toString().trim())
+
+const heading = computed(() => {
+  if (routeCategory.value) {
+    const category = categories.value.find(c => c.slug === routeCategory.value)
+    return { title: category?.name || 'Category', subtitle: category?.description || '' }
+  }
+  if (isSeasonal.value) return { title: 'Seasonal specials', subtitle: 'Bakes available for a limited time' }
+  if (searchQuery.value) return { title: `Results for "${searchQuery.value}"`, subtitle: '' }
+  return { title: 'Our Products', subtitle: '' }
 })
 
 // Methods
 const loadProducts = async () => {
   try {
     await productStore.fetchProducts({
-      sort: sortBy.value,
+      page: currentPage.value,
+      ordering: sortBy.value,
+      category: routeCategory.value,
+      seasonal: isSeasonal.value,
+      search: searchQuery.value,
       categories: selectedCategories.value,
-      price_min: priceRange.value[0],
-      price_max: priceRange.value[1],
-      isVegan: filters.value.dietary.isVegan,
-      isVegetarian: filters.value.dietary.isVegetarian,
-      isGlutenFree: filters.value.dietary.isGlutenFree
+      price_min: priceRange.value[0] > 0 ? priceRange.value[0] : null,
+      price_max: priceRange.value[1] < maxPriceLimit ? priceRange.value[1] : null,
+      is_vegan: filters.value.dietary.isVegan,
+      is_vegetarian: filters.value.dietary.isVegetarian,
+      is_gluten_free: filters.value.dietary.isGlutenFree
     })
   } catch (error) {
     console.error('Error loading products:', error)
@@ -292,12 +315,13 @@ const loadProducts = async () => {
 }
 
 const handleSort = () => {
+  currentPage.value = 1
   loadProducts()
 }
 
 const clearFilters = () => {
   selectedCategories.value = []
-  priceRange.value = [0, maxPrice.value]
+  priceRange.value = [0, maxPriceLimit]
   filters.value.dietary = {
     isVegan: false,
     isVegetarian: false,
@@ -317,29 +341,27 @@ const addToCart = async (product) => {
 
 const previousPage = () => {
   if (productStore.hasPreviousPage) {
-    productStore.setPage(productStore.pagination.page - 1)
+    currentPage.value -= 1
     loadProducts()
   }
 }
 
 const nextPage = () => {
   if (productStore.hasNextPage) {
-    productStore.setPage(productStore.pagination.page + 1)
+    currentPage.value += 1
     loadProducts()
   }
 }
 
 // Watchers
 watch([selectedCategories, priceRange, filters], () => {
-  productStore.setPage(1) // Reset to first page when filters change
+  currentPage.value = 1 // Back to the first page when filters change
   loadProducts()
 }, { deep: true })
 
-watch(() => route.params.category, (newCategory) => {
-  if (newCategory) {
-    filters.value.category = newCategory
-    loadProducts()
-  }
+watch(() => [route.params.category, route.meta.seasonal, route.query.search], () => {
+  currentPage.value = 1
+  loadProducts()
 })
 
 // Lifecycle

@@ -38,17 +38,7 @@ class AddItemCommand(BaseCommand[CartItem]):
         """Execute add item command."""
         try:
             with transaction.atomic():
-                # Lock product for update and validate stock
-                try:
-                    product = Product.objects.select_for_update(nowait=True).get(pk=self.product.pk)
-                except OperationalError:
-                    # If we can't get the lock, raise a version conflict
-                    raise VersionConflictError(obj_type="Cart", obj_id=self.cart.pk)
-                    
-                if self.quantity > product.stock:
-                    raise InsufficientStockError(
-                        f"Insufficient stock. Requested: {self.quantity}, Available: {product.stock}"
-                    )
+                product = Product.objects.get(pk=self.product.pk)
                 
                 # Get or create cart item
                 try:
@@ -60,10 +50,17 @@ class AddItemCommand(BaseCommand[CartItem]):
                     # If we can't get the lock, raise a version conflict
                     raise VersionConflictError(obj_type="Cart", obj_id=self.cart.pk)
                 
+                # Stock is only deducted at checkout; the cart may hold at
+                # most what is currently in stock.
+                new_quantity = (cart_item.quantity if cart_item else 0) + self.quantity
+                if new_quantity > product.stock:
+                    raise InsufficientStockError(
+                        f"Insufficient stock. Requested: {new_quantity}, Available: {product.stock}",
+                        available_stock=product.stock
+                    )
+
                 if cart_item:
-                    # Stock already excludes what this cart holds, so only the
-                    # increment (checked above) needs to be available.
-                    cart_item.quantity = cart_item.quantity + self.quantity
+                    cart_item.quantity = new_quantity
                     cart_item.unit_price = product.price
                     cart_item.save()
                 else:
@@ -74,10 +71,6 @@ class AddItemCommand(BaseCommand[CartItem]):
                         unit_price=product.price
                     )
                 
-                # Update product stock
-                product.stock -= self.quantity
-                product.save(update_fields=['stock'])
-
                 # Log event
                 self._event_service.log_event(
                     cart=self.cart,
@@ -85,8 +78,7 @@ class AddItemCommand(BaseCommand[CartItem]):
                     product=self.product,
                     quantity=self.quantity,
                     details={
-                        'old_stock': product.stock + self.quantity,
-                        'new_stock': product.stock,
+                        'new_quantity': new_quantity,
                         'operation': 'add_item'
                     }
                 )

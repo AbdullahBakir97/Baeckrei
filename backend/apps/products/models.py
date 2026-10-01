@@ -349,6 +349,10 @@ class Product(TimeStampedModel):
     is_vegan = models.BooleanField(_('Vegan'), default=False)
     is_vegetarian = models.BooleanField(_('Vegetarian'), default=False)
     is_gluten_free = models.BooleanField(_('Gluten Free'), default=False)
+    is_seasonal = models.BooleanField(
+        _('Seasonal'), default=False,
+        help_text=_('Shown on the seasonal specials page'),
+    )
     available = models.BooleanField(default=True)
     status = models.CharField(
         _('Status'),

@@ -48,7 +48,9 @@
         <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
           <div>
             <h3 class="text-xl font-semibold text-gray-200">
-              Order #{{ order.order_number }}
+              <router-link :to="{ name: 'order-detail', params: { id: order.id } }" class="hover:text-amber-300">
+                Order #{{ order.order_number }}
+              </router-link>
             </h3>
             <p class="text-sm text-gray-400">
               Placed on {{ formatDate(order.created_at) }}
@@ -106,30 +108,29 @@
             <!-- Shipping Info -->
             <div class="text-sm text-gray-400">
               <p class="flex items-center gap-2">
-                <font-awesome-icon icon="truck" />
-                {{ order.shipping_tracking_number || 'Tracking number pending' }}
+                <font-awesome-icon :icon="order.fulfillment_method === 'pickup' ? 'store' : 'truck'" />
+                {{ order.fulfillment_method === 'pickup' ? 'Pickup in store' : 'Delivery' }}
               </p>
-              <p class="flex items-center gap-2 mt-1">
+              <p v-if="order.requested_time" class="flex items-center gap-2 mt-1">
                 <font-awesome-icon icon="calendar" />
-                Estimated delivery: {{ formatDate(order.estimated_delivery_date) }}
+                Requested for {{ formatDate(order.requested_time) }}
               </p>
             </div>
             
             <!-- Actions -->
             <div class="flex items-center gap-3">
-              <button v-if="order.status === 'Pending'"
+              <button v-if="order.is_cancelable"
                       @click="cancelOrder(order.id)"
                       class="btn bg-red-500/20 text-red-300 hover:bg-red-500/30">
                 <font-awesome-icon icon="times" class="mr-2" />
                 Cancel Order
               </button>
-              <button @click="trackOrder(order.shipping_tracking_number)"
-                      :disabled="!order.shipping_tracking_number"
-                      class="btn bg-[rgba(255,255,255,0.05)] text-gray-300 
-                             hover:bg-[rgba(255,255,255,0.1)]">
+              <router-link :to="{ name: 'order-detail', params: { id: order.id } }"
+                           class="btn bg-[rgba(255,255,255,0.05)] text-gray-300
+                                  hover:bg-[rgba(255,255,255,0.1)]">
                 <font-awesome-icon icon="location-dot" class="mr-2" />
-                Track Order
-              </button>
+                View details
+              </router-link>
             </div>
           </div>
         </div>
@@ -185,15 +186,6 @@ const cancelOrder = async (orderId) => {
     showToast('Failed to cancel order', 'error')
     console.error('Error cancelling order:', err)
   }
-}
-
-const trackOrder = (trackingNumber) => {
-  if (!trackingNumber) {
-    showToast('Tracking number not available yet', 'warning')
-    return
-  }
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-  window.open(`${API_URL}/track/${trackingNumber}`, '_blank')
 }
 
 // Lifecycle

@@ -6,7 +6,7 @@
         <!-- Logo -->
         <div class="flex items-center justify-center h-16 bg-indigo-600">
           <router-link to="/" class="text-xl font-bold text-white">
-            Beackrei Admin
+            {{ business.name }} Admin
           </router-link>
         </div>
 
@@ -18,7 +18,7 @@
             :to="item.path"
             class="flex items-center px-4 py-2 text-sm font-medium rounded-md"
             :class="[
-              $route.path.startsWith(item.path)
+              isActive(item)
                 ? 'bg-indigo-100 text-indigo-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             ]"
@@ -27,7 +27,7 @@
               :is="item.icon"
               class="mr-3 h-5 w-5"
               :class="[
-                $route.path.startsWith(item.path)
+                isActive(item)
                   ? 'text-indigo-500'
                   : 'text-gray-400'
               ]"
@@ -73,6 +73,14 @@ import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { business } from '@/config/business'
+import {
+  HomeIcon,
+  ShoppingBagIcon,
+  FolderIcon,
+  ShoppingCartIcon,
+  UsersIcon
+} from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -82,27 +90,27 @@ const navItems = [
   {
     name: 'Dashboard',
     path: '/admin',
-    icon: 'HomeIcon',
+    icon: HomeIcon,
   },
   {
     name: 'Products',
     path: '/admin/products',
-    icon: 'ShoppingBagIcon',
+    icon: ShoppingBagIcon,
   },
   {
     name: 'Categories',
     path: '/admin/categories',
-    icon: 'FolderIcon',
+    icon: FolderIcon,
   },
   {
     name: 'Orders',
     path: '/admin/orders',
-    icon: 'ShoppingCartIcon',
+    icon: ShoppingCartIcon,
   },
   {
     name: 'Users',
     path: '/admin/users',
-    icon: 'UsersIcon',
+    icon: UsersIcon,
   },
 ]
 
@@ -112,11 +120,13 @@ onMounted(() => {
   }
 })
 
-const currentPageTitle = computed(() => {
-  const currentPath = router.currentRoute.value.path
-  const currentItem = navItems.find(item => currentPath.startsWith(item.path))
-  return currentItem?.name || 'Dashboard'
-})
+// '/admin' must only be active on the dashboard itself, not on every admin page.
+const isActive = (item) => {
+  const path = router.currentRoute.value.path
+  return item.path === '/admin' ? path === '/admin' : path.startsWith(item.path)
+}
+
+const currentPageTitle = computed(() => router.currentRoute.value.meta.title || 'Dashboard')
 
 const handleLogout = async () => {
   try {

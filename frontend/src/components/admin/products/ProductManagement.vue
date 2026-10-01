@@ -82,21 +82,21 @@
           <div class="flex justify-end space-x-2">
             <button
               @click="viewProduct(item)"
-              class="text-gray-400 hover:text-gray-500"
+              class="text-gray-400 hover:text-gray-500 bg-transparent p-1"
               title="View Details"
             >
               <EyeIcon class="h-5 w-5" />
             </button>
             <button
               @click="editProduct(item)"
-              class="text-blue-400 hover:text-blue-500"
+              class="text-blue-400 hover:text-blue-500 bg-transparent p-1"
               title="Edit"
             >
               <PencilIcon class="h-5 w-5" />
             </button>
             <button
               @click="deleteProduct(item)"
-              class="text-red-400 hover:text-red-500"
+              class="text-red-400 hover:text-red-500 bg-transparent p-1"
               title="Delete"
             >
               <TrashIcon class="h-5 w-5" />
@@ -110,6 +110,8 @@
     <ProductFormModal
       v-if="showFormModal"
       :product="selectedProduct"
+      :saving="saving"
+      :server-errors="formErrors"
       @close="closeModal"
       @save="saveProduct"
     />
@@ -125,6 +127,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useProductStore } from '@/stores/productStore'
+import { useToast } from '@/composables/useToast'
+import { useRouter } from 'vue-router'
 import DataTable from '../common/DataTable.vue'
 import ProductStats from './ProductStats.vue'
 import ProductFilters from './ProductFilters.vue'
@@ -138,6 +142,8 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const productStore = useProductStore()
+const { showToast } = useToast()
+const router = useRouter()
 const products = ref([])
 const totalItems = ref(0)
 const loading = ref(false)
@@ -166,14 +172,33 @@ const currentFilters = ref({
   pageSize: 10
 })
 
+// The API can order by name and price; other columns fall back to name.
+const toOrdering = (sort) => {
+  const [key, order] = (sort || '').split('_')
+  if (!['name', 'price'].includes(key)) return 'name'
+  return `${order === 'desc' ? '-' : ''}${key}`
+}
+
 const loadProducts = async () => {
   loading.value = true
+  const f = currentFilters.value
   try {
-    await productStore.fetchProducts(currentFilters.value)
+    await productStore.fetchProducts({
+      include_all: true,
+      page: f.page,
+      page_size: f.pageSize,
+      search: f.search,
+      categories: f.category ? [f.category] : [],
+      status: f.status,
+      stock_status: f.stockStatus,
+      price_min: f.priceMin,
+      price_max: f.priceMax,
+      ordering: toOrdering(f.sort)
+    })
     products.value = productStore.products
     totalItems.value = productStore.totalItems
   } catch (error) {
-    console.error('Error loading products:', error)
+    showToast('Products could not be loaded', 'error')
   } finally {
     loading.value = false
   }
@@ -233,12 +258,18 @@ const openCreateModal = () => {
 }
 
 const viewProduct = (product) => {
-  selectedProduct.value = product
-  showDetailModal.value = true
+  router.push({ name: 'admin-product-detail', params: { id: product.id } })
 }
 
-const editProduct = (product) => {
-  selectedProduct.value = { ...product }
+// List rows are a summary; load the full product (description etc.) to edit it.
+const editProduct = async (product) => {
+  formErrors.value = {}
+  const full = await productStore.fetchProductById(product.id)
+  if (!full) {
+    showToast('The product could not be loaded', 'error')
+    return
+  }
+  selectedProduct.value = full
   showFormModal.value = true
 }
 
@@ -252,28 +283,37 @@ const closeDetailModal = () => {
   selectedProduct.value = null
 }
 
+const saving = ref(false)
+const formErrors = ref({})
+
 const saveProduct = async (productData) => {
+  saving.value = true
+  formErrors.value = {}
   try {
     if (selectedProduct.value) {
       await productStore.updateProduct(productData)
+      showToast('Product saved')
     } else {
       await productStore.createProduct(productData)
+      showToast('Product created')
     }
     await loadProducts()
     closeModal()
   } catch (error) {
-    console.error('Error saving product:', error)
+    formErrors.value = error.response?.data || { general: 'The product could not be saved.' }
+  } finally {
+    saving.value = false
   }
 }
 
 const deleteProduct = async (product) => {
-  if (confirm('Are you sure you want to delete this product?')) {
-    try {
-      await productStore.deleteProduct(product.id)
-      await loadProducts()
-    } catch (error) {
-      console.error('Error deleting product:', error)
-    }
+  if (!confirm(`Delete ${product.name}?`)) return
+  try {
+    const result = await productStore.deleteProduct(product.id)
+    showToast(result?.discontinued ? 'Used in past orders, so it was marked discontinued' : 'Product deleted')
+    await loadProducts()
+  } catch (error) {
+    showToast('The product could not be deleted', 'error')
   }
 }
 

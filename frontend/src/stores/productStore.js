@@ -36,17 +36,29 @@ export const useProductStore = defineStore('products', () => {
   const hasPreviousPage = computed(() => pagination.value.has_previous)
   const totalItems = computed(() => pagination.value.count)
 
-  // Convert the admin form (camelCase flags, nested category) to the API payload.
-  const toProductPayload = (data) => ({
-    name: data.name,
-    description: data.description,
-    category: typeof data.category === 'object' ? data.category?.id : data.category,
-    price: data.price,
-    stock: data.stock,
-    is_vegan: data.isVegan ?? data.is_vegan ?? false,
-    is_vegetarian: data.isVegetarian ?? data.is_vegetarian ?? false,
-    is_gluten_free: data.isGlutenFree ?? data.is_gluten_free ?? false
-  })
+  // Convert the admin form to the API payload. A new image has to be sent
+  // as multipart form data; everything else can be JSON.
+  const toProductPayload = (data) => {
+    const fields = {
+      name: data.name,
+      description: data.description,
+      category: typeof data.category === 'object' ? data.category?.id : data.category,
+      price: data.price,
+      stock: data.stock,
+      status: data.status,
+      available: data.available,
+      is_vegan: data.is_vegan ?? false,
+      is_vegetarian: data.is_vegetarian ?? false,
+      is_gluten_free: data.is_gluten_free ?? false,
+      is_seasonal: data.is_seasonal ?? false
+    }
+    Object.keys(fields).forEach(key => fields[key] === undefined && delete fields[key])
+    if (!data.imageFile) return fields
+    const form = new FormData()
+    Object.entries(fields).forEach(([key, value]) => form.append(key, value))
+    form.append('image', data.imageFile)
+    return form
+  }
 
   const createProduct = async (data) => {
     const response = await axios.post(`${API_PATH}/`, toProductPayload(data))
@@ -54,13 +66,14 @@ export const useProductStore = defineStore('products', () => {
   }
 
   const updateProduct = async (data) => {
-    const response = await axios.put(`${API_PATH}/${data.id}/`, toProductPayload(data))
+    const response = await axios.patch(`${API_PATH}/${data.id}/`, toProductPayload(data))
     return response.data
   }
 
   const deleteProduct = async (id) => {
-    await axios.delete(`${API_PATH}/${id}/`)
+    const response = await axios.delete(`${API_PATH}/${id}/`)
     products.value = products.value.filter(p => p.id !== id)
+    return response.data || null
   }
 
   const fetchProducts = async (filters = {}) => {
@@ -84,10 +97,19 @@ export const useProductStore = defineStore('products', () => {
       if (filters.ordering) {
         if (filters.ordering === 'price_desc') ordering = '-price'
         else if (filters.ordering === 'price_asc') ordering = 'price'
-        else if (filters.ordering === 'popularity') ordering = '-popularity'
+        else if (filters.ordering === 'newest') ordering = '-created_at'
         else ordering = filters.ordering
       }
       params.append('ordering', ordering)
+
+      // Admin product list: include drafts, hidden and unavailable products
+      if (filters.include_all) params.append('include_all', 'true')
+      if (filters.status) params.append('status', filters.status)
+      if (filters.stock_status) params.append('stock_status', filters.stock_status)
+
+      // Category page (slug) and seasonal page
+      if (filters.category) params.append('category', filters.category)
+      if (filters.seasonal) params.append('seasonal', true)
 
       // Category filter
       if (filters.categories?.length) {
@@ -245,7 +267,8 @@ export const useProductStore = defineStore('products', () => {
   const fetchProductById = async (id) => {
     loading.value = true
     error.value = null
-    
+    product.value = null
+
     try {
       console.log('Fetching product details for ID:', id)
       const response = await axios.get(`${API_PATH}/${id}/`, {
@@ -269,9 +292,12 @@ export const useProductStore = defineStore('products', () => {
     } catch (err) {
       console.error('Error fetching product:', err)
       error.value = err.response?.data?.message || 'Failed to fetch product details'
+      // Don't keep showing the previously viewed product.
+      product.value = null
     } finally {
       loading.value = false
     }
+    return product.value
   }
 
   const fetchIngredients = async () => {
