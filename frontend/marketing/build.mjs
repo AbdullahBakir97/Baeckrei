@@ -4,6 +4,7 @@
 //   postkarte-a6.pdf           breakfast postcard, front + back, A6 + 3 mm bleed
 //   plakat-a3.pdf              window poster, A3 + 3 mm bleed
 //   kundeninfo-a4.pdf          customer guide (A4, for screens and home printers)
+//   handbuch-a4.pdf            owner handbook: running the shop and the admin (A4)
 //   social-post.png / social-story.png   Instagram post (1080×1350) and story (1080×1920)
 // plus small previews in marketing/dist/previews/.
 //
@@ -20,6 +21,7 @@ import { HERE } from './shared.mjs'
 import { menuDocument } from './docs/menu.mjs'
 import { flyerDocument, postcardDocument, posterDocument, socialPostDocument, socialStoryDocument } from './docs/flyers.mjs'
 import { guideDocument } from './docs/guide.mjs'
+import { handbookDocument } from './docs/handbook.mjs'
 
 const argv = process.argv.slice(2)
 const option = (name) => { const i = argv.indexOf(`--${name}`); return i >= 0 ? argv[i + 1] : null }
@@ -31,7 +33,8 @@ const PRINT = [
   { key: 'flyer', file: 'flyer-a5.pdf', make: flyerDocument },
   { key: 'postcard', file: 'postkarte-a6.pdf', make: postcardDocument },
   { key: 'poster', file: 'plakat-a3.pdf', make: posterDocument },
-  { key: 'guide', file: 'kundeninfo-a4.pdf', make: guideDocument }
+  { key: 'guide', file: 'kundeninfo-a4.pdf', make: guideDocument },
+  { key: 'handbook', file: 'handbuch-a4.pdf', make: handbookDocument }
 ]
 const SOCIAL = [
   { key: 'post', file: 'social-post.png', make: socialPostDocument, width: 1080, height: 1350 },

@@ -18,5 +18,8 @@ export default {
   // From the shop settings (SHOP_DELIVERY_FEE, pickup and delivery lead times).
   deliveryFee: 3.5,
   pickupLeadMinutes: 60,
-  deliveryLeadMinutes: 120
+  deliveryLeadMinutes: 120,
+  // SHOP_SLOT_MINUTES and SHOP_SLOT_DAYS
+  slotMinutes: 30,
+  slotDays: 7
 }

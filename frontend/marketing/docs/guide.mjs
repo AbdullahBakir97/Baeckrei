@@ -231,10 +231,10 @@ export async function guideDocument(lang) {
     </div>
   </div>`)
 
-  return documentHtml({ lang, title: `${t('guide.title')} – Backlover`, width: '210mm', height: '297mm', pages, css: CSS })
+  return documentHtml({ lang, title: `${t('guide.title')} – Backlover`, width: '210mm', height: '297mm', pages, css: GUIDE_CSS })
 }
 
-const CSS = `
+export const GUIDE_CSS = `
   .sheet.paper { display: flex; flex-direction: column; }
   .run { display: flex; align-items: baseline; justify-content: space-between; margin: 12mm 16mm 0; padding-bottom: 3mm;
     border-bottom: 0.25mm solid var(--line); font-size: 7.5pt; color: var(--muted); }

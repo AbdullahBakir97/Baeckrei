@@ -7,6 +7,10 @@
 //
 // Writes marketing/assets/screens/<de|en>/<page>.jpg (desktop) and
 // marketing/assets/screens/<de|en>/mobile-<page>.jpg.
+//
+// With --admin-email and --admin-password (a superuser) it takes the admin
+// pages for the owner handbook instead (admin-*.jpg), including Django's own
+// admin at --api (default http://localhost:8000).
 import { chromium } from '@playwright/test'
 import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -20,6 +24,10 @@ const PASSWORD = args.password
 const ONLY = args.only ? args.only.split(',') : null
 const OUT = join(dirname(fileURLToPath(import.meta.url)), 'assets', 'screens')
 const LANGS = (args.langs || 'de,en').split(',')
+const ADMIN_EMAIL = args['admin-email']
+const ADMIN_PASSWORD = args['admin-password']
+const API = (args.api || 'http://localhost:8000').replace(/\/$/, '')
+const DJANGO_ADMIN = args['django-admin'] || '/django-admin/'
 
 const wait = (page, ms) => page.waitForTimeout(ms)
 
@@ -41,11 +49,12 @@ async function open(page, path, ms) {
   await settle(page, ms)
 }
 
-async function signIn(page) {
+async function signIn(page, email = EMAIL, password = PASSWORD) {
   await open(page, '/login', 800)
+  await page.waitForSelector('input[type=password]')
   const form = page.locator('form').filter({ has: page.locator('button[type=submit]') }).first()
-  await form.locator('input[type=email]').fill(EMAIL)
-  await form.locator('input[type=password]').fill(PASSWORD)
+  await form.locator('input[type=email]').fill(email)
+  await form.locator('input[type=password]').fill(password)
   await form.locator('button[type=submit]').click()
   await page.waitForURL(url => !url.pathname.startsWith('/login'), { timeout: 15000 })
   await settle(page, 1000)
@@ -135,9 +144,81 @@ async function mobile(browser, lang) {
   await ctx.close()
 }
 
+async function admin(browser, lang) {
+  const ctx = await browser.newContext({
+    viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.25, locale: lang === 'de' ? 'de-DE' : 'en-GB',
+    timezoneId: 'Europe/Berlin', reducedMotion: 'reduce'
+  })
+  await ctx.addInitScript((l) => { localStorage.setItem('locale', l); localStorage.setItem('intro-seen', '1') }, lang)
+  const page = await ctx.newPage()
+  const closeDialog = () => page.keyboard.press('Escape').then(() => wait(page, 500))
+  await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD)
+
+  await open(page, '/admin', 2500); await shot(page, lang, 'admin-dashboard')
+  await open(page, '/admin/products', 2500); await shot(page, lang, 'admin-products')
+  // The edit form of the first product
+  await page.getByTitle(/^(Bearbeiten|Edit)$/).nth(1).click()
+  await wait(page, 1200); await shot(page, lang, 'admin-product-form')
+  await open(page, '/admin/products', 2000)
+  await page.getByTitle(/^(Details anzeigen|View details)$/).nth(1).click()
+  await settle(page, 2000); await shot(page, lang, 'admin-product-detail')
+  await open(page, '/admin/categories', 2000); await shot(page, lang, 'admin-categories')
+  await page.getByRole('button', { name: /Kategorie hinzufügen|Add category/ }).click()
+  await wait(page, 1000); await shot(page, lang, 'admin-category-form')
+  await closeDialog()
+  await open(page, '/admin/orders', 2000); await shot(page, lang, 'admin-orders')
+  await page.getByRole('button', { name: 'Details' }).first().click()
+  await wait(page, 1500); await shot(page, lang, 'admin-order')
+  await closeDialog()
+  await open(page, '/admin/users', 2000); await shot(page, lang, 'admin-users')
+
+  // A new order coming in: the next check of recent orders gets one more.
+  let calls = 0
+  await page.route('**/api/orders/orders/recent_orders/**', async (route) => {
+    const response = await route.fetch()
+    const data = await response.json()
+    calls += 1
+    if (calls > 1) data.unshift({ ...data[0], id: 'incoming', order_number: 'ORD-20261003-4F2A91C7' })
+    await route.fulfill({ response, json: data })
+  })
+  await open(page, '/admin/orders', 2500)
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+  await wait(page, 1500); await shot(page, lang, 'admin-new-order')
+  await page.unroute('**/api/orders/orders/recent_orders/**')
+
+  // Django's admin for the journal, messages and newsletter
+  await page.goto(`${API}${DJANGO_ADMIN}login/`)
+  await page.fill('input[name=username]', ADMIN_EMAIL)
+  await page.fill('input[name=password]', ADMIN_PASSWORD)
+  await page.click('input[type=submit]')
+  await settle(page, 800)
+  for (const [name, path] of [['posts', 'content/post/'], ['post-form', 'content/post/add/'],
+    ['messages', 'content/contactmessage/'], ['newsletter', 'content/newslettersubscriber/']]) {
+    await page.goto(`${API}${DJANGO_ADMIN}${path}`); await settle(page, 600)
+    await shot(page, lang, `admin-django-${name}`)
+  }
+  await ctx.close()
+
+  // The admin on a phone
+  const phoneCtx = await browser.newContext({
+    viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+    locale: lang === 'de' ? 'de-DE' : 'en-GB', timezoneId: 'Europe/Berlin', reducedMotion: 'reduce'
+  })
+  await phoneCtx.addInitScript((l) => { localStorage.setItem('locale', l); localStorage.setItem('intro-seen', '1') }, lang)
+  const phonePage = await phoneCtx.newPage()
+  await signIn(phonePage, ADMIN_EMAIL, ADMIN_PASSWORD)
+  await open(phonePage, '/admin', 2500); await shot(phonePage, lang, 'admin-dashboard', { mobile: true })
+  await open(phonePage, '/admin/orders', 2500); await shot(phonePage, lang, 'admin-orders', { mobile: true })
+  await phoneCtx.close()
+}
+
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] })
 for (const lang of LANGS) {
-  await desktop(browser, lang)
-  await mobile(browser, lang)
+  if (ADMIN_EMAIL) {
+    await admin(browser, lang)
+  } else {
+    await desktop(browser, lang)
+    await mobile(browser, lang)
+  }
 }
 await browser.close()
