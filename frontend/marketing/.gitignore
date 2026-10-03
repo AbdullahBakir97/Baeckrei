@@ -1,0 +1,3 @@
+# Generated: the HTML sources, the PDFs/PNGs and their previews.
+.build/
+dist/
