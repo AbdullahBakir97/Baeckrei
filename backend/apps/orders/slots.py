@@ -105,3 +105,37 @@ def is_bookable(method, requested_time, now=None):
         slot['available'] and slot['start'] == requested_time
         for slot in available_slots(method, now=now)
     )
+
+
+def opening_status(now=None, days=7):
+    """Today's hours and whether the shop is open, for screens and the footer.
+
+    Returns {'days': [{'weekday': 0-6, 'ranges': [['07:00', '18:00'], ...]}],
+    'open_now': bool, 'closes_at': 'HH:MM' | None, 'next_open': ISO datetime | None}.
+    """
+    tz = timezone.get_current_timezone()
+    now = timezone.localtime(now or timezone.now(), tz)
+    hours = opening_hours()
+    status = {
+        'time_zone': str(tz),
+        'days': [
+            {'weekday': day, 'ranges': [[o.strftime('%H:%M'), c.strftime('%H:%M')] for o, c in hours.get(day, [])]}
+            for day in range(7)
+        ],
+        'open_now': False,
+        'closes_at': None,
+        'next_open': None,
+    }
+    for opens, closes in hours.get(now.weekday(), []):
+        if opens <= now.time() < closes:
+            status['open_now'] = True
+            status['closes_at'] = closes.strftime('%H:%M')
+            return status
+    for offset in range(days + 1):
+        day = now.date() + timedelta(days=offset)
+        for opens, _closes in sorted(hours.get(day.weekday(), [])):
+            start = timezone.make_aware(datetime.combine(day, opens), tz)
+            if start > now:
+                status['next_open'] = start.isoformat()
+                return status
+    return status

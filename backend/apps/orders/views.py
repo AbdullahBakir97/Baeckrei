@@ -2,9 +2,9 @@ import uuid
 
 from django.utils.translation import gettext as _
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from .models import Order, Payment
 from django.conf import settings
 from django.http import HttpResponse
@@ -204,6 +204,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             'fulfillment_method': order.fulfillment_method,
             'created_at': order.created_at,
         } for order in recent])
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def opening_hours(request):
+    """Public opening hours and whether the shop is open right now."""
+    return Response(slots.opening_status())
 
 
 @csrf_exempt

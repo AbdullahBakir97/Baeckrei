@@ -83,3 +83,14 @@ test('online payment is only offered once Stripe is set up', async ({ page }) =>
   await expect(online).toBeDisabled()
   await expect(online).toContainText('Coming soon')
 })
+
+test('the menu board shows the live menu full screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 })
+  await page.goto('/menu-board')
+  // No shop navigation on the screen; products and prices are listed.
+  await expect(page.locator('nav.nav')).toHaveCount(0)
+  await expect(page.locator('.menu-item').first()).toBeVisible()
+  await expect(page.locator('.menu-item', { hasText: 'Roggenbrot' })).toContainText('4,20 €')
+  await expect(page.locator('.board-open')).toBeVisible()
+  await expect(page.locator('.board-qr img')).toBeVisible()
+})

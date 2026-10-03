@@ -12,6 +12,7 @@ export default {
       sidebar: 'Verwaltung',
       manage: 'Verwalten',
       viewShop: 'Zum Shop',
+      menuBoard: 'Menü-Bildschirm',
       signOut: 'Abmelden',
       openMenu: 'Menü öffnen'
     },
@@ -259,6 +260,7 @@ export default {
       sidebar: 'Admin',
       manage: 'Manage',
       viewShop: 'View shop',
+      menuBoard: 'Menu board',
       signOut: 'Sign out',
       openMenu: 'Open menu'
     },

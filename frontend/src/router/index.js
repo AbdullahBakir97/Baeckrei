@@ -134,6 +134,13 @@ const routes = [
     meta: { requiresAuth: true, title: 'Order Details' }
   },
   {
+    // Full-screen menu for the shop's screens (see docs/menu-board.md).
+    path: '/menu-board',
+    name: 'menu-board',
+    component: () => import('@/views/MenuBoard.vue'),
+    meta: { title: 'Menu board', requiresAuth: false, bare: true }
+  },
+  {
     path: '/about',
     name: 'about',
     component: About,

@@ -80,3 +80,25 @@ class SlotTests(TestCase):
         order.status = order.StatusChoices.CANCELED
         order.save()
         self.assertTrue(is_bookable('pickup', berlin(2026, 10, 1, 8, 0), now=self.now))
+
+
+@override_settings(SHOP_OPENING_HOURS=HOURS, TIME_ZONE='Europe/Berlin')
+class OpeningStatusTests(TestCase):
+    def test_open_now_with_closing_time(self):
+        from apps.orders.slots import opening_status
+        status = opening_status(now=berlin(2026, 10, 1, 8, 15))
+        self.assertTrue(status['open_now'])
+        self.assertEqual(status['closes_at'], '09:00')
+        self.assertEqual(status['days'][0]['ranges'], [['07:00', '09:00']])
+        self.assertEqual(status['days'][6]['ranges'], [])
+
+    def test_closed_shows_next_opening(self):
+        from apps.orders.slots import opening_status
+        status = opening_status(now=berlin(2026, 10, 3, 10, 0))  # Saturday after closing
+        self.assertFalse(status['open_now'])
+        self.assertEqual(status['next_open'], berlin(2026, 10, 5, 7, 0).isoformat())  # Monday
+
+    def test_public_endpoint(self):
+        response = self.client.get('/api/orders/opening-hours/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['days']), 7)
