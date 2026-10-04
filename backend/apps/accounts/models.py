@@ -19,6 +19,9 @@ class UserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        # The shop's admin (Studio) checks is_admin; DEPLOY.md creates the
+        # owner's account with createsuperuser.
+        extra_fields.setdefault('is_admin', True)
         extra_fields.setdefault('is_active', True)
 
         if extra_fields.get('is_staff') is not True:

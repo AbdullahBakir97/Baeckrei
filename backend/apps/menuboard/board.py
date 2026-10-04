@@ -16,20 +16,21 @@ def default_screen():
     return screen or MenuScreen(name='Menü', slug='default')
 
 
-def board_payload(screen, request, now=None):
+def board_payload(screen, request, now=None, filtered=True):
+    """`filtered=False` (the admin's live preview) leaves the screen's choices to the page."""
     now = now or timezone.now()
     shop = shop_config.get()
 
     categories = list(Category.objects.filter(is_active=True).order_by('order', 'name'))
-    if screen.categories:
+    if screen.categories and filtered:
         wanted = [str(c) for c in screen.categories]
         categories = sorted((c for c in categories if str(c.pk) in wanted), key=lambda c: wanted.index(str(c.pk)))
 
     products = (Product.objects.filter(status='active', available=True, category__in=categories)
                 .select_related('category').order_by('name'))
-    hidden = {str(p) for p in screen.hidden_products or []}
+    hidden = {str(p) for p in screen.hidden_products or []} if filtered else set()
     products = [p for p in products if str(p.pk) not in hidden]
-    if screen.sold_out == MenuScreen.SoldOut.HIDE:
+    if screen.sold_out == MenuScreen.SoldOut.HIDE and filtered:
         products = [p for p in products if p.stock > 0]
     present = {str(p.pk) for p in products}
 

@@ -121,6 +121,14 @@ library.add(
 // Icons used by the redesigned storefront.
 library.add(faCube, faArrowRight, faArrowDown, faImage, faHandPointer, faFire, faWheatAwn, faEuroSign, faLayerGroup, faReceipt, faUsers, faRightFromBracket, faBars, faGlobe, faCircleInfo, faBell)
 
+// Studio (admin) icons
+import {
+  faTv, faGear, faPaperPlane, faInbox, faPen, faEye, faCopy, faDownload, faUpRightFromSquare, faReply,
+  faCalendarXmark, faPalette, faBullhorn, faGripVertical, faMobileScreen, faDisplay, faWifi, faPlay
+} from '@fortawesome/free-solid-svg-icons'
+library.add(faTv, faGear, faPaperPlane, faInbox, faPen, faEye, faCopy, faDownload, faUpRightFromSquare, faReply,
+  faCalendarXmark, faPalette, faBullhorn, faGripVertical, faMobileScreen, faDisplay, faWifi, faPlay)
+
 export default function installFontAwesome(app) {
   app.component('font-awesome-icon', FontAwesomeIcon)
 }

@@ -254,8 +254,12 @@ const form = reactive({
   save_address: true
 })
 
-const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
+const storeAddress = computed(() => [streetLine(), cityLine()].filter(Boolean).join(', '))
 const fulfillmentMethods = computed(() => options.value.fulfillment_methods)
+// Pickup or delivery may be switched off in the admin: start with what is offered.
+watch(fulfillmentMethods, (methods) => {
+  if (methods.length && !methods.some(m => m.code === form.fulfillment_method)) form.fulfillment_method = methods[0].code
+})
 const paymentMethods = computed(() => options.value.payment_methods)
 const isDelivery = computed(() => form.fulfillment_method === 'delivery')
 

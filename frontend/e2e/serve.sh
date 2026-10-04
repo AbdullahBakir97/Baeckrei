@@ -31,4 +31,9 @@ cd "$FRONTEND/../backend"
 "$PYTHON" manage.py seed_demo \
   --customer "$(node -p "require('$FRONTEND/e2e/account.cjs').email")" \
   --password "$(node -p "require('$FRONTEND/e2e/account.cjs').password")"
+# The bakery's own admin account.
+DJANGO_SUPERUSER_EMAIL="$(node -p "require('$FRONTEND/e2e/account.cjs').admin.email")" \
+DJANGO_SUPERUSER_PASSWORD="$(node -p "require('$FRONTEND/e2e/account.cjs').admin.password")" \
+DJANGO_SUPERUSER_FIRST_NAME=Backlover DJANGO_SUPERUSER_LAST_NAME=Team \
+  "$PYTHON" manage.py createsuperuser --noinput >/dev/null
 exec "$PYTHON" manage.py runserver "127.0.0.1:$PORT" --noreload

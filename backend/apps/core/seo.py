@@ -28,7 +28,8 @@ from apps.products.models import Category, Product
 STATIC_PAGES = ['/', '/products', '/seasonal', '/blog', '/about', '/contact',
                 '/impressum', '/privacy', '/terms', '/cookie-policy']
 PRIVATE_PREFIXES = ['/admin', '/cart', '/checkout', '/profile', '/orders', '/settings',
-                    '/login', '/register', '/forgot-password', '/reset-password', '/wishlist', '/compare']
+                    '/login', '/register', '/forgot-password', '/reset-password', '/wishlist', '/compare',
+                    '/menu-board', '/tv']
 
 PAGE_TEXT = {
     'de': {

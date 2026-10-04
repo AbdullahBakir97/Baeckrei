@@ -36,7 +36,7 @@ def _screen(slug):
 @permission_classes([AllowAny])
 def board(request, slug):
     """The design, the live menu, promotions and opening status of a screen."""
-    return Response(board_payload(_screen(slug), request))
+    return Response(board_payload(_screen(slug), request, filtered=request.GET.get('preview') != '1'))
 
 
 @api_view(['GET'])

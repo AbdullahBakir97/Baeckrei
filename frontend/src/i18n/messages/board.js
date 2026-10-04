@@ -17,7 +17,20 @@ export default {
     featured: 'Frisch aus dem Ofen',
     vatNote: 'Alle Preise inkl. MwSt.',
     empty: 'Die Auswahl wird gerade aufgefüllt.',
-    offline: 'Keine Verbindung – zeige die letzte Auswahl'
+    offline: 'Keine Verbindung – zeige die letzte Auswahl',
+    special: 'Angebot',
+    tv: {
+      title: 'Menü-Bildschirm einrichten',
+      intro: 'Geben Sie den 4-stelligen Code ein, der in der Verwaltung unter „Menü-Bildschirme“ bei diesem Bildschirm steht.',
+      code: 'Bildschirm-Code',
+      open: 'Bildschirm starten',
+      wrong: 'Kein Bildschirm mit diesem Code gefunden.',
+      offline: 'Keine Verbindung. Bitte Internet prüfen.',
+      starting: 'Starte „{name}“ …',
+      remembered: 'Dieses Gerät zeigt „{name}“. Startet in {n} Sekunden …',
+      change: 'Anderen Bildschirm wählen',
+      tip: 'Tipp: Vollbild mit der Taste F11 oder im Menü des Browsers.'
+    }
   },
   en: {
     title: 'Our selection',
@@ -37,6 +50,19 @@ export default {
     featured: 'Fresh from the oven',
     vatNote: 'All prices incl. VAT',
     empty: 'The counter is being restocked.',
-    offline: 'No connection – showing the last selection'
+    offline: 'No connection – showing the last selection',
+    special: 'Special',
+    tv: {
+      title: 'Set up a menu screen',
+      intro: 'Enter the 4-digit code shown for this screen in the admin under “Menu screens”.',
+      code: 'Screen code',
+      open: 'Start screen',
+      wrong: 'No screen has this code.',
+      offline: 'No connection. Please check the internet.',
+      starting: 'Starting “{name}” …',
+      remembered: 'This device shows “{name}”. Starting in {n} seconds …',
+      change: 'Choose another screen',
+      tip: 'Tip: full screen with F11 or from the browser menu.'
+    }
   }
 }

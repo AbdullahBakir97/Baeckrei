@@ -83,10 +83,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LegalPage from '@/components/legal/LegalPage.vue'
 import { business, streetLine, cityLine } from '@/config/business'
 
 const { locale } = useI18n()
-const address = [streetLine(), cityLine()].filter(Boolean).join(', ')
+const address = computed(() => [streetLine(), cityLine()].filter(Boolean).join(', '))
 </script>

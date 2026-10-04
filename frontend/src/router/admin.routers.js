@@ -1,6 +1,18 @@
 const ProductManagement = () => import('@/components/admin/products/ProductManagement.vue')
 const AdminLayout = () => import('@/components/admin/AdminLayout.vue')
 
+// Studio pages: journal, inbox, newsletter, ingredients, settings, menu screens.
+const STUDIO = {
+  JournalList: () => import('@/components/admin/studio/JournalList.vue'),
+  JournalEditor: () => import('@/components/admin/studio/JournalEditor.vue'),
+  MessagesInbox: () => import('@/components/admin/studio/MessagesInbox.vue'),
+  NewsletterManager: () => import('@/components/admin/studio/NewsletterManager.vue'),
+  IngredientManager: () => import('@/components/admin/studio/IngredientManager.vue'),
+  ShopSettings: () => import('@/components/admin/studio/ShopSettings.vue'),
+  ScreenList: () => import('@/components/admin/studio/ScreenList.vue'),
+  ScreenEditor: () => import('@/components/admin/studio/ScreenEditor.vue')
+}
+
 export const adminRoutes = {
     path: '/admin',
     component: AdminLayout,
@@ -56,6 +68,22 @@ export const adminRoutes = {
           requiresAdmin: true
         }
       },
+      ...[
+        ['journal', 'admin-journal', 'JournalList'],
+        ['journal/new', 'admin-journal-new', 'JournalEditor'],
+        ['journal/:id', 'admin-journal-edit', 'JournalEditor'],
+        ['messages', 'admin-messages', 'MessagesInbox'],
+        ['newsletter', 'admin-newsletter', 'NewsletterManager'],
+        ['ingredients', 'admin-ingredients', 'IngredientManager'],
+        ['settings', 'admin-settings', 'ShopSettings'],
+        ['screens', 'admin-screens', 'ScreenList'],
+        ['screens/:id', 'admin-screen-edit', 'ScreenEditor']
+      ].map(([path, name, component]) => ({
+        path,
+        name,
+        component: STUDIO[component],
+        meta: { requiresAuth: true, requiresAdmin: true }
+      })),
       {
         path: 'orders',
         name: 'admin-orders',  // Fixed naming convention

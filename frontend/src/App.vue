@@ -2,6 +2,7 @@
   <div class="app">
     <AmbientBackground v-if="!bare" />
     <a href="#main" class="skip-link">{{ $t('common.skipToContent') }}</a>
+    <AnnouncementBar v-if="!bare" />
     <Navbar v-if="!bare" />
     <main id="main" class="main-container" :class="{ 'is-full-bleed': route.meta.fullBleed || isAdmin }">
       <router-view v-slot="{ Component, route }">
@@ -23,7 +24,8 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
-import { business } from '@/config/business'
+import { business, loadShopInfo } from '@/config/business'
+import AnnouncementBar from '@/components/layout/AnnouncementBar.vue'
 import { SHARE_IMAGE, bakeryJsonLd, usePageMeta } from '@/seo'
 import Navbar from '@/components/layout/Navbar.vue'
 import Footer from '@/components/layout/Footer.vue'
@@ -44,7 +46,9 @@ const bare = computed(() => isAdmin.value || Boolean(route.meta.bare))
 // The intro plays once per browser, on storefront pages, with motion allowed.
 const INTRO_KEY = 'intro-seen'
 const introSeen = () => { try { return localStorage.getItem(INTRO_KEY) === '1' } catch { return true } }
-const showIntro = ref(!prefersReducedMotion() && !introSeen() && !/^\/(admin|menu-board)/.test(window.location.pathname))
+const showIntro = ref(!prefersReducedMotion() && !introSeen() && !/^\/(admin|menu-board|tv)/.test(window.location.pathname))
+// Hours, address and the shop notice as saved in the admin.
+loadShopInfo()
 function finishIntro() {
   showIntro.value = false
   try { localStorage.setItem(INTRO_KEY, '1') } catch { /* ignore */ }
@@ -58,7 +62,7 @@ setTimeout(markIntroDone, 6000)
 // their own content (products, posts, categories) refine it.
 const { t, te } = useI18n()
 const place = computed(() => ({ street: business.street, city: business.city }))
-const PRIVATE = ['menu-board', 'cart', 'checkout', 'order-detail', 'profile', 'orders', 'settings', 'login', 'register',
+const PRIVATE = ['menu-board', 'tv', 'cart', 'checkout', 'order-detail', 'profile', 'orders', 'settings', 'login', 'register',
   'forgot-password', 'reset-password', 'newsletter-unsubscribe', 'wishlist', 'compare', 'not-found']
 useHead(() => ({
   htmlAttrs: { lang: locale.value },

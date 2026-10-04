@@ -23,9 +23,9 @@
             {{ formatDate(post.published_at) }}<template v-if="post.author_name"> · {{ post.author_name }}</template>
           </p>
           <h2 class="post-title">
-            <router-link :to="{ name: 'blog-post', params: { slug: post.slug } }">{{ post.title }}</router-link>
+            <router-link :to="{ name: 'blog-post', params: { slug: post.slug } }">{{ localized(post, 'title') }}</router-link>
           </h2>
-          <p v-if="post.excerpt" class="text-cream-muted">{{ post.excerpt }}</p>
+          <p v-if="post.excerpt" class="text-cream-muted">{{ localized(post, 'excerpt') }}</p>
           <span class="post-more">{{ $t('blog.readMore') }} <font-awesome-icon icon="arrow-right" /></span>
         </div>
       </article>
@@ -37,6 +37,7 @@
 import { onMounted, ref } from 'vue'
 import axios from '@/plugins/axios'
 import PageHeader from '@/components/common/PageHeader.vue'
+import { localized } from '@/i18n/catalog'
 import { applyImageFallback } from '@/utils/imageFallback'
 import { formatDate } from '@/utils/money'
 import croissantImg from '@/assets/bakery/croissant-butter.png'

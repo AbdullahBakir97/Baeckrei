@@ -115,33 +115,8 @@
             </div>
           </div>
 
-          <!-- Ingredients -->
-          <div class="bg-[#1e1914] rounded-xl border border-cream/[0.07] overflow-hidden">
-            <div class="p-6 border-b border-cream/[0.07]">
-              <h2 class="text-lg font-bold text-white">{{ $t('admin.productDetail.ingredients') }}</h2>
-            </div>
-            <div class="p-6">
-              <div class="grid grid-cols-2 gap-4">
-                <div v-for="ingredient in product.ingredients" :key="ingredient.id" 
-                     class="p-4 bg-[#2a231c] rounded-lg">
-                  <h3 class="font-medium text-white">{{ ingredient.name }}</h3>
-                  <p v-if="ingredient.description" class="mt-1 text-sm text-cream-faint">
-                    {{ ingredient.description }}
-                  </p>
-                  <!-- Allergens -->
-                  <div v-if="ingredient.allergens?.length" class="mt-2 flex flex-wrap gap-2">
-                    <span
-                      v-for="allergen in ingredient.allergens"
-                      :key="allergen.id"
-                      class="px-2 py-1 text-xs font-medium text-red-500 bg-red-500/10 rounded-full"
-                    >
-                      {{ allergen.name }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Ingredients, allergens and nutrition -->
+          <ProductRecipe :product-id="String(product.id)" @saved="fetchProduct" />
         </div>
 
         <!-- Right Column - Additional Info -->
@@ -253,6 +228,7 @@ import axios from '@/plugins/axios'
 import { formatEuro } from '@/utils/money'
 import { categoryName } from '@/i18n/catalog'
 import ProductFormModal from './ProductFormModal.vue'
+import ProductRecipe from '../studio/ProductRecipe.vue'
 import { useProductStore } from '@/stores/productStore'
 import { useToast } from '@/composables/useToast'
 

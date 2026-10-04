@@ -11,6 +11,7 @@ from . import config
 @permission_classes([AllowAny])
 def info(request):
     """The shop's public details for the footer, contact page and Impressum."""
+    from .models import ShopSettings
     shop = config.get()
     public = ('name', 'legal_name', 'owner', 'street', 'house_number', 'postal_code', 'city', 'country',
               'transit', 'phone', 'email', 'vat_id', 'register', 'instagram', 'facebook', 'twitter',
@@ -19,4 +20,6 @@ def info(request):
         **{key: getattr(shop, key) for key in public},
         'delivery_fee': str(shop.delivery_fee),
         'hours': slots.opening_status(config=shop),
+        # Until the bakery saves its settings, the storefront keeps its defaults.
+        'configured': ShopSettings.objects.filter(pk=1).exists(),
     })

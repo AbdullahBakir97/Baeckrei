@@ -196,7 +196,7 @@ async function pay() {
     await orderStore.fetchOrderById(route.params.id).catch(() => {})
   }
 }
-const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
+const storeAddress = computed(() => [streetLine(), cityLine()].filter(Boolean).join(', '))
 
 const steps = [
   { status: 'Pending', label: 'order.steps.received' },

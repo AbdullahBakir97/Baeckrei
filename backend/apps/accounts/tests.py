@@ -191,3 +191,12 @@ class AdminUserTests(TestCase):
         response = self.client.get('/api/accounts/users/dashboard_stats/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['total_users'], 2)
+
+
+class CreateSuperuserTests(TestCase):
+    def test_superuser_can_use_the_shop_admin(self):
+        # DEPLOY.md: `manage.py createsuperuser` creates the owner's account.
+        owner = User.objects.create_superuser(email='owner@example.com', password=make_test_password(),
+                                              first_name='Backlover', last_name='Team')
+        self.assertTrue(owner.is_admin)
+        self.assertTrue(owner.is_staff)

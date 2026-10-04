@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
 import { business, streetLine, cityLine } from '@/config/business'
@@ -201,8 +201,8 @@ const activeStep = ref(0)
 const bakeProgress = ref(0)
 const reducedMotion = prefersReducedMotion()
 
-const address = [streetLine(), cityLine()].filter(Boolean).join(', ')
-const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([business.name, address].join(', '))}`
+const address = computed(() => [streetLine(), cityLine()].filter(Boolean).join(', '))
+const mapUrl = computed(() => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([business.name, address.value].join(', '))}`)
 
 const { t } = useI18n()
 const marqueeWords = t('home.marquee').split(',')
