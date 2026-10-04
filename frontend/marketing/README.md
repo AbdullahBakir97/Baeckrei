@@ -75,6 +75,10 @@ shop itself is in German and English.
   important content stay well inside the trimmed edge.
 - The customer guide and the handbook have no bleed: they are meant for
   screens, email and office printers.
+- To keep the files light and smooth to scroll, the build scales pictures to
+  300 dpi (print) or 150 dpi (guide and handbook) and turns soft gradients
+  and shadows into plain images. `dist/previews/` shows the design as
+  written.
 - Fonts are embedded (Instrument Serif and Manrope, El Messiri and IBM Plex
   Sans Arabic for Arabic).
 - Suggested paper: menu 300 g/m² matte (or laminated), flyer and postcard
