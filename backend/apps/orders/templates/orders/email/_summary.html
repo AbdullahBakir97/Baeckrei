@@ -1,15 +1,15 @@
-{% load i18n order_emails %}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;font-size:14px;">
+{% load i18n order_emails %}{% get_current_language_bidi as rtl %}{% if rtl %}{% firstof "left" as end %}{% else %}{% firstof "right" as end %}{% endif %}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;font-size:14px;">
   {% for item in items %}<tr>
     <td style="padding:8px 0;border-bottom:1px solid #2a231c;color:#f4ece1;">{{ item.quantity }} × {{ item.display_name }}</td>
-    <td align="right" style="padding:8px 0;border-bottom:1px solid #2a231c;color:#d9cfc2;white-space:nowrap;">{{ item.subtotal|euro }}</td>
+    <td align="{{ end }}" style="padding:8px 0;border-bottom:1px solid #2a231c;color:#d9cfc2;white-space:nowrap;">{{ item.subtotal|euro }}</td>
   </tr>{% endfor %}
   {% if order.delivery_fee %}<tr>
     <td style="padding:8px 0;color:#b9ab98;">{% translate "Delivery fee" %}</td>
-    <td align="right" style="padding:8px 0;color:#b9ab98;">{{ order.delivery_fee|euro }}</td>
+    <td align="{{ end }}" style="padding:8px 0;color:#b9ab98;">{{ order.delivery_fee|euro }}</td>
   </tr>{% endif %}
   <tr>
     <td style="padding:12px 0 0;font-weight:bold;color:#f4ece1;">{% translate "Total" %}</td>
-    <td align="right" style="padding:12px 0 0;font-weight:bold;color:#f2c48d;font-size:16px;">{{ order.total_price|euro }}</td>
+    <td align="{{ end }}" style="padding:12px 0 0;font-weight:bold;color:#f2c48d;font-size:16px;">{{ order.total_price|euro }}</td>
   </tr>
   <tr><td colspan="2" style="padding:2px 0 0;font-size:12px;color:#7d7061;">{% blocktranslate with vat=order.vat_amount|euro %}incl. {{ vat }} VAT{% endblocktranslate %}</td></tr>
 </table>

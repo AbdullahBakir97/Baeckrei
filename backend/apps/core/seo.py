@@ -48,7 +48,16 @@ PAGE_TEXT = {
         '/contact': 'Contact', '/impressum': 'Impressum', '/privacy': 'Privacy Policy',
         '/terms': 'Terms and Conditions', '/cookie-policy': 'Cookie Policy',
     },
+    'ar': {
+        'tagline': 'مخبز في {street}، {city}',
+        'description': 'خبز طازج وبريتسل وكرواسون وكعك، نخبزها كل صباح في {street}، {city}. '
+                       'اطلب عبر الإنترنت للاستلام أو التوصيل.',
+        '/products': 'المتجر', '/seasonal': 'منتجات موسمية', '/blog': 'المدونة', '/about': 'من نحن',
+        '/contact': 'تواصل معنا', '/impressum': 'بيانات الناشر', '/privacy': 'سياسة الخصوصية',
+        '/terms': 'الشروط والأحكام', '/cookie-policy': 'سياسة ملفات تعريف الارتباط',
+    },
 }
+OG_LOCALE = {'de': 'de_DE', 'en': 'en_GB', 'ar': 'ar_AR'}
 
 
 def site_url():
@@ -77,7 +86,8 @@ def _language(request):
 
 
 def _localized(obj, field, language):
-    if language == 'en' and getattr(obj, f'{field}_en', ''):
+    # There is no Arabic catalogue; Arabic pages use the English texts.
+    if language != 'de' and getattr(obj, f'{field}_en', ''):
         return getattr(obj, f'{field}_en')
     return getattr(obj, field, '') or ''
 
@@ -107,7 +117,7 @@ def robots_txt(request):
 
 @require_GET
 def sitemap_xml(request):
-    """Every public page, with German and English alternates (?lang=)."""
+    """Every public page, with German, English and Arabic alternates (?lang=)."""
     entries = [(path, None) for path in STATIC_PAGES]
     entries += [(f'/categories/{c.slug}', c.modified_at) for c in Category.objects.filter(is_active=True)]
     entries += [(f'/products/{p.pk}', p.modified_at) for p in public_products()]
@@ -123,7 +133,7 @@ def sitemap_xml(request):
         parts.append(f'<loc>{url}</loc>')
         if modified:
             parts.append(f'<lastmod>{modified.date().isoformat()}</lastmod>')
-        for language in ('de', 'en'):
+        for language in PAGE_TEXT:
             parts.append(f'<xhtml:link rel="alternate" hreflang="{language}" href="{url}?lang={language}"/>')
         parts.append(f'<xhtml:link rel="alternate" hreflang="x-default" href="{url}"/>')
         parts.append('</url>')
@@ -235,7 +245,7 @@ def render_head(meta):
         tag('property', 'og:url', meta['url']),
         tag('property', 'og:type', meta['type']),
         tag('property', 'og:site_name', meta.get('site_name') or settings.SHOP_NAME),
-        tag('property', 'og:locale', 'de_DE' if meta['language'] == 'de' else 'en_GB'),
+        tag('property', 'og:locale', OG_LOCALE[meta['language']]),
         tag('name', 'twitter:card', 'summary_large_image'),
     ]
     if meta['noindex']:
@@ -265,7 +275,8 @@ def spa_index(request, path=''):
         html = html[:start] + head + html[end:]
     else:
         html = html.replace('</head>', f'    {head}\n  </head>', 1)
-    html = html.replace('<html lang="en">', f'<html lang="{meta["language"]}">', 1)
+    direction = 'rtl' if meta['language'] == 'ar' else 'ltr'
+    html = html.replace('<html lang="en">', f'<html lang="{meta["language"]}" dir="{direction}">', 1)
     response = HttpResponse(html)
     response['Vary'] = 'Accept-Language'
     return response

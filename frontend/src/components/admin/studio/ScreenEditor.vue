@@ -90,7 +90,8 @@
               <div>
                 <label class="st-label" for="sc-lang">{{ $t('admin.screens.language') }}</label>
                 <select id="sc-lang" v-model="screen.language" class="st-input" @change="touch">
-                  <option value="de">Deutsch</option><option value="en">English</option><option value="alternate">{{ $t('admin.screens.alternate') }}</option>
+                  <option value="de">Deutsch</option><option value="en">English</option><option value="ar">العربية</option>
+                  <option value="alternate">{{ $t('admin.screens.alternate') }}</option><option value="de_ar">{{ $t('admin.screens.alternateArabic') }}</option>
                 </select>
               </div>
               <div>
@@ -115,6 +116,12 @@
                 <input id="sc-tick" v-model="screen.ticker" class="st-input" maxlength="300" @input="touch" /></div>
               <div><label class="st-label" for="sc-tick-en">{{ $t('admin.screens.ticker') }} (English)</label>
                 <input id="sc-tick-en" v-model="screen.ticker_en" lang="en" class="st-input" maxlength="300" @input="touch" /></div>
+              <template v-if="arabic">
+                <div><label class="st-label" for="sc-head-ar">{{ $t('admin.screens.headline') }} (العربية)</label>
+                  <input id="sc-head-ar" v-model="screen.headline_ar" lang="ar" dir="rtl" class="st-input" maxlength="120" @input="touch" /></div>
+                <div><label class="st-label" for="sc-tick-ar">{{ $t('admin.screens.ticker') }} (العربية)</label>
+                  <input id="sc-tick-ar" v-model="screen.ticker_ar" lang="ar" dir="rtl" class="st-input" maxlength="300" @input="touch" /></div>
+              </template>
             </div>
             <div class="flex flex-wrap gap-x-6 gap-y-3">
               <label v-for="key in toggles" :key="key" class="st-switch"><input v-model="screen[key]" type="checkbox" @change="touch" /><i></i> {{ $t(`admin.screens.show.${key}`) }}</label>
@@ -202,6 +209,10 @@
               <div><label class="st-label" for="sl-title-en">{{ $t('admin.screens.slideTitle') }} (English)</label><input id="sl-title-en" v-model="slideForm.title_en" lang="en" class="st-input" maxlength="120" /></div>
               <div><label class="st-label" for="sl-text">{{ $t('admin.screens.slideText') }}</label><input id="sl-text" v-model="slideForm.text" class="st-input" maxlength="300" /></div>
               <div><label class="st-label" for="sl-text-en">{{ $t('admin.screens.slideText') }} (English)</label><input id="sl-text-en" v-model="slideForm.text_en" lang="en" class="st-input" maxlength="300" /></div>
+              <template v-if="arabic">
+                <div><label class="st-label" for="sl-title-ar">{{ $t('admin.screens.slideTitle') }} (العربية)</label><input id="sl-title-ar" v-model="slideForm.title_ar" lang="ar" dir="rtl" class="st-input" maxlength="120" /></div>
+                <div><label class="st-label" for="sl-text-ar">{{ $t('admin.screens.slideText') }} (العربية)</label><input id="sl-text-ar" v-model="slideForm.text_ar" lang="ar" dir="rtl" class="st-input" maxlength="300" /></div>
+              </template>
               <div><label class="st-label" for="sl-price">{{ $t('admin.screens.slidePrice') }} <small>({{ $t('admin.common.optional') }})</small></label><input id="sl-price" v-model="slideForm.price" type="number" min="0" step="0.01" class="st-input" /></div>
               <div><label class="st-label" for="sl-note">{{ $t('admin.screens.priceNote') }}</label><input id="sl-note" v-model="slideForm.price_note" class="st-input" maxlength="60" :placeholder="$t('admin.screens.priceNotePlaceholder')" /></div>
             </div>
@@ -238,7 +249,7 @@
             <div class="flex gap-2">
               <button type="submit" class="st-btn" :disabled="busy">{{ $t('admin.common.save') }}</button>
               <button type="button" class="st-btn st-btn-ghost" @click="slideForm = null; pin(null)">{{ $t('admin.common.cancel') }}</button>
-              <button v-if="slideForm.id" type="button" class="st-btn st-btn-danger ml-auto" @click="removeSlide"><font-awesome-icon icon="trash" /></button>
+              <button v-if="slideForm.id" type="button" class="st-btn st-btn-danger ms-auto" @click="removeSlide"><font-awesome-icon icon="trash" /></button>
             </div>
           </form>
         </template>
@@ -263,7 +274,7 @@
             <div class="flex flex-wrap gap-2">
               <button type="button" class="st-btn st-btn-ghost" @click="reload"><font-awesome-icon icon="rotate" /> {{ $t('admin.screens.reloadNow') }}</button>
               <button type="button" class="st-btn st-btn-ghost" @click="duplicate"><font-awesome-icon icon="copy" /> {{ $t('admin.screens.duplicate') }}</button>
-              <button type="button" class="st-btn st-btn-danger ml-auto" @click="remove"><font-awesome-icon icon="trash" /> {{ $t('admin.screens.deleteScreen') }}</button>
+              <button type="button" class="st-btn st-btn-danger ms-auto" @click="remove"><font-awesome-icon icon="trash" /> {{ $t('admin.screens.deleteScreen') }}</button>
             </div>
             <p v-if="notice" class="st-success">{{ notice }}</p>
           </section>
@@ -338,6 +349,8 @@ const qrUrl = ref('')
 
 const tvUrl = `${window.location.host}/tv`
 const boardUrl = computed(() => `${window.location.origin}/menu-board/${screen.value?.slug}`)
+// Arabic texts are only asked for when the screen shows Arabic.
+const arabic = computed(() => ['ar', 'de_ar'].includes(screen.value?.language))
 const themeAccent = computed(() => themes.find(th => th.key === screen.value?.theme)?.accent || '#e6a15a')
 const frameSize = computed(() => (upright.value ? { width: '1080px', height: '1920px' } : { width: '1920px', height: '1080px' }))
 const scale = computed(() => boxWidth.value / (upright.value ? 1080 : 1920))
@@ -406,7 +419,7 @@ const touch = () => { dirty.value = true }
 function set(key, value) { screen.value[key] = value; touch() }
 
 const DESIGN = ['name', 'is_default', 'layout', 'theme', 'font', 'background_color', 'text_color', 'accent_color', 'background_dim',
-  'orientation', 'language', 'headline', 'headline_en', 'ticker', 'ticker_en', 'categories', 'featured_products', 'hidden_products',
+  'orientation', 'language', 'headline', 'headline_en', 'headline_ar', 'ticker', 'ticker_en', 'ticker_ar', 'categories', 'featured_products', 'hidden_products',
   'show_prices', 'show_descriptions', 'show_images', 'show_tags', 'show_qr', 'show_clock', 'show_status', 'sold_out', 'page_seconds', 'slide_every']
 
 async function save() {
@@ -500,7 +513,8 @@ function editSlide(sl) {
   slideFile.value = null
   slideForm.value = sl
     ? { ...sl, weekdays: [...(sl.weekdays || [])], start_time: sl.start_time?.slice(0, 5) || '', end_time: sl.end_time?.slice(0, 5) || '' }
-    : { id: null, style: 'product', title: '', title_en: '', text: '', text_en: '', price: '', price_note: '', price_note_en: '', product: null,
+    : { id: null, style: 'product', title: '', title_en: '', title_ar: '', text: '', text_en: '', text_ar: '', price: '', price_note: '',
+        price_note_en: '', price_note_ar: '', product: null,
         active: true, seconds: null, start_date: '', end_date: '', start_time: '', end_time: '', weekdays: [] }
   slideImagePreview.value = sl?.image_url || null
   pinForm()
@@ -522,8 +536,10 @@ async function saveSlide() {
   error.value = ''
   const f = slideForm.value
   const payload = {
-    screen: screen.value.id, style: f.style, title: f.title, title_en: f.title_en, text: f.text, text_en: f.text_en,
+    screen: screen.value.id, style: f.style, title: f.title, title_en: f.title_en, title_ar: f.title_ar, text: f.text,
+    text_en: f.text_en, text_ar: f.text_ar,
     price: f.price === '' || f.price === null ? null : f.price, price_note: f.price_note, price_note_en: f.price_note_en,
+    price_note_ar: f.price_note_ar,
     product: f.style === 'product' ? f.product : null, active: f.active, seconds: f.seconds || null,
     start_date: f.start_date || null, end_date: f.end_date || null, start_time: f.start_time || null, end_time: f.end_time || null,
     weekdays: f.weekdays, order: f.id ? f.order : slides.value.length
@@ -579,7 +595,7 @@ onBeforeRouteLeave(() => (dirty.value ? window.confirm(t('admin.settings.leave')
 .preview-frame.is-upright { width: min(100%, 22rem); aspect-ratio: 9 / 16; margin: 0 auto; }
 .preview-frame iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: top left; transform: scale(var(--s)); }
 .choice-grid { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); }
-.choice { display: grid; gap: 0.3rem; padding: 0.85rem; border-radius: 1rem; text-align: left; border: 1px solid rgba(244, 236, 225, 0.1); transition: border-color 0.2s, background 0.2s; }
+.choice { display: grid; gap: 0.3rem; padding: 0.85rem; border-radius: 1rem; text-align: start; border: 1px solid rgba(244, 236, 225, 0.1); transition: border-color 0.2s, background 0.2s; }
 .choice:hover { border-color: rgba(244, 236, 225, 0.25); }
 .choice.is-on { border-color: #e6a15a; background: rgba(230, 161, 90, 0.1); }
 .choice strong { font-size: 0.85rem; color: #f4ece1; }

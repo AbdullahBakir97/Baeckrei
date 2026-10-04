@@ -14,9 +14,7 @@
       </ul>
 
       <div class="nav-tools">
-        <button type="button" class="nav-lang" :aria-label="$t('nav.switchLanguage')" @click="toggleLocale">
-          {{ otherLocale.short }}
-        </button>
+        <LanguageSwitcher class="nav-lang" />
         <button type="button" class="nav-icon" :aria-label="$t('nav.search')" @click="openSearch">
           <font-awesome-icon icon="search" />
         </button>
@@ -42,7 +40,7 @@
               <router-link to="/profile" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">{{ $t('nav.profile') }}</router-link>
               <router-link to="/orders" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">{{ $t('nav.orders') }}</router-link>
               <router-link to="/settings" class="nav-pop-item" role="menuitem" @click="userMenuOpen = false">{{ $t('nav.settings') }}</router-link>
-              <button type="button" class="nav-pop-item w-full text-left" role="menuitem" @click="logout">{{ $t('nav.signOut') }}</button>
+              <button type="button" class="nav-pop-item w-full text-start" role="menuitem" @click="logout">{{ $t('nav.signOut') }}</button>
             </div>
           </transition>
         </div>
@@ -104,7 +102,7 @@
           <router-link to="/login" @click="closeMenu">{{ $t('nav.signIn') }}</router-link>
           <router-link to="/register" @click="closeMenu">{{ $t('nav.createAccount') }}</router-link>
         </template>
-        <button type="button" @click="toggleLocale">{{ otherLocale.label }}</button>
+        <LanguageSwitcher inline class="mt-2" @changed="closeMenu" />
         <p class="mt-4 w-full text-cream-faint">{{ business.street }}, {{ business.city }}<span v-if="business.transit"> · {{ business.transit }}</span></p>
       </div>
     </div>
@@ -143,7 +141,7 @@ import { formatEuro } from '@/utils/money'
 import { PLACEHOLDER_IMAGE, applyImageFallback } from '@/utils/imageFallback'
 import { gsap, lockScroll, prefersReducedMotion } from '@/motion'
 import { useI18n } from 'vue-i18n'
-import { LOCALES, setLocale } from '@/i18n'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -163,8 +161,6 @@ const mobileLinks = [{ label: 'nav.homeLink', to: '/' }, ...links]
 
 const { locale, t } = useI18n()
 const searchHints = computed(() => t('nav.hints').split(','))
-const otherLocale = computed(() => LOCALES.find(l => l.code !== locale.value))
-const toggleLocale = () => setLocale(otherLocale.value.code)
 
 const scrolled = ref(false)
 const hidden = ref(false)
@@ -366,12 +362,12 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 @media (min-width: 768px) {
   .nav-tools {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -417,7 +413,7 @@ onBeforeUnmount(() => {
 .nav-badge {
   position: absolute;
   top: 0.2rem;
-  right: 0.1rem;
+  inset-inline-end: 0.1rem;
   min-width: 1rem;
   height: 1rem;
   padding: 0 0.2rem;
@@ -462,7 +458,7 @@ onBeforeUnmount(() => {
 
 .nav-pop {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   top: calc(100% + 0.75rem);
   padding: 0.6rem;
   border-radius: 1.25rem;
@@ -493,24 +489,6 @@ onBeforeUnmount(() => {
   background: rgba(244, 236, 225, 0.06);
 }
 
-.nav-lang {
-  display: grid;
-  place-items: center;
-  height: 2.5rem;
-  padding: 0 0.7rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #d9cfc2;
-  transition: background 0.25s, color 0.25s;
-}
-
-.nav-lang:hover {
-  color: #f4ece1;
-  background: rgba(244, 236, 225, 0.07);
-}
-
 .nav-burger {
   display: grid;
   place-content: center;
@@ -522,24 +500,6 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 768px) {
-  .nav-lang {
-  display: grid;
-  place-items: center;
-  height: 2.5rem;
-  padding: 0 0.7rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #d9cfc2;
-  transition: background 0.25s, color 0.25s;
-}
-
-.nav-lang:hover {
-  color: #f4ece1;
-  background: rgba(244, 236, 225, 0.07);
-}
-
 .nav-burger {
     display: none;
   }

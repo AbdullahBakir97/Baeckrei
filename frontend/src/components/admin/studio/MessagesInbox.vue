@@ -22,7 +22,7 @@
         <button v-for="m in messages" v-else :key="m.id" type="button" class="inbox-row"
                 :class="{ 'is-active': current?.id === m.id, 'is-unread': !m.handled }" @click="open(m)">
           <span class="inbox-avatar">{{ initial(m.name) }}</span>
-          <span class="min-w-0 flex-1 text-left">
+          <span class="min-w-0 flex-1 text-start">
             <span class="flex items-baseline justify-between gap-2">
               <strong class="truncate">{{ m.name }}</strong>
               <small class="flex-none">{{ ago(m.created_at) }}</small>
@@ -39,7 +39,7 @@
         <template v-else>
           <div class="st-bar">
             <button type="button" class="st-link text-sm lg:hidden" @click="current = null"><font-awesome-icon icon="arrow-left" /> {{ $t('admin.messages.back') }}</button>
-            <div class="flex flex-wrap gap-2 ml-auto">
+            <div class="flex flex-wrap gap-2 ms-auto">
               <button type="button" class="st-btn st-btn-ghost st-btn-sm" @click="toggleHandled">
                 <font-awesome-icon :icon="current.handled ? 'rotate' : 'check'" />
                 {{ current.handled ? $t('admin.messages.reopen') : $t('admin.messages.markDone') }}
@@ -221,14 +221,14 @@ function ago(iso) {
 .inbox-row:hover { background: rgba(244, 236, 225, 0.03); }
 .inbox-row.is-active { background: rgba(230, 161, 90, 0.1); }
 .inbox-row strong { font-size: 0.9rem; color: #f4ece1; font-weight: 600; }
-.inbox-row.is-unread strong::before { content: ''; display: inline-block; width: 0.45rem; height: 0.45rem; margin-right: 0.45rem; border-radius: 50%; background: #e6a15a; vertical-align: 0.1rem; }
+.inbox-row.is-unread strong::before { content: ''; display: inline-block; width: 0.45rem; height: 0.45rem; margin-inline-end: 0.45rem; border-radius: 50%; background: #e6a15a; vertical-align: 0.1rem; }
 .inbox-row small { font-size: 0.72rem; color: #85766a; }
 .inbox-avatar { flex: none; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; font-weight: 700; color: #0e0c0a; background: linear-gradient(135deg, #f2c48d, #b6722c); }
 .read-head { margin: 1.25rem 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(244, 236, 225, 0.08); }
 .read-head h2 { font-family: 'Instrument Serif', Georgia, serif; font-size: 1.9rem; font-weight: 400 !important; line-height: 1.15; color: #f4ece1; }
 .read-head p { margin-top: 0.4rem; font-size: 0.85rem; color: #b9ab98; }
 .read-body { white-space: pre-line; font-size: 0.95rem; line-height: 1.7; color: #d9cfc2; }
-.read-reply { margin-top: 1.25rem; padding: 1rem 1.2rem; border-radius: 1rem; background: rgba(159, 212, 154, 0.06); border-left: 3px solid #9fd49a; }
+.read-reply { margin-top: 1.25rem; padding: 1rem 1.2rem; border-radius: 1rem; background: rgba(159, 212, 154, 0.06); border-inline-start: 3px solid #9fd49a; }
 .read-reply-head { margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 600; color: #b8e3b2; }
 .reply-box { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid rgba(244, 236, 225, 0.08); }
 </style>

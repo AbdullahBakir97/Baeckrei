@@ -5,7 +5,7 @@ from .models import MenuScreen, MenuSlide
 DESIGN_FIELDS = (
     'name', 'slug', 'layout', 'theme', 'font', 'background_color', 'text_color', 'accent_color',
     'background_image_url', 'background_dim', 'orientation', 'language', 'headline', 'headline_en',
-    'ticker', 'ticker_en', 'show_prices', 'show_descriptions', 'show_images', 'show_tags', 'show_qr',
+    'headline_ar', 'ticker', 'ticker_en', 'ticker_ar', 'show_prices', 'show_descriptions', 'show_images', 'show_tags', 'show_qr',
     'show_clock', 'show_status', 'sold_out', 'page_seconds', 'slide_every', 'reload_token',
 )
 
@@ -33,8 +33,8 @@ class PublicSlideSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MenuSlide
-        fields = ('id', 'style', 'title', 'title_en', 'text', 'text_en', 'price', 'price_note', 'price_note_en',
-                  'image_url', 'seconds')
+        fields = ('id', 'style', 'title', 'title_en', 'title_ar', 'text', 'text_en', 'text_ar', 'price', 'price_note',
+                  'price_note_en', 'price_note_ar', 'image_url', 'seconds')
 
     def get_image_url(self, obj):
         request = self.context.get('request')
@@ -93,8 +93,8 @@ class SlideSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MenuSlide
-        fields = ('id', 'screen', 'style', 'title', 'title_en', 'text', 'text_en', 'price', 'price_note', 'price_note_en',
-                  'image', 'image_url', 'remove_image', 'product', 'active', 'order', 'seconds', 'start_date', 'end_date',
+        fields = ('id', 'screen', 'style', 'title', 'title_en', 'title_ar', 'text', 'text_en', 'text_ar', 'price',
+                  'price_note', 'price_note_en', 'price_note_ar', 'image', 'image_url', 'remove_image', 'product', 'active', 'order', 'seconds', 'start_date', 'end_date',
                   'start_time', 'end_time', 'weekdays')
         extra_kwargs = {'image': {'write_only': True, 'required': False}}
 

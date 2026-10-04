@@ -204,7 +204,7 @@ watch(() => [props.image, props.model], () => {
 .viewer-status,
 .viewer-hint {
   position: absolute;
-  right: 1rem;
+  inset-inline-end: 1rem;
   bottom: 1rem;
   display: inline-flex;
   align-items: center;
@@ -242,7 +242,7 @@ watch(() => [props.image, props.model], () => {
 .viewer-reset {
   position: absolute;
   top: 0.75rem;
-  right: 0.75rem;
+  inset-inline-end: 0.75rem;
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 9999px;

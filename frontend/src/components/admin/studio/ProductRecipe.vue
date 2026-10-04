@@ -22,7 +22,7 @@
       <p class="text-sm text-cream/80">
         <strong>{{ $t('admin.recipe.allergens') }}:</strong>
         <span v-if="!allergens.length" class="text-cream-faint"> {{ $t('admin.recipe.none') }}</span>
-        <span v-for="a in allergens" :key="a" class="st-chip is-amber ml-1">{{ a }}</span>
+        <span v-for="a in allergens" :key="a" class="st-chip is-amber ms-1">{{ a }}</span>
       </p>
       <fieldset>
         <legend class="st-label">{{ $t('admin.recipe.nutrition') }}</legend>

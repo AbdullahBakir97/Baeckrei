@@ -19,11 +19,14 @@ counter, the window and the café corner can each show something different.
 - **Content:** which categories and in what order, products to feature or
   to hide on this screen, prices, descriptions, photos, labels, the QR code
   for ordering ahead, the clock and the opening status, a headline and a
-  running ticker along the bottom (German and English).
+  running ticker along the bottom (German, English and Arabic).
 - **Promotions:** full-screen slides between the menu pages, e.g. a breakfast
   offer. Each one can have a product, a photo or just a big message, a price,
   and run only on certain dates, days of the week or times of day.
-- **Language:** German, English, or both in turn.
+- **Language:** German, English or Arabic, or two in turn (German and
+  English, or German and Arabic). Arabic screens read right to left; their
+  headline, ticker and promotions have their own Arabic texts, products show
+  their English names.
 - **Orientation:** automatic, or turned for a TV mounted upright whose player
   still sends a landscape picture.
 
@@ -76,5 +79,5 @@ back after every power cut.
 ## Older links
 
 Addresses with options still work and override the screen's design:
-`/menu-board?lang=en`, `?alternate=1`, `?categories=pastries,cakes`
+`/menu-board?lang=en` (or `de`, `ar`), `?alternate=1`, `?categories=pastries,cakes`
 (category address names), `?seconds=15`.

@@ -36,7 +36,7 @@ def _cents(amount):
 
 
 def _product_name(product, language):
-    if language == 'en' and getattr(product, 'name_en', ''):
+    if language != 'de' and getattr(product, 'name_en', ''):
         return product.name_en
     return product.name
 

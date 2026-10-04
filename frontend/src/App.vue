@@ -65,7 +65,7 @@ const place = computed(() => ({ street: business.street, city: business.city }))
 const PRIVATE = ['menu-board', 'tv', 'cart', 'checkout', 'order-detail', 'profile', 'orders', 'settings', 'login', 'register',
   'forgot-password', 'reset-password', 'newsletter-unsubscribe', 'wishlist', 'compare', 'not-found']
 useHead(() => ({
-  htmlAttrs: { lang: locale.value },
+  htmlAttrs: { lang: locale.value, dir: locale.value === 'ar' ? 'rtl' : 'ltr' },
   titleTemplate: (title) => (title ? `${title} · ${business.name}` : `${business.name} · ${t('seo.tagline', place.value)}`)
 }))
 usePageMeta(() => {
@@ -135,7 +135,7 @@ onMounted(() => {
 .skip-link {
   position: fixed;
   top: 0.75rem;
-  left: 0.75rem;
+  inset-inline-start: 0.75rem;
   z-index: 100;
   padding: 0.5rem 1rem;
   border-radius: 9999px;

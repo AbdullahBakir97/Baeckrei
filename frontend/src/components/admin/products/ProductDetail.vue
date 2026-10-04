@@ -12,7 +12,7 @@
 
     <div v-else-if="loadError" class="rounded-lg bg-red-400/10 p-6 text-red-300" role="alert">
       {{ loadError }}
-      <router-link to="/admin/products" class="ml-2 underline">{{ $t('admin.productDetail.back') }}</router-link>
+      <router-link to="/admin/products" class="ms-2 underline">{{ $t('admin.productDetail.back') }}</router-link>
     </div>
 
     <template v-else>
@@ -27,7 +27,7 @@
             @click="router.push('/admin/products')"
             class="px-4 py-2 text-sm font-medium text-cream-faint hover:text-white bg-[#2a231c] hover:bg-[#342b22] rounded-lg transition-colors"
           >
-            <font-awesome-icon icon="arrow-left" class="mr-2" />
+            <font-awesome-icon icon="arrow-left" class="me-2" />
             {{ $t('admin.productDetail.back') }}
           </button>
           <button
@@ -94,21 +94,21 @@
                   v-if="product.is_vegan"
                   class="px-3 py-1 text-sm font-medium text-green-500 bg-green-500/10 rounded-full"
                 >
-                  <font-awesome-icon icon="leaf" class="mr-1" />
+                  <font-awesome-icon icon="leaf" class="me-1" />
                   {{ $t('common.vegan') }}
                 </span>
                 <span
                   v-if="product.is_vegetarian"
                   class="px-3 py-1 text-sm font-medium text-green-500 bg-green-500/10 rounded-full"
                 >
-                  <font-awesome-icon icon="seedling" class="mr-1" />
+                  <font-awesome-icon icon="seedling" class="me-1" />
                   {{ $t('common.vegetarian') }}
                 </span>
                 <span
                   v-if="product.is_gluten_free"
                   class="px-3 py-1 text-sm font-medium text-yellow-500 bg-yellow-500/10 rounded-full"
                 >
-                  <font-awesome-icon icon="wheat-alt" class="mr-1" />
+                  <font-awesome-icon icon="wheat-alt" class="me-1" />
                   {{ $t('common.glutenFree') }}
                 </span>
               </div>

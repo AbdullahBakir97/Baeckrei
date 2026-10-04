@@ -21,7 +21,7 @@
       <div class="st-card !p-0 overflow-hidden">
         <p v-if="!campaigns.length" class="st-empty">{{ $t('admin.newsletter.noCampaigns') }}</p>
         <button v-for="c in campaigns" :key="c.id" type="button" class="nl-row" :class="{ 'is-active': draft?.id === c.id }" @click="openCampaign(c)">
-          <span class="min-w-0 flex-1 text-left">
+          <span class="min-w-0 flex-1 text-start">
             <strong class="block truncate">{{ c.subject }}</strong>
             <small>{{ c.sent_at ? $t('admin.newsletter.sentTo', { n: c.recipient_count, date: formatDate(c.sent_at, intlLocale()) }) : $t('admin.newsletter.draftFrom', { date: formatDate(c.updated_at, intlLocale()) }) }}</small>
           </span>
@@ -42,7 +42,7 @@
           <div class="flex flex-wrap gap-2">
             <button type="button" class="st-btn st-btn-ghost" :disabled="busy" @click="saveDraft()">{{ $t('admin.newsletter.saveDraft') }}</button>
             <button type="button" class="st-btn st-btn-ghost" :disabled="busy || !draft.subject" @click="sendTest"><font-awesome-icon icon="envelope" /> {{ $t('admin.newsletter.test') }}</button>
-            <button type="button" class="st-btn ml-auto" :disabled="busy || !draft.subject || !draft.body || !activeCount" @click="confirmSend = true">
+            <button type="button" class="st-btn ms-auto" :disabled="busy || !draft.subject || !draft.body || !activeCount" @click="confirmSend = true">
               <font-awesome-icon icon="paper-plane" /> {{ $t('admin.newsletter.sendTo', { n: activeCount }) }}
             </button>
             <button v-if="draft.id" type="button" class="st-btn st-btn-danger" :aria-label="$t('admin.common.delete')" @click="removeDraft"><font-awesome-icon icon="trash" /></button>
@@ -92,7 +92,7 @@
               <td>{{ formatDate(s.subscribed_at, intlLocale(), false) }}</td>
               <td><span class="st-chip" :class="s.active ? 'is-green' : ''">{{ s.active ? $t('admin.newsletter.active') : $t('admin.newsletter.unsubscribedOn', { date: formatDate(s.unsubscribed_at, intlLocale(), false) }) }}</span></td>
               <td class="is-right whitespace-nowrap">
-                <button v-if="s.active" type="button" class="st-link text-sm mr-3" @click="unsubscribe(s)">{{ $t('admin.newsletter.unsubscribe') }}</button>
+                <button v-if="s.active" type="button" class="st-link text-sm me-3" @click="unsubscribe(s)">{{ $t('admin.newsletter.unsubscribe') }}</button>
                 <button type="button" class="text-sm text-red-300" @click="removeSubscriber(s)">{{ $t('admin.common.delete') }}</button>
               </td>
             </tr>

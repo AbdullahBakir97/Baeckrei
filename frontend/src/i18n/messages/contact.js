@@ -40,5 +40,26 @@ export default {
       email: 'Please enter a valid email address.',
       message: 'Please write a message.'
     }
+  },
+  ar: {
+    eyebrow: 'يسعدنا تواصلك',
+    title: 'تواصل معنا',
+    subtitle: 'أسئلة أو طلبات خاصة أو ملاحظات: يسعدنا دائمًا أن نسمع منك.',
+    subject: 'الموضوع',
+    message: 'الرسالة',
+    website: 'الموقع الإلكتروني',
+    send: 'إرسال الرسالة',
+    privacyNote: 'نستخدم بياناتك فقط للرد عليك. للمزيد، اطّلع على',
+    openingHours: 'ساعات العمل',
+    closures: 'مغلق في',
+    openMaps: 'افتح في Google Maps',
+    thanks: 'شكرًا لك! سنعود إليك قريبًا.',
+    tooMany: 'لقد أرسلت عدة رسائل بالفعل. يُرجى المحاولة لاحقًا.',
+    failed: 'تعذّر إرسال رسالتك. يُرجى المحاولة مجددًا.',
+    errors: {
+      name: 'يُرجى إدخال اسمك.',
+      email: 'يُرجى إدخال بريد إلكتروني صالح.',
+      message: 'يُرجى كتابة رسالتك.'
+    }
   }
 }

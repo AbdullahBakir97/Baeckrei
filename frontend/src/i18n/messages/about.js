@@ -40,5 +40,26 @@ export default {
     promise2: 'and we stand behind it.',
     promiseText: "If something isn't right with your order, tell us. Your satisfaction is our priority.",
     getInTouch: 'Get in touch'
+  },
+  ar: {
+    eyebrow: 'حكايتنا',
+    statement: 'أهلًا بك في {name}، وجهتك للمخبوزات والحلويات الحرفية. شغفنا بالمكوّنات الجيدة وأساليب الخَبز التقليدية حاضر في كل ما يخرج من فرننا في {street}.',
+    storyTitle: 'مصنوع يدويًا، منذ أول خبزة.',
+    story1: 'تأسّس {name} برؤية واضحة: صنع مخبوزات أصيلة مصنوعة يدويًا. والتزامنا بالجودة يدفعنا إلى استكشاف نكهات جديدة مع الحفاظ على الوصفات التقليدية.',
+    story2: 'تجدنا في {street} في {city}. استلم طلبك في طريقك، أو اطلب توصيله إليك.',
+    story2Transit: 'تجدنا في {street} في {city}، بجوار {transit} مباشرةً. استلم طلبك في طريقك، أو اطلب توصيله إليك.',
+    valuesEyebrow: 'ما يهمّنا',
+    valuesTitle: 'أربعة أمور لا نتهاون فيها',
+    values: {
+      ingredients: { title: 'مكوّنات جيدة', text: 'مكوّنات عالية الجودة من مورّدين نثق بهم.' },
+      methods: { title: 'أساليب تقليدية', text: 'خَبز عريق، مع قليل من الفضول العصري.' },
+      waste: { title: 'هدر أقل', text: 'ممارسات مستدامة وتغليف مدروس.' },
+      neighbourhood: { title: 'حيّنا', text: 'مخبز لأهل الحيّ من حولنا، في شارعنا.' }
+    },
+    promiseEyebrow: 'وعدنا',
+    promise1: 'كل ما نخبزه نصنعه بعناية،',
+    promise2: 'ونحن نقف وراءه.',
+    promiseText: 'إذا لم يكن طلبك كما ينبغي، فأخبرنا. رضاك أولويتنا.',
+    getInTouch: 'تواصل معنا'
   }
 }

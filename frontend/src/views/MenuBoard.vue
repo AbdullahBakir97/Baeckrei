@@ -1,6 +1,6 @@
 <template>
   <div class="board-viewport" :style="viewportStyle">
-    <div ref="boardEl" class="board" :class="boardClass" :style="themeStyle" :lang="lang">
+    <div ref="boardEl" class="board" :class="boardClass" :style="themeStyle" :lang="lang" :dir="lang === 'ar' ? 'rtl' : 'ltr'">
       <div v-if="design.background_image_url" class="board-photo" :style="{ backgroundImage: `url(${design.background_image_url})` }" aria-hidden="true">
         <span :style="{ opacity: (design.background_dim ?? 60) / 100 }"></span>
       </div>
@@ -161,7 +161,7 @@ import { i18n } from '@/i18n'
 // come from the board API and refresh every minute; the screen keeps showing
 // the last menu when the internet drops, checks in so the admin sees it
 // online, and reloads when the admin asks. See docs/menu-board.md.
-// Older links still work: ?lang=de|en, ?alternate=1, ?categories=a,b, ?seconds=12.
+// Older links still work: ?lang=de|en|ar, ?alternate=1, ?categories=a,b, ?seconds=12.
 const route = useRoute()
 const query = route.query
 const slug = String(route.params.slug || 'default')
@@ -192,12 +192,13 @@ function readCache() {
 const DEFAULTS = {
   layout: 'columns', theme: 'oven', font: 'serif', language: 'de', orientation: 'auto', background_dim: 60,
   show_prices: true, show_descriptions: true, show_images: true, show_tags: true, show_qr: true, show_clock: true,
-  show_status: true, sold_out: 'mark', page_seconds: 12, slide_every: 2, headline: '', headline_en: '', ticker: '', ticker_en: ''
+  show_status: true, sold_out: 'mark', page_seconds: 12, slide_every: 2, headline: '', headline_en: '', headline_ar: '',
+  ticker: '', ticker_en: '', ticker_ar: ''
 }
 const design = computed(() => {
   const merged = { ...DEFAULTS, ...(payload.value?.screen || {}), ...(draft.value || {}) }
   // Options in the address (older links) win.
-  if (['de', 'en'].includes(query.lang)) merged.language = query.lang
+  if (['de', 'en', 'ar'].includes(query.lang)) merged.language = query.lang
   if (query.alternate === '1') merged.language = 'alternate'
   if (Number(query.seconds)) merged.page_seconds = Number(query.seconds)
   return merged
@@ -253,11 +254,18 @@ function isLight(hex) {
 }
 
 // ---- language ------------------------------------------------------------------
+// A screen shows one language, or two in turn after each round of pages.
+const TURNS = { alternate: ['de', 'en'], de_ar: ['de', 'ar'] }
+const INTL = { de: 'de-DE', en: 'en-GB', ar: 'ar-u-nu-latn' }
 const lang = ref('de')
-watch(() => design.value.language, (value) => { lang.value = value === 'en' ? 'en' : 'de' }, { immediate: true })
+watch(() => design.value.language, (value) => { lang.value = INTL[value] ? value : 'de' }, { immediate: true })
 const tr = (key, params) => i18n.global.t(`board.${key}`, params || {}, { locale: lang.value })
-const intl = computed(() => (lang.value === 'en' ? 'en-GB' : 'de-DE'))
-const text = (obj, field) => (lang.value === 'en' && obj[`${field}_en`]) || obj[field] || ''
+const intl = computed(() => INTL[lang.value])
+// The screen's own texts come in all three languages; products only in German
+// and English, so Arabic screens show their English names.
+const translated = (obj, field) =>
+  (lang.value === 'ar' && obj[`${field}_ar`]) || (lang.value !== 'de' && obj[`${field}_en`]) || obj[field] || ''
+const text = translated
 const headline = computed(() => text(design.value, 'headline'))
 const ticker = computed(() => text(design.value, 'ticker'))
 const shop = computed(() => payload.value?.shop || { name: 'Backlover', address: '', time_zone: 'Europe/Berlin' })
@@ -265,9 +273,9 @@ const zone = computed(() => shop.value.time_zone || 'Europe/Berlin')
 const status = computed(() => payload.value?.status)
 const shopHost = window.location.host
 
-const nameOf = (p) => (lang.value === 'en' && p.name_en) || p.name
+const nameOf = (p) => translated(p, 'name')
 function descOf(p, max = 90) {
-  const value = (lang.value === 'en' && p.description_en) || p.description || ''
+  const value = translated(p, 'description')
   return value.length > max ? `${value.slice(0, max - 2).trim()}…` : value
 }
 const image = (p) => p.image_url || p.image
@@ -281,7 +289,7 @@ const tags = (p) => [
 
 function categoryTitle(category) {
   if (!category) return ''
-  if (lang.value === 'en' && category.name_en) return category.name_en
+  if (lang.value !== 'de' && category.name_en) return category.name_en
   const key = `categories.${category.slug}`
   // Categories created with the shop carry English names; show them translated.
   if (i18n.global.te(key, 'en') && category.name === i18n.global.t(key, {}, { locale: 'en' })) {
@@ -417,7 +425,7 @@ const featured = computed(() => {
 })
 
 // ---- clock and status ----------------------------------------------------------
-const clock = computed(() => new Intl.DateTimeFormat(intl.value, { timeZone: zone.value, hour: '2-digit', minute: '2-digit' }).format(now.value))
+const clock = computed(() => new Intl.DateTimeFormat(intl.value, { timeZone: zone.value, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now.value))
 const statusText = computed(() => {
   const s = status.value
   if (!s) return ''
@@ -426,7 +434,7 @@ const statusText = computed(() => {
   if (!s.next_open) return tr('closed') + closedNote
   const next = new Date(s.next_open)
   const dayKey = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: zone.value }).format(d)
-  const time = new Intl.DateTimeFormat(intl.value, { timeZone: zone.value, hour: '2-digit', minute: '2-digit' }).format(next)
+  const time = new Intl.DateTimeFormat(intl.value, { timeZone: zone.value, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(next)
   let when
   if (dayKey(next) === dayKey(now.value)) when = tr('todayAt', { time })
   else if (dayKey(next) === dayKey(new Date(now.value.getTime() + 864e5))) when = tr('tomorrow', { time })
@@ -472,7 +480,8 @@ async function heartbeat() {
 function advance() {
   const count = Math.max(sequence.value.length, 1)
   const next = step.value + 1
-  if (next % count === 0 && design.value.language === 'alternate') lang.value = lang.value === 'de' ? 'en' : 'de'
+  const turns = TURNS[design.value.language]
+  if (next % count === 0 && turns) lang.value = turns[(turns.indexOf(lang.value) + 1) % turns.length]
   step.value = next
   schedule()
 }
@@ -632,13 +641,13 @@ onBeforeUnmount(() => {
 .qr-title { font-size: 1.3em; font-weight: 700; }
 .qr-text { margin-top: 0.2em; font-size: 0.95em; color: var(--muted); }
 .qr-url { margin-top: 0.4em; font-size: 0.95em; font-weight: 600; color: var(--accent); }
-.board-qr.is-corner { position: absolute; right: 0; bottom: 0; padding: 0.8em 1em; gap: 0.9em; }
+.board-qr.is-corner { position: absolute; inset-inline-end: 0; bottom: 0; padding: 0.8em 1em; gap: 0.9em; }
 .board-qr.is-corner img { width: 5.2em; height: 5.2em; }
 .board-qr.is-corner .qr-title { font-size: 1em; }
 
 /* Menu */
 .board-menu { position: relative; min-height: 0; overflow: hidden; }
-.menu-dots { position: absolute; top: 0.6em; right: 0; display: flex; gap: 0.5em; z-index: 1; }
+.menu-dots { position: absolute; top: 0.6em; inset-inline-end: 0; display: flex; gap: 0.5em; z-index: 1; }
 .menu-dots i { width: 0.6em; height: 0.6em; border-radius: 50%; background: var(--line); transition: background 0.4s, transform 0.4s; }
 .menu-dots i.is-on { background: var(--accent); transform: scale(1.3); }
 .menu-page { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 0 3em; height: 100%; }
@@ -717,9 +726,10 @@ onBeforeUnmount(() => {
 /* Footer */
 .board-foot { display: flex; align-items: center; gap: 2em; margin-top: 1.6em; padding-top: 1.2em; border-top: 1px solid var(--line); font-size: 1em; color: var(--muted); }
 .board-ticker { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 1.4em; font-weight: 600; color: var(--text); }
-.board-ticker span { display: inline-block; padding-left: 100%; animation: ticker linear infinite; }
+.board-ticker span { display: inline-block; padding-inline-start: 100%; animation: ticker linear infinite; }
+.board[dir='rtl'] .board-ticker span { animation-name: ticker-rtl; }
 .board-offline { padding: 0.2em 0.8em; border-radius: 9999px; color: #f0b4a3; background: rgba(240, 143, 121, 0.14); }
-.board-progress { flex: none; width: 12em; height: 0.3em; margin-left: auto; border-radius: 9999px; background: var(--line); overflow: hidden; }
+.board-progress { flex: none; width: 12em; height: 0.3em; margin-inline-start: auto; border-radius: 9999px; background: var(--line); overflow: hidden; }
 .board-progress i { display: block; height: 100%; background: var(--accent); animation: progress linear both; }
 
 /* Motion */
@@ -736,9 +746,18 @@ onBeforeUnmount(() => {
 @keyframes pulse { 50% { box-shadow: 0 0 0 0.5em rgba(110, 190, 120, 0); } }
 @keyframes progress { from { width: 0; } to { width: 100%; } }
 @keyframes ticker { to { transform: translateX(-100%); } }
+@keyframes ticker-rtl { to { transform: translateX(100%); } }
+/* Arabic letters join up; spacing them apart breaks the words. */
+.board[dir='rtl'] * { letter-spacing: 0 !important; }
+/* Product texts come in German or English; on an Arabic screen they keep
+   their own word order (full stop and "…" at their end), aligned right. */
+.board[dir='rtl'] :is(.spot-name, .spot-desc, .feature-name, .grid-name, .grid-desc, .item-name, .item-desc, .spot-others li span) {
+  unicode-bidi: plaintext;
+  text-align: right;
+}
 @keyframes kenburns { from { transform: scale(1.12); } }
 @media (prefers-reduced-motion: reduce) {
   .board *, .board *::before, .board *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
-  .board-ticker span { animation: none; padding-left: 0; }
+  .board-ticker span { animation: none; padding-inline-start: 0; }
 }
 </style>

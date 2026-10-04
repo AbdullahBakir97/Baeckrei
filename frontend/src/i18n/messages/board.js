@@ -64,5 +64,38 @@ export default {
       change: 'Choose another screen',
       tip: 'Tip: full screen with F11 or from the browser menu.'
     }
+  },
+  ar: {
+    title: 'تشكيلتنا',
+    openUntil: 'مفتوح حتى {time}',
+    closed: 'مغلق',
+    opensAt: 'نفتح {when}',
+    tomorrow: 'غدًا الساعة {time}',
+    todayAt: 'اليوم الساعة {time}',
+    onDay: '{day} الساعة {time}',
+    orderAhead: 'اطلب مسبقًا عبر الإنترنت',
+    orderAheadText: 'امسح الرمز، اختر، واستلم – دون انتظار.',
+    soldOut: 'نفدت الكمية',
+    vegan: 'نباتي صرف',
+    vegetarian: 'نباتي',
+    glutenFree: 'خالٍ من الغلوتين',
+    seasonal: 'موسمي',
+    featured: 'طازج من الفرن',
+    vatNote: 'جميع الأسعار شاملة ضريبة القيمة المضافة',
+    empty: 'نعيد ملء الواجهة الآن.',
+    offline: 'لا يوجد اتصال – نعرض آخر تشكيلة',
+    special: 'عرض خاص',
+    tv: {
+      title: 'إعداد شاشة القائمة',
+      intro: 'أدخل الرمز المكوّن من 4 أرقام الظاهر لهذه الشاشة في لوحة الإدارة ضمن «شاشات القائمة».',
+      code: 'رمز الشاشة',
+      open: 'تشغيل الشاشة',
+      wrong: 'لا توجد شاشة بهذا الرمز.',
+      offline: 'لا يوجد اتصال. يُرجى التحقق من الإنترنت.',
+      starting: 'جارٍ تشغيل «{name}» …',
+      remembered: 'هذا الجهاز يعرض «{name}». يبدأ التشغيل خلال {n} ثوانٍ …',
+      change: 'اختيار شاشة أخرى',
+      tip: 'نصيحة: للعرض بملء الشاشة اضغط F11 أو استخدم قائمة المتصفح.'
+    }
   }
 }

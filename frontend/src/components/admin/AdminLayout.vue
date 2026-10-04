@@ -23,9 +23,7 @@
       </nav>
 
       <div class="admin-side-foot">
-        <button type="button" class="admin-link" :lang="otherLocale.code" @click="toggleLocale">
-          <font-awesome-icon icon="globe" class="w-4" /> <span>{{ otherLocale.label }}</span>
-        </button>
+        <LanguageSwitcher inline class="admin-langs" />
         <router-link to="/" class="admin-link">
           <font-awesome-icon icon="store" class="w-4" /> <span>{{ $t('admin.layout.viewShop') }}</span>
         </router-link>
@@ -78,8 +76,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { business } from '@/config/business'
-import { LOCALES, i18n, intlLocale, setLocale } from '@/i18n'
+import { i18n, intlLocale } from '@/i18n'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import adminMessages from '@/i18n/messages/admin'
 import studioMessages from '@/i18n/messages/studio'
 import { enableOrderNotifications, markOrdersSeen, useNewOrderAlerts } from '@/composables/useNewOrderAlerts'
@@ -129,8 +129,6 @@ const today = computed(() => {
   return new Intl.DateTimeFormat(intlLocale(), { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())
 })
 
-const otherLocale = computed(() => LOCALES.find(l => l.code !== locale.value))
-const toggleLocale = () => setLocale(otherLocale.value.code)
 
 const displayName = computed(() => {
   const user = authStore.user || {}
@@ -152,6 +150,8 @@ const currentPageTitle = computed(() => {
   const key = `admin.titles.${String(route.name)}`
   return te(key) ? t(key) : (route.meta.title || t('admin.titles.admin-dashboard'))
 })
+// The browser tab shows the page title in the chosen language too.
+useHead(() => ({ title: currentPageTitle.value }))
 
 watch(() => route.fullPath, () => { drawerOpen.value = false; refreshStudio() })
 // Opening the orders page counts as having seen the new orders.
@@ -213,7 +213,7 @@ const handleLogout = async () => {
 }
 
 .admin-shell input[type='file']::file-selector-button {
-  margin-right: 0.75rem;
+  margin-inline-end: 0.75rem;
   padding: 0.45rem 0.9rem;
   border: 0;
   border-radius: 9999px;
@@ -261,7 +261,7 @@ const handleLogout = async () => {
 }
 
 .admin-badge {
-  margin-left: auto;
+  margin-inline-start: auto;
   min-width: 1.35rem;
   padding: 0 0.4rem;
   border-radius: 9999px;
@@ -278,7 +278,7 @@ const handleLogout = async () => {
   from { transform: scale(0.4); opacity: 0; }
 }
 .admin-dot {
-  margin-left: auto;
+  margin-inline-start: auto;
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 50%;
@@ -331,23 +331,24 @@ textarea.st-input { line-height: 1.6; resize: vertical; }
 .st-tab { padding: 0.4rem 0.95rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; color: #b9ab98; transition: background 0.2s, color 0.2s; }
 .st-tab:hover { color: #f4ece1; }
 .st-tab.is-active { color: #0e0c0a; background: #f4ece1; }
-.st-tab .st-count { margin-left: 0.35rem; font-size: 0.72rem; opacity: 0.7; }
+.st-tab .st-count { margin-inline-start: 0.35rem; font-size: 0.72rem; opacity: 0.7; }
 .st-table { width: 100%; border-collapse: collapse; }
-.st-table th { padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+.st-table th { padding: 0.75rem 1rem; text-align: start; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
   text-transform: uppercase; color: #85766a; background: rgba(244, 236, 225, 0.03); border-bottom: 1px solid rgba(244, 236, 225, 0.08); }
 .st-table td { padding: 0.8rem 1rem; font-size: 0.875rem; color: rgba(244, 236, 225, 0.82); border-bottom: 1px solid rgba(244, 236, 225, 0.06); vertical-align: middle; }
 .st-table tr:last-child td { border-bottom: 0; }
-.st-table .is-right { text-align: right; }
+.st-table .is-right { text-align: end; }
 .st-empty { padding: 3rem 1rem; text-align: center; font-size: 0.9rem; color: #85766a; }
 .st-switch { display: inline-flex; align-items: center; gap: 0.65rem; font-size: 0.875rem; color: rgba(244, 236, 225, 0.85); cursor: pointer; }
 .st-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .st-switch i { position: relative; flex: none; width: 2.4rem; height: 1.4rem; border-radius: 9999px; background: rgba(244, 236, 225, 0.15); transition: background 0.2s; }
-.st-switch i::after { content: ''; position: absolute; top: 0.2rem; left: 0.2rem; width: 1rem; height: 1rem; border-radius: 50%; background: #f4ece1; transition: transform 0.25s var(--ease-out-expo); }
+.st-switch i::after { content: ''; position: absolute; top: 0.2rem; inset-inline-start: 0.2rem; width: 1rem; height: 1rem; border-radius: 50%; background: #f4ece1; transition: transform 0.25s var(--ease-out-expo); }
 .st-switch input:checked + i { background: #e6a15a; }
 .st-switch input:checked + i::after { transform: translateX(1rem); }
+[dir='rtl'] .st-switch input:checked + i::after { transform: translateX(-1rem); }
 .st-switch input:focus-visible + i { box-shadow: 0 0 0 3px rgba(230, 161, 90, 0.35); }
 .st-savebar { position: sticky; bottom: 1rem; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;
-  padding: 0.75rem 0.75rem 0.75rem 1.25rem; border-radius: 9999px; background: rgba(30, 25, 20, 0.96); border: 1px solid rgba(230, 161, 90, 0.3);
+  padding: 0.75rem; padding-inline-start: 1.25rem; border-radius: 9999px; background: rgba(30, 25, 20, 0.96); border: 1px solid rgba(230, 161, 90, 0.3);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45); backdrop-filter: blur(8px); }
 .st-savebar p { font-size: 0.85rem; color: #b9ab98; }
 .st-modal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 1rem; background: rgba(14, 12, 10, 0.7); backdrop-filter: blur(4px); }
@@ -360,18 +361,19 @@ textarea.st-input { line-height: 1.6; resize: vertical; }
 
 /* Pushed right on its own while the date is hidden (small screens). */
 .admin-bell {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .admin-date + .admin-bell {
-  margin-left: 0;
+  margin-inline-start: 0;
 }
 </style>
 
 <style scoped>
 .admin-side {
   position: fixed;
-  inset: 0 auto 0 0;
+  inset-block: 0;
+  inset-inline-start: 0;
   z-index: 40;
   display: flex;
   flex-direction: column;
@@ -379,13 +381,17 @@ textarea.st-input { line-height: 1.6; resize: vertical; }
   padding: 1.5rem 1rem;
   overflow-y: auto;
   background: #15120f;
-  border-right: 1px solid rgba(244, 236, 225, 0.07);
+  border-inline-end: 1px solid rgba(244, 236, 225, 0.07);
   transition: transform 0.5s var(--ease-out-expo);
 }
 
 @media (max-width: 1023px) {
   .admin-side {
     transform: translateX(-100%);
+  }
+
+  [dir='rtl'] .admin-side {
+    transform: translateX(100%);
   }
 
   .admin-side.is-open {
@@ -458,7 +464,7 @@ textarea.st-input { line-height: 1.6; resize: vertical; }
 
 button.admin-link {
   width: 100%;
-  text-align: left;
+  text-align: start;
 }
 
 .admin-link:hover {
@@ -529,7 +535,7 @@ button.admin-link {
 
 @media (min-width: 1024px) {
   .admin-main {
-    padding-left: 16.5rem;
+    padding-inline-start: 16.5rem;
   }
 }
 
@@ -571,7 +577,7 @@ button.admin-link {
 
 .admin-date {
   display: none;
-  margin-left: auto;
+  margin-inline-start: auto;
   font-size: 0.85rem;
   color: #7d7061;
 }

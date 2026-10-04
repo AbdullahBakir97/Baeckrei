@@ -38,7 +38,7 @@
             <a :href="`/menu-board/${s.slug}`" target="_blank" rel="noopener" class="st-btn st-btn-ghost st-btn-sm"><font-awesome-icon icon="up-right-from-square" /> {{ $t('admin.screens.open') }}</a>
             <button type="button" class="st-btn st-btn-ghost st-btn-sm" :title="$t('admin.screens.reloadHint')" @click="reload(s)"><font-awesome-icon icon="rotate" /></button>
             <button type="button" class="st-btn st-btn-ghost st-btn-sm" :title="$t('admin.screens.duplicate')" @click="duplicate(s)"><font-awesome-icon icon="copy" /></button>
-            <button type="button" class="st-btn st-btn-danger st-btn-sm ml-auto" :title="$t('admin.common.delete')" @click="remove(s)"><font-awesome-icon icon="trash" /></button>
+            <button type="button" class="st-btn st-btn-danger st-btn-sm ms-auto" :title="$t('admin.common.delete')" @click="remove(s)"><font-awesome-icon icon="trash" /></button>
           </div>
         </div>
       </article>

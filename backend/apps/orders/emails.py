@@ -21,7 +21,7 @@ def _context(order, **extra):
     items = list(order.order_items.select_related('product'))
     for item in items:
         name_en = getattr(item.product, 'name_en', '')
-        item.display_name = name_en if order.language == 'en' and name_en else item.product.name
+        item.display_name = name_en if order.language != 'de' and name_en else item.product.name
     requested = timezone.localtime(order.requested_time) if order.requested_time else None
     shop = shop_config.get()
     return {

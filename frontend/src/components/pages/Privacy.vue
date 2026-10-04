@@ -10,7 +10,7 @@
       </p>
 
       <h2>Welche Daten wir verarbeiten und warum</h2>
-      <ul class="list-disc pl-6 space-y-2">
+      <ul class="list-disc ps-6 space-y-2">
         <li>
           <strong class="text-white">Dein Kundenkonto</strong>: E-Mail-Adresse, Name, Telefonnummer (optional) und ein
           sicher verschlüsseltes Passwort, damit du dich anmelden und deine Bestellungen sehen kannst (Art. 6 Abs. 1 lit. b DSGVO).
@@ -59,6 +59,66 @@
       </p>
     </template>
 
+    <template v-else-if="locale === 'ar'">
+      <p class="text-sm text-gray-500">هذه ترجمة للتسهيل؛ النسخة الألمانية هي النسخة الملزمة قانونيًا.</p>
+
+      <h2>الجهة المسؤولة</h2>
+      <p>
+        {{ business.legalName || business.name }}، {{ address }}.
+        البريد الإلكتروني: <Fill :value="business.email" :label="$t('legal.fields.email')" />.
+        للاطلاع على بيانات الاتصال الكاملة، يُرجى مراجعة صفحة <router-link to="/impressum">Impressum</router-link> (البيانات القانونية للناشر).
+      </p>
+
+      <h2>البيانات التي نجمعها والغرض منها</h2>
+      <ul class="list-disc ps-6 space-y-2">
+        <li>
+          <strong class="text-white">حسابك</strong>: عنوان البريد الإلكتروني والاسم ورقم الهاتف (اختياري) وكلمة مرور
+          محفوظة بصيغة مُجزّأة (hashed) آمنة، لتتمكن من تسجيل الدخول والاطلاع على طلباتك
+          (Art. 6(1)(b) GDPR – اللائحة العامة لحماية البيانات).
+        </li>
+        <li>
+          <strong class="text-white">الطلبات</strong>: المنتجات التي تطلبها، واختيارك بين الاستلام أو التوصيل،
+          وعنوان التوصيل، والوقت المفضّل، والملاحظات، وطريقة الدفع، لنتمكن من تجهيز طلبك وتسليمه
+          والوفاء بالتزاماتنا المحاسبية (Art. 6(1)(b), (c) GDPR).
+        </li>
+        <li>
+          <strong class="text-white">العناوين المحفوظة</strong>: عناوين التوصيل التي تختار الاحتفاظ بها في
+          حسابك (Art. 6(1)(b) GDPR). ويمكنك حذفها في أي وقت من الإعدادات.
+        </li>
+        <li>
+          <strong class="text-white">نموذج التواصل والنشرة الإخبارية</strong>: اسمك وعنوان بريدك الإلكتروني ورسالتك
+          عند مراسلتنا، وعنوان بريدك الإلكتروني إذا اشتركت في نشرتنا الإخبارية (Art. 6(1)(a), (b)
+          GDPR). ويمكنك إلغاء الاشتراك في أي وقت.
+        </li>
+        <li>
+          <strong class="text-white">البيانات التقنية</strong>: يسجّل الخادم عنوان IP ووقت الطلبات
+          للحفاظ على أمان المتجر (Art. 6(1)(f) GDPR).
+        </li>
+      </ul>
+
+      <h2>الدفع</h2>
+      <p>تدفع نقدًا أو بالبطاقة عند استلامك طلبك أو تسلّمه. ولا نخزّن بيانات البطاقات.</p>
+
+      <h2>مدة الاحتفاظ بالبيانات</h2>
+      <p>
+        تُحفظ بيانات الحساب إلى أن تحذف حسابك. وتُحفظ سجلات الطلبات للمدة التي يقتضيها القانون الضريبي
+        والتجاري (عادةً حتى 10 سنوات). وتُحذف رسائل التواصل فور الانتهاء من معالجتها.
+      </p>
+
+      <h2>ملفات تعريف الارتباط (الكوكيز) والتخزين المحلي</h2>
+      <p>
+        لا نستخدم إلا ما هو ضروري لتشغيل المتجر. وتُحمَّل الخطوط من خادمنا الخاص. وتجد التفاصيل في
+        <router-link to="/cookie-policy">سياسة ملفات تعريف الارتباط</router-link> الخاصة بنا.
+      </p>
+
+      <h2>حقوقك</h2>
+      <p>
+        يحق لك الاطلاع على بياناتك وتصحيحها وحذفها، وتقييد معالجتها أو الاعتراض عليها،
+        ونقلها، وسحب موافقتك في أي وقت. كما يحق لك تقديم شكوى إلى سلطة رقابية مختصة بحماية
+        البيانات، ومنها على سبيل المثال مفوّض ولاية برلين لحماية البيانات وحرية المعلومات.
+      </p>
+    </template>
+
     <template v-else>
       <h2>Who is responsible</h2>
       <p>
@@ -68,7 +128,7 @@
       </p>
 
       <h2>What we collect and why</h2>
-      <ul class="list-disc pl-6 space-y-2">
+      <ul class="list-disc ps-6 space-y-2">
         <li>
           <strong class="text-white">Your account</strong>: email address, name, phone number (optional) and a
           securely hashed password, so you can sign in and see your orders (Art. 6(1)(b) GDPR).

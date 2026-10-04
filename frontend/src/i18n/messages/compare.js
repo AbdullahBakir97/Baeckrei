@@ -24,5 +24,18 @@ export default {
     inStock: 'In stock',
     noneListed: 'None listed',
     energy: 'Energy (per 100 g)'
+  },
+  ar: {
+    eyebrow: 'جنبًا إلى جنب',
+    title: 'المقارنة',
+    subtitle: 'السعر والنظام الغذائي ومسبّبات الحساسية والقيم الغذائية جنبًا إلى جنب',
+    emptyTitle: 'لا شيء للمقارنة بعد',
+    emptyText: 'استخدم «أضف إلى المقارنة» في صفحات ما يصل إلى أربعة منتجات لتظهر هنا.',
+    clear: 'مسح المقارنة',
+    yes: 'نعم',
+    no: 'لا',
+    inStock: 'متوفر',
+    noneListed: 'غير مذكور',
+    energy: 'الطاقة (لكل 100 غ)'
   }
 }

@@ -20,11 +20,11 @@
           · {{ $t('blog.minutes', readingMinutes) }}
         </p>
         <h1 v-split.load class="display-title text-5xl sm:text-7xl mt-4">{{ localized(post, 'title') }}</h1>
-        <p v-if="post.excerpt" v-reveal="{ delay: 0.2 }" class="lede">{{ localized(post, 'excerpt') }}</p>
+        <p v-if="post.excerpt" v-reveal="{ delay: 0.2 }" class="lede text-auto">{{ localized(post, 'excerpt') }}</p>
         <img v-if="post.cover_image" v-mask :src="post.cover_image" :alt="post.title"
              class="cover" @error="applyImageFallback" />
         <div class="body">
-          <p v-for="(paragraph, index) in paragraphs" :key="index" v-reveal class="whitespace-pre-line">{{ paragraph }}</p>
+          <p v-for="(paragraph, index) in paragraphs" :key="index" v-reveal class="whitespace-pre-line text-auto">{{ paragraph }}</p>
         </div>
       </article>
     </div>

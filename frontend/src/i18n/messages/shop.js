@@ -50,5 +50,31 @@ export default {
     emptyTitle: 'Nothing on this shelf yet.',
     emptyText: 'Try another category or clear the filters.',
     pages: 'Pages'
+  },
+  ar: {
+    kicker: 'المتجر',
+    title: 'طازج من الفرن',
+    subtitle: 'اطلب للاستلام من المتجر في {street} أو للتوصيل إلى أي مكان في {city}.',
+    category: 'الفئة',
+    seasonalKicker: 'لفترة قصيرة',
+    seasonalText: 'مخبوزات لا تتوفر إلا لبضعة أسابيع في السنة.',
+    searchTitle: '«{query}»',
+    categories: 'الفئات',
+    all: 'الكل',
+    dietary: 'النظام الغذائي',
+    price: 'السعر',
+    clearFilters: 'مسح عوامل التصفية',
+    sortBy: 'ترتيب حسب',
+    sortName: 'الاسم',
+    sortPriceAsc: 'السعر: من الأقل إلى الأعلى',
+    sortPriceDesc: 'السعر: من الأعلى إلى الأقل',
+    sortNewest: 'الأحدث',
+    min: 'الحد الأدنى €',
+    max: 'الحد الأقصى €',
+    any: 'أي سعر',
+    loadError: 'تعذّر تحميل الرفوف.',
+    emptyTitle: 'لا شيء على هذا الرف بعد.',
+    emptyText: 'جرّب فئة أخرى أو امسح عوامل التصفية.',
+    pages: 'الصفحات'
   }
 }

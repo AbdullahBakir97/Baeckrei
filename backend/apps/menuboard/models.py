@@ -37,7 +37,9 @@ class MenuScreen(models.Model):
     class Language(models.TextChoices):
         GERMAN = 'de', 'German'
         ENGLISH = 'en', 'English'
+        ARABIC = 'ar', 'Arabic'
         ALTERNATE = 'alternate', 'German and English'
+        GERMAN_ARABIC = 'de_ar', 'German and Arabic'
 
     class Orientation(models.TextChoices):
         AUTO = 'auto', 'Automatic'
@@ -72,8 +74,10 @@ class MenuScreen(models.Model):
     # Content
     headline = models.CharField(max_length=120, blank=True)
     headline_en = models.CharField(max_length=120, blank=True)
+    headline_ar = models.CharField(max_length=120, blank=True)
     ticker = models.CharField(max_length=300, blank=True, help_text='A running message along the bottom')
     ticker_en = models.CharField(max_length=300, blank=True)
+    ticker_ar = models.CharField(max_length=300, blank=True)
     categories = models.JSONField(default=list, blank=True, help_text='Category ids in order; empty: all')
     featured_products = models.JSONField(default=list, blank=True, help_text='Product ids for the large spot; empty: automatic')
     hidden_products = models.JSONField(default=list, blank=True)
@@ -135,11 +139,14 @@ class MenuSlide(models.Model):
     style = models.CharField(max_length=10, choices=Style.choices, default=Style.PRODUCT)
     title = models.CharField(max_length=120)
     title_en = models.CharField(max_length=120, blank=True)
+    title_ar = models.CharField(max_length=120, blank=True)
     text = models.CharField(max_length=300, blank=True)
     text_en = models.CharField(max_length=300, blank=True)
+    text_ar = models.CharField(max_length=300, blank=True)
     price = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
     price_note = models.CharField(max_length=60, blank=True, help_text='e.g. "instead of 5.40 €"')
     price_note_en = models.CharField(max_length=60, blank=True)
+    price_note_ar = models.CharField(max_length=60, blank=True)
     image = models.ImageField(upload_to='menu-screens/slides/', blank=True, null=True)
     product = models.ForeignKey('products.Product', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     active = models.BooleanField(default=True)

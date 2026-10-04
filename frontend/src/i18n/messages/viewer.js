@@ -10,5 +10,11 @@ export default {
     preparing: 'Preparing 3D view…',
     hint: 'Drag to turn · scroll to zoom',
     reset: 'Reset view'
+  },
+  ar: {
+    label: 'عرض 3D لـ {name}',
+    preparing: 'جارٍ تجهيز عرض 3D…',
+    hint: 'اسحب للتدوير · مرّر للتكبير',
+    reset: 'إعادة ضبط العرض'
   }
 }

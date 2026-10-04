@@ -1,0 +1,212 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Backlover\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+msgid "This cart has already been checked out."
+msgstr "تم إرسال طلب سلة التسوق هذه بالفعل."
+
+msgid "Your cart is empty."
+msgstr "سلة التسوق فارغة."
+
+msgid "That address could not be found."
+msgstr "لم يتم العثور على هذا العنوان."
+
+msgid "{name} is no longer available."
+msgstr "{name} لم يعد متوفرًا."
+
+msgid "Only {count} × {name} left in stock."
+msgstr "المتبقي في المخزون {count} × {name} فقط."
+
+msgid "A delivery address is required."
+msgstr "يرجى إدخال عنوان التوصيل."
+
+msgid "PayPal is not available yet."
+msgstr "الدفع عبر PayPal غير متاح بعد."
+
+msgid "Choose a time in the future."
+msgstr "يرجى اختيار وقت في المستقبل."
+
+msgid "This order can no longer be canceled"
+msgstr "لم يعد بالإمكان إلغاء هذا الطلب"
+
+msgid "Invalid old password"
+msgstr "كلمة المرور الحالية غير صحيحة"
+
+msgid "Password updated successfully"
+msgstr "تم تغيير كلمة المرور بنجاح"
+
+msgid "Successfully logged out"
+msgstr "تم تسجيل الخروج بنجاح"
+
+msgid "If an account exists for this email, we sent a reset link."
+msgstr ""
+"إذا كان هناك حساب بهذا البريد الإلكتروني، فقد أرسلنا إليه رابطًا لإعادة "
+"تعيين كلمة المرور."
+
+msgid "This reset link is invalid or has expired. Please request a new one."
+msgstr "هذا الرابط غير صالح أو انتهت صلاحيته. يرجى طلب رابط جديد."
+
+msgid "Your password has been changed. You can now sign in."
+msgstr "تم تغيير كلمة المرور. يمكنك الآن تسجيل الدخول."
+
+msgid "You cannot deactivate or demote your own account."
+msgstr "لا يمكنك تعطيل حسابك أو تخفيض صلاحياته."
+
+msgid "Password fields didn't match."
+msgstr "كلمتا المرور غير متطابقتين."
+
+msgid "Thanks! We will get back to you soon."
+msgstr "شكرًا لك! سنرد عليك قريبًا."
+
+msgid "You're subscribed. Thanks!"
+msgstr "تم اشتراكك. شكرًا لك!"
+
+msgid "This unsubscribe link is not valid."
+msgstr "رابط إلغاء الاشتراك هذا غير صالح."
+
+msgid "You've been unsubscribed from the newsletter."
+msgstr "تم إلغاء اشتراكك في النشرة الإخبارية."
+
+msgid "Quantity must be at least 1"
+msgstr "يجب أن تكون الكمية 1 على الأقل"
+
+msgid "Product is not available"
+msgstr "المنتج غير متوفر"
+
+msgid "Product is out of stock"
+msgstr "المنتج نفد من المخزون"
+
+msgid "Product not found"
+msgstr "لم يتم العثور على المنتج"
+
+msgid "Product not found or inactive"
+msgstr "لم يتم العثور على المنتج أو أنه غير نشط"
+
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+msgid "Processing"
+msgstr "قيد التحضير"
+
+msgid "Completed"
+msgstr "مكتمل"
+
+msgid "Canceled"
+msgstr "ملغى"
+
+msgid "Failed"
+msgstr "فشل"
+
+msgid "Refunded"
+msgstr "مسترد"
+
+msgid "Pickup"
+msgstr "استلام من المتجر"
+
+msgid "Delivery"
+msgstr "توصيل"
+
+msgid "Card on pickup/delivery"
+msgstr "بالبطاقة عند الاستلام/التوصيل"
+
+msgid "Cash on pickup/delivery"
+msgstr "نقدًا عند الاستلام/التوصيل"
+
+msgid "PayPal"
+msgstr "PayPal"
+
+msgid "Paid online"
+msgstr "مدفوع عبر الإنترنت"
+
+msgid "Online payment is not available."
+msgstr "الدفع عبر الإنترنت غير متاح."
+
+msgid "That time is not available any more. Please choose another one."
+msgstr "هذا الوقت لم يعد متاحًا. يرجى اختيار وقت آخر."
+
+msgid "This order does not need to be paid online."
+msgstr "لا يلزم دفع هذا الطلب عبر الإنترنت."
+
+msgid "This order can no longer be paid."
+msgstr "لم يعد بالإمكان دفع هذا الطلب."
+
+msgid "Online payment is unavailable right now. Please try again in a moment."
+msgstr "الدفع عبر الإنترنت غير متاح حاليًا. يرجى المحاولة مرة أخرى بعد قليل."
+
+msgid "This payment cannot be refunded automatically."
+msgstr "لا يمكن استرداد هذه الدفعة تلقائيًا."
+
+msgid ""
+"The refund failed. Please try again or refund it in the Stripe dashboard."
+msgstr ""
+"فشل الاسترداد. يرجى المحاولة مرة أخرى أو الاسترداد من لوحة تحكم Stripe."
+
+msgid "The online payment was not completed, so the order was canceled."
+msgstr "لم يكتمل الدفع عبر الإنترنت، لذلك تم إلغاء الطلب."
+
+msgid "Your order %(number)s at %(shop)s"
+msgstr "طلبك %(number)s لدى %(shop)s"
+
+msgid "New order %(number)s"
+msgstr "طلب جديد %(number)s"
+
+msgid "Your order %(number)s was canceled"
+msgstr "تم إلغاء طلبك %(number)s"
+
+msgid "Questions? Just reply to this email."
+msgstr "لديك أسئلة؟ ما عليك سوى الرد على هذه الرسالة."
+
+msgid "Delivery fee"
+msgstr "رسوم التوصيل"
+
+msgid "Total"
+msgstr "المجموع"
+
+msgid "Time"
+msgstr "الوقت"
+
+msgid "Payment"
+msgstr "الدفع"
+
+msgid "As soon as possible"
+msgstr "في أقرب وقت ممكن"
+
+msgid "incl. %(vat)s VAT"
+msgstr "شامل ضريبة القيمة المضافة %(vat)s"
+
+msgid "Thank you for your order!"
+msgstr "شكرًا لطلبك!"
+
+msgid "Hello %(customer_name)s,"
+msgstr "مرحبًا %(customer_name)s،"
+
+msgid "Hello,"
+msgstr "مرحبًا،"
+
+msgid "we have received your order %(number)s and are getting it ready."
+msgstr "لقد استلمنا طلبك %(number)s ونقوم بتجهيزه الآن."
+
+msgid "View your order"
+msgstr "عرض طلبك"
+
+msgid "We will let you know if anything changes. See you soon!"
+msgstr "سنخبرك إذا تغير أي شيء. نراك قريبًا!"
+
+msgid "Order %(number)s was canceled"
+msgstr "تم إلغاء الطلب %(number)s"
+
+msgid "your order has been canceled."
+msgstr "تم إلغاء طلبك."
+
+msgid ""
+"Your online payment has been refunded. It can take a few days to show on "
+"your statement."
+msgstr ""
+"تم استرداد المبلغ الذي دفعته عبر الإنترنت. قد يستغرق ظهوره في كشف حسابك بضعة"
+" أيام."

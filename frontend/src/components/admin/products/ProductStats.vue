@@ -11,7 +11,7 @@
               aria-hidden="true"
             />
           </div>
-          <div class="ml-5 w-0 flex-1">
+          <div class="ms-5 w-0 flex-1">
             <dl>
               <dt class="text-sm font-medium text-cream-muted truncate">
                 {{ stat.name }}
@@ -22,7 +22,7 @@
                 </div>
                 <div
                   v-if="stat.change"
-                  :class="[ stat.changeType === 'increase' ? 'text-emerald-300' : 'text-red-300', 'ml-2 flex items-baseline text-sm font-semibold' ]"
+                  :class="[ stat.changeType === 'increase' ? 'text-emerald-300' : 'text-red-300', 'ms-2 flex items-baseline text-sm font-semibold' ]"
                 >
                   <component
                     :is="stat.changeType === 'increase' ? 'ArrowUpIcon' : 'ArrowDownIcon'"

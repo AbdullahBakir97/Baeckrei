@@ -18,7 +18,7 @@
             <th scope="col">{{ $t('common.name') }}</th>
             <th scope="col">{{ $t('common.email') }}</th>
             <th scope="col">{{ $t('admin.users.joined') }}</th>
-            <th scope="col" class="text-right">{{ $t('admin.users.orders') }}</th>
+            <th scope="col" class="text-end">{{ $t('admin.users.orders') }}</th>
             <th scope="col">{{ $t('admin.users.account') }}</th>
             <th scope="col"><span class="sr-only">{{ $t('admin.table.actions') }}</span></th>
           </tr>
@@ -32,7 +32,7 @@
             <td class="whitespace-nowrap" :title="$t('admin.users.lastSignIn', { date: user.last_login ? formatDate(user.last_login) : $t('admin.users.never') })">
               {{ formatDate(user.date_joined) }}
             </td>
-            <td class="text-right tabular-nums">{{ user.order_count ?? 0 }}</td>
+            <td class="text-end tabular-nums">{{ user.order_count ?? 0 }}</td>
             <td>
               <div class="flex flex-col items-start gap-1">
                 <span class="px-2 py-0.5 text-xs font-medium rounded-full" :class="user.is_staff ? 'bg-crust/15 text-crust-light' : 'bg-cream/[0.05] text-cream/80'">
@@ -43,7 +43,7 @@
                 </span>
               </div>
             </td>
-            <td class="text-right whitespace-nowrap"><div class="flex flex-col items-end gap-1">
+            <td class="text-end whitespace-nowrap"><div class="flex flex-col items-end gap-1">
               <template v-if="user.id !== currentUserId">
                 <template v-if="pending?.id === user.id">
                   <span class="text-cream-muted">{{ pending.question }}</span>

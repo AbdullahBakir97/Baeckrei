@@ -101,7 +101,9 @@ class Migration(migrations.Migration):
                         choices=[
                             ("de", "German"),
                             ("en", "English"),
+                            ("ar", "Arabic"),
                             ("alternate", "German and English"),
+                            ("de_ar", "German and Arabic"),
                         ],
                         default="de",
                         max_length=10,
@@ -109,6 +111,7 @@ class Migration(migrations.Migration):
                 ),
                 ("headline", models.CharField(blank=True, max_length=120)),
                 ("headline_en", models.CharField(blank=True, max_length=120)),
+                ("headline_ar", models.CharField(blank=True, max_length=120)),
                 (
                     "ticker",
                     models.CharField(
@@ -118,6 +121,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("ticker_en", models.CharField(blank=True, max_length=300)),
+                ("ticker_ar", models.CharField(blank=True, max_length=300)),
                 (
                     "categories",
                     models.JSONField(
@@ -194,8 +198,10 @@ class Migration(migrations.Migration):
                 ),
                 ("title", models.CharField(max_length=120)),
                 ("title_en", models.CharField(blank=True, max_length=120)),
+                ("title_ar", models.CharField(blank=True, max_length=120)),
                 ("text", models.CharField(blank=True, max_length=300)),
                 ("text_en", models.CharField(blank=True, max_length=300)),
+                ("text_ar", models.CharField(blank=True, max_length=300)),
                 (
                     "price",
                     models.DecimalField(
@@ -209,6 +215,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("price_note_en", models.CharField(blank=True, max_length=60)),
+                ("price_note_ar", models.CharField(blank=True, max_length=60)),
                 (
                     "image",
                     models.ImageField(

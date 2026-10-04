@@ -54,6 +54,16 @@ class BoardTests(TestCase):
         titles = [s['title'] for s in self.client.get(f'/api/menu-screens/{screen.slug}/board/').json()['slides']]
         self.assertEqual(titles, ['Immer'])
 
+    def test_arabic_texts(self):
+        screen = MenuScreen.objects.create(name='Fenster', language='de_ar', headline_ar='مخبزنا', ticker_ar='بريتسل طازج')
+        MenuSlide.objects.create(screen=screen, style='text', title='Frühstück', title_ar='الفطور', text_ar='قهوة وكرواسون')
+        data = self.client.get(f'/api/menu-screens/{screen.slug}/board/').json()
+        self.assertEqual(data['screen']['language'], 'de_ar')
+        self.assertEqual(data['screen']['headline_ar'], 'مخبزنا')
+        self.assertEqual(data['screen']['ticker_ar'], 'بريتسل طازج')
+        self.assertEqual(data['slides'][0]['title_ar'], 'الفطور')
+        self.assertEqual(data['slides'][0]['text_ar'], 'قهوة وكرواسون')
+
     def test_codes_slugs_and_one_default(self):
         first = MenuScreen.objects.create(name='Theke', is_default=True)
         second = MenuScreen.objects.create(name='Theke', is_default=True)

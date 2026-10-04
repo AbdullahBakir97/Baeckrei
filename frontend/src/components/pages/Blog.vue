@@ -25,7 +25,7 @@
           <h2 class="post-title">
             <router-link :to="{ name: 'blog-post', params: { slug: post.slug } }">{{ localized(post, 'title') }}</router-link>
           </h2>
-          <p v-if="post.excerpt" class="text-cream-muted">{{ localized(post, 'excerpt') }}</p>
+          <p v-if="post.excerpt" class="text-cream-muted text-auto">{{ localized(post, 'excerpt') }}</p>
           <span class="post-more">{{ $t('blog.readMore') }} <font-awesome-icon icon="arrow-right" /></span>
         </div>
       </article>

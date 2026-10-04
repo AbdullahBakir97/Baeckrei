@@ -52,7 +52,7 @@
             <th scope="col">{{ $t('admin.orders.placed') }}</th>
             <th scope="col">{{ $t('admin.orders.fulfillment') }}</th>
             <th scope="col">{{ $t('admin.fields.status') }}</th>
-            <th scope="col" class="text-right">{{ $t('common.total') }}</th>
+            <th scope="col" class="text-end">{{ $t('common.total') }}</th>
             <th scope="col"><span class="sr-only">{{ $t('admin.table.actions') }}</span></th>
           </tr>
         </thead>
@@ -68,8 +68,8 @@
               <span v-if="order.requested_time" class="block text-xs text-cream-muted">{{ $t('admin.orders.forTime', { time: formatDateTime(order.requested_time) }) }}</span>
             </td>
             <td><span class="px-2 py-1 text-xs font-medium rounded-full" :class="statusClass(order.status)">{{ statusLabel(order.status) }}</span></td>
-            <td class="text-right tabular-nums">{{ formatEuro(order.total_price) }}</td>
-            <td class="text-right">
+            <td class="text-end tabular-nums">{{ formatEuro(order.total_price) }}</td>
+            <td class="text-end">
               <button type="button" class="text-crust hover:text-crust-light bg-transparent font-medium" @click="openOrder(order.id)">{{ $t('admin.orders.details') }}</button>
             </td>
           </tr>
@@ -150,7 +150,7 @@
         </div>
         <p v-if="nextActions.length && selected.payment?.payment_method === 'ST' && selected.payment?.status === 'Completed'"
            class="mt-3 text-xs text-cream-faint">
-          <font-awesome-icon icon="circle-info" class="mr-1" /> {{ $t('admin.orders.refundHint') }}
+          <font-awesome-icon icon="circle-info" class="me-1" /> {{ $t('admin.orders.refundHint') }}
         </p>
       </aside>
     </div>

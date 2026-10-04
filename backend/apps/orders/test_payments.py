@@ -93,6 +93,14 @@ class OrderEmailTests(OrderFlowTestCase):
         self.assertIn('€7.00', customer.body)
         self.assertEqual(Order.objects.get().language, 'en')
 
+    def test_arabic_customers_get_arabic_email(self):
+        self.checkout(language='ar')
+        customer = mail.outbox[0]
+        self.assertIn('شكرًا لطلبك', customer.body)
+        self.assertIn('2 × Rye bread', customer.body)  # products have no Arabic names
+        self.assertIn('dir="rtl"', customer.alternatives[0][0])
+        self.assertEqual(Order.objects.get().language, 'ar')
+
     def test_canceling_tells_the_customer(self):
         order_id = self.checkout().json()['id']
         mail.outbox.clear()

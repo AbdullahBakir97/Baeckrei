@@ -32,5 +32,22 @@ export default {
     empty: 'Empty cart',
     confirmEmpty: 'Remove everything from your cart?',
     emptied: 'Your cart is empty'
+  },
+  ar: {
+    eyebrow: 'طلبك',
+    title: 'سلة التسوق',
+    subtitle: 'لا شيء جاهز لإتمام الطلب | قطعة واحدة جاهزة لإتمام الطلب | {n} قطع جاهزة لإتمام الطلب',
+    emptyTitle: 'سلة التسوق فارغة.',
+    emptyText: 'كل ما على واجهة العرض مخبوز طازجًا اليوم.',
+    quantityOf: 'كمية {name}',
+    each: '{price} للقطعة',
+    lastOnes: 'هذا كل ما تبقّى لدينا اليوم.',
+    summary: 'الملخّص',
+    feeNote: 'الاستلام من المتجر في {street} مجاني. تظهر رسوم التوصيل عند إتمام الطلب إذا اخترت التوصيل.',
+    checkout: 'إتمام الطلب',
+    keepShopping: 'متابعة التسوق',
+    empty: 'إفراغ السلة',
+    confirmEmpty: 'هل تريد إزالة كل شيء من سلة التسوق؟',
+    emptied: 'أصبحت سلة التسوق فارغة'
   }
 }

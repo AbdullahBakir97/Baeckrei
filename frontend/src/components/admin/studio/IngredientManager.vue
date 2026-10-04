@@ -20,13 +20,13 @@
               <tr v-if="!shownIngredients.length"><td colspan="4" class="st-empty">{{ $t('admin.ingredients.noIngredients') }}</td></tr>
               <tr v-for="i in shownIngredients" :key="i.id">
                 <td><span class="font-medium text-cream">{{ i.name }}</span>
-                  <span v-if="!i.is_active" class="st-chip ml-2">{{ $t('admin.ingredients.inactive') }}</span>
+                  <span v-if="!i.is_active" class="st-chip ms-2">{{ $t('admin.ingredients.inactive') }}</span>
                   <span v-if="i.description" class="block text-xs text-cream-faint">{{ i.description }}</span></td>
                 <td><span v-if="!i.allergen_names.length" class="text-cream-faint">–</span>
-                  <span v-for="name in i.allergen_names" :key="name" class="st-chip is-amber mr-1 mb-1">{{ name }}</span></td>
+                  <span v-for="name in i.allergen_names" :key="name" class="st-chip is-amber me-1 mb-1">{{ name }}</span></td>
                 <td class="is-right tabular-nums">{{ i.product_count }}</td>
                 <td class="is-right whitespace-nowrap">
-                  <button type="button" class="st-link text-sm mr-3" @click="editIngredient(i)">{{ $t('admin.common.edit') }}</button>
+                  <button type="button" class="st-link text-sm me-3" @click="editIngredient(i)">{{ $t('admin.common.edit') }}</button>
                   <button type="button" class="text-sm text-red-300 disabled:opacity-40" :disabled="i.product_count > 0"
                           :title="i.product_count ? $t('admin.ingredients.inUse') : ''" @click="removeIngredient(i)">{{ $t('admin.common.delete') }}</button>
                 </td>

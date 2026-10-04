@@ -24,5 +24,18 @@ export default {
     notFound: "This post doesn't exist",
     notFoundText: 'It may have been removed or not published yet.',
     minutes: '{n} min read | {n} min read | {n} min read'
+  },
+  ar: {
+    eyebrow: 'المدونة',
+    title: 'من المخبز',
+    subtitle: 'أخبار ومخبوزات موسمية وحكايات من مطبخنا',
+    loadError: 'تعذّر تحميل المدونة. يُرجى المحاولة لاحقًا.',
+    emptyTitle: 'لا توجد مقالات بعد',
+    emptyText: 'عُد قريبًا لتقرأ أخبار المخبز.',
+    readMore: 'اقرأ المزيد',
+    allPosts: 'جميع المقالات',
+    notFound: 'هذا المقال غير موجود',
+    notFoundText: 'ربما تمت إزالته أو لم يُنشر بعد.',
+    minutes: 'مدة القراءة {n} دقيقة | مدة القراءة دقيقة واحدة | مدة القراءة {n} دقيقة'
   }
 }

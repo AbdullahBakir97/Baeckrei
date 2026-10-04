@@ -18,7 +18,7 @@ import { business } from '@/config/business'
 // The notice the bakery sets in the admin (Settings → Shop notice), e.g.
 // holidays. Closing it hides this text for the rest of the visit.
 const { locale } = useI18n()
-const text = computed(() => (locale.value === 'en' && business.announcementEn) || business.announcement)
+const text = computed(() => (locale.value !== 'de' && business.announcementEn) || business.announcement)
 const KEY = 'announcement-dismissed'
 const dismissedText = ref((() => { try { return sessionStorage.getItem(KEY) } catch { return null } })())
 const dismissed = computed(() => dismissedText.value === text.value)
@@ -46,7 +46,7 @@ function dismiss() {
 .announce-icon { flex: none; }
 .announce-close {
   position: absolute;
-  right: 0.75rem;
+  inset-inline-end: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   padding: 0.35rem 0.5rem;

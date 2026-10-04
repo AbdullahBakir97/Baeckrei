@@ -4,7 +4,7 @@
       <label class="block text-sm font-medium text-cream/80 mb-1">{{ $t('admin.fields.category') }}</label>
       <select
         v-model="filters.category"
-        class="block w-full pl-3 pr-10 py-2 text-base border-cream/15 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+        class="block w-full ps-3 pe-10 py-2 text-base border-cream/15 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
       >
         <option value="">{{ $t('admin.filters.allCategories') }}</option>
         <option v-for="category in categories" :key="category.id" :value="category.id">
@@ -17,7 +17,7 @@
       <label class="block text-sm font-medium text-cream/80 mb-1">{{ $t('admin.fields.status') }}</label>
       <select
         v-model="filters.status"
-        class="block w-full pl-3 pr-10 py-2 text-base border-cream/15 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+        class="block w-full ps-3 pe-10 py-2 text-base border-cream/15 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
       >
         <option value="">{{ $t('admin.filters.allStatuses') }}</option>
         <option value="active">{{ $t('admin.productStatus.active') }}</option>
@@ -48,7 +48,7 @@
       <label class="block text-sm font-medium text-cream/80 mb-1">{{ $t('admin.filters.stockStatus') }}</label>
       <select
         v-model="filters.stockStatus"
-        class="block w-full pl-3 pr-10 py-2 text-base border-cream/15 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+        class="block w-full ps-3 pe-10 py-2 text-base border-cream/15 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
       >
         <option value="">{{ $t('admin.filters.all') }}</option>
         <option value="in_stock">{{ $t('admin.filters.inStock') }}</option>
@@ -57,7 +57,7 @@
       </select>
     </div>
 
-    <div class="flex items-end space-x-2">
+    <div class="flex items-end space-x-2 rtl:space-x-reverse">
       <button
         @click="applyFilters"
         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"

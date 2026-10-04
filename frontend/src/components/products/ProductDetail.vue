@@ -82,7 +82,7 @@
             </span>
           </div>
 
-          <p v-reveal="{ delay: 0.3 }" class="pd-description">{{ localized(product, 'description') }}</p>
+          <p v-reveal="{ delay: 0.3 }" class="pd-description text-auto">{{ localized(product, 'description') }}</p>
 
           <div v-if="dietary.length" v-reveal="{ delay: 0.35 }" class="mt-5 flex flex-wrap gap-2">
             <span v-for="tag in dietary" :key="tag.label" class="pd-chip">
@@ -417,7 +417,7 @@ usePageMeta(() => {
 
 .pd-toggle {
   position: absolute;
-  left: 1rem;
+  inset-inline-start: 1rem;
   bottom: 1rem;
   display: inline-flex;
   padding: 0.25rem;
@@ -447,7 +447,7 @@ usePageMeta(() => {
 
 .pd-ar {
   position: absolute;
-  right: 1rem;
+  inset-inline-end: 1rem;
   bottom: 4rem;
   z-index: 2;
 }
@@ -455,7 +455,7 @@ usePageMeta(() => {
 .pd-actions {
   position: absolute;
   top: 1rem;
-  left: 1rem;
+  inset-inline-start: 1rem;
   display: flex;
   gap: 0.5rem;
   z-index: 2;
@@ -653,7 +653,7 @@ usePageMeta(() => {
 
 .pd-details summary::after {
   content: '+';
-  margin-left: 1rem;
+  margin-inline-start: 1rem;
   font-family: 'Manrope Variable', system-ui, sans-serif;
   font-size: 1.25rem;
   color: #e6a15a;
@@ -665,7 +665,7 @@ usePageMeta(() => {
 }
 
 .pd-details summary span {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .pd-ingredients {

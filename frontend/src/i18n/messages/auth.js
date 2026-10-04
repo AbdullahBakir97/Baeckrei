@@ -48,5 +48,30 @@ export default {
     setPassword: 'Set new password',
     linkExpired: 'Link expired?',
     requestNew: 'Request a new one'
+  },
+  ar: {
+    signInTitle: 'تسجيل الدخول إلى حسابك',
+    email: 'البريد الإلكتروني',
+    forgot: 'هل نسيت كلمة المرور؟',
+    signingIn: 'جارٍ تسجيل الدخول…',
+    newHere: 'هل أنت جديد هنا؟',
+    createAccount: 'إنشاء حساب',
+    registerTitle: 'أنشئ حسابك',
+    registerSubtitle: 'اطلب مسبقًا وتابع طلباتك بسهولة',
+    repeatPassword: 'أعد إدخال كلمة المرور',
+    passwordRules: '8 أحرف على الأقل، ألّا تتكوّن من أرقام فقط، وألّا تشبه اسمك أو بريدك الإلكتروني كثيرًا.',
+    creating: 'جارٍ إنشاء الحساب…',
+    haveAccount: 'لديك حساب بالفعل؟',
+    mismatch: 'كلمتا المرور غير متطابقتين.',
+    forgotTitle: 'هل نسيت كلمة المرور؟',
+    forgotSubtitle: 'أدخل بريدك الإلكتروني وسنرسل إليك رابطًا لاختيار كلمة مرور جديدة.',
+    sendLink: 'إرسال رابط إعادة التعيين',
+    backToSignIn: 'العودة إلى تسجيل الدخول',
+    tooMany: 'طلبات كثيرة جدًا. يُرجى الانتظار قليلًا ثم المحاولة مجددًا.',
+    sendFailed: 'تعذّر إرسال رابط إعادة التعيين. يُرجى المحاولة مجددًا.',
+    resetTitle: 'اختر كلمة مرور جديدة',
+    setPassword: 'حفظ كلمة المرور الجديدة',
+    linkExpired: 'انتهت صلاحية الرابط؟',
+    requestNew: 'اطلب رابطًا جديدًا'
   }
 }

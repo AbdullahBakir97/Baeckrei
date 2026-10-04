@@ -68,5 +68,49 @@ export default {
     confirmingPayment: 'Confirming your payment…',
     paidThanks: 'Thank you! Your payment has been received.',
     emailSent: 'A confirmation is on its way to {email}.'
+  },
+  ar: {
+    allOrders: 'جميع الطلبات',
+    notFound: 'لم نتمكن من العثور على هذا الطلب',
+    notFoundText: 'ربما يعود إلى حساب آخر.',
+    thanks: 'شكرًا لك! تم تقديم طلبك بنجاح.',
+    readyAt: 'سنجهّزه لك في {name}، {address}.',
+    willDeliver: 'سنوصله إليك على العنوان أدناه.',
+    eyebrow: 'الطلب',
+    placedOn: 'تاريخ الطلب: {date}',
+    progress: 'مراحل الطلب',
+    steps: {
+      received: 'تم الاستلام',
+      preparing: 'قيد التحضير',
+      done: 'مكتمل'
+    },
+    canceled: 'تم إلغاء هذا الطلب.',
+    requestedFor: 'الموعد المطلوب: {time}',
+    tracking: 'رقم التتبع: {number}',
+    payment: 'الدفع',
+    paymentStatus: 'الحالة: {status}',
+    paymentStatuses: {
+      pending: 'قيد الانتظار',
+      completed: 'مدفوع',
+      failed: 'لم ينجح',
+      refunded: 'مُسترد'
+    },
+    notes: 'ملاحظات: {notes}',
+    items: 'المنتجات',
+    confirmCancel: 'هل تريد إلغاء هذا الطلب؟',
+    yesCancel: 'نعم، ألغِ الطلب',
+    keep: 'الإبقاء على الطلب',
+    cancel: 'إلغاء الطلب',
+    canceledToast: 'تم إلغاء طلبك',
+    cancelFailed: 'تعذّر إلغاء الطلب',
+    payNow: 'ادفع الآن · {total}',
+    payOpen: 'لم يكتمل الدفع بعد',
+    payOpenText: 'طلبك محجوز لك حتى تنتهي صلاحية صفحة الدفع، وبعدها يُلغى تلقائيًا.',
+    payCanceled: 'لم تكتمل عملية الدفع',
+    payCanceledText: 'يمكنك المحاولة مجددًا أو إلغاء الطلب.',
+    payFailed: 'تعذّر فتح صفحة الدفع. يُرجى المحاولة مجددًا.',
+    confirmingPayment: 'جارٍ تأكيد الدفع…',
+    paidThanks: 'شكرًا لك! لقد استلمنا دفعتك.',
+    emailSent: 'رسالة التأكيد في طريقها إلى {email}.'
   }
 }
