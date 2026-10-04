@@ -1,0 +1,42 @@
+export default {
+  de: {
+    title: 'Unsere Auswahl',
+    openUntil: 'Geöffnet bis {time} Uhr',
+    closed: 'Geschlossen',
+    opensAt: 'öffnet {when}',
+    tomorrow: 'morgen, {time} Uhr',
+    todayAt: 'heute, {time} Uhr',
+    onDay: '{day}, {time} Uhr',
+    orderAhead: 'Online vorbestellen',
+    orderAheadText: 'Scannen, auswählen, abholen – ohne Warten.',
+    soldOut: 'Ausverkauft',
+    vegan: 'Vegan',
+    vegetarian: 'Vegetarisch',
+    glutenFree: 'Glutenfrei',
+    seasonal: 'Saison',
+    featured: 'Frisch aus dem Ofen',
+    vatNote: 'Alle Preise inkl. MwSt.',
+    empty: 'Die Auswahl wird gerade aufgefüllt.',
+    offline: 'Keine Verbindung – zeige die letzte Auswahl'
+  },
+  en: {
+    title: 'Our selection',
+    openUntil: 'Open until {time}',
+    closed: 'Closed',
+    opensAt: 'opens {when}',
+    tomorrow: 'tomorrow at {time}',
+    todayAt: 'today at {time}',
+    onDay: '{day} at {time}',
+    orderAhead: 'Order ahead online',
+    orderAheadText: 'Scan, choose, pick up – no waiting.',
+    soldOut: 'Sold out',
+    vegan: 'Vegan',
+    vegetarian: 'Vegetarian',
+    glutenFree: 'Gluten free',
+    seasonal: 'Seasonal',
+    featured: 'Fresh from the oven',
+    vatNote: 'All prices incl. VAT',
+    empty: 'The counter is being restocked.',
+    offline: 'No connection – showing the last selection'
+  }
+}

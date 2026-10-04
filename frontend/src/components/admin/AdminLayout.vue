@@ -24,6 +24,9 @@
         <router-link to="/" class="admin-link">
           <font-awesome-icon icon="store" class="w-4" /> <span>{{ $t('admin.layout.viewShop') }}</span>
         </router-link>
+        <a href="/menu-board" target="_blank" rel="noopener" class="admin-link">
+          <font-awesome-icon icon="receipt" class="w-4" /> <span>{{ $t('admin.layout.menuBoard') }}</span>
+        </a>
         <div class="admin-user">
           <span class="admin-avatar">{{ initials }}</span>
           <div class="min-w-0 flex-1">

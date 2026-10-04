@@ -1,8 +1,8 @@
 <template>
   <div class="app">
-    <AmbientBackground v-if="!isAdmin" />
+    <AmbientBackground v-if="!bare" />
     <a href="#main" class="skip-link">{{ $t('common.skipToContent') }}</a>
-    <Navbar v-if="!isAdmin" />
+    <Navbar v-if="!bare" />
     <main id="main" class="main-container" :class="{ 'is-full-bleed': route.meta.fullBleed || isAdmin }">
       <router-view v-slot="{ Component, route }">
         <transition :css="false" mode="out-in" @leave="onLeave" @enter="onEnter">
@@ -11,9 +11,9 @@
         </transition>
       </router-view>
     </main>
-    <Footer v-if="!isAdmin" :key="locale" />
+    <Footer v-if="!bare" :key="locale" />
     <Toast />
-    <CursorFollower v-if="!isAdmin" />
+    <CursorFollower v-if="!bare" />
     <IntroOverlay v-if="showIntro" @done="finishIntro" />
   </div>
 </template>
@@ -38,11 +38,13 @@ const route = useRoute()
 const { locale } = useI18n()
 // The admin area has its own layout and navigation.
 const isAdmin = computed(() => route.matched.some(record => record.meta.requiresAdmin))
+// Admin and the in-shop menu board show without the shop's navigation.
+const bare = computed(() => isAdmin.value || Boolean(route.meta.bare))
 
 // The intro plays once per browser, on storefront pages, with motion allowed.
 const INTRO_KEY = 'intro-seen'
 const introSeen = () => { try { return localStorage.getItem(INTRO_KEY) === '1' } catch { return true } }
-const showIntro = ref(!prefersReducedMotion() && !introSeen() && !window.location.pathname.startsWith('/admin'))
+const showIntro = ref(!prefersReducedMotion() && !introSeen() && !/^\/(admin|menu-board)/.test(window.location.pathname))
 function finishIntro() {
   showIntro.value = false
   try { localStorage.setItem(INTRO_KEY, '1') } catch { /* ignore */ }
@@ -56,7 +58,7 @@ setTimeout(markIntroDone, 6000)
 // their own content (products, posts, categories) refine it.
 const { t, te } = useI18n()
 const place = computed(() => ({ street: business.street, city: business.city }))
-const PRIVATE = ['cart', 'checkout', 'order-detail', 'profile', 'orders', 'settings', 'login', 'register',
+const PRIVATE = ['menu-board', 'cart', 'checkout', 'order-detail', 'profile', 'orders', 'settings', 'login', 'register',
   'forgot-password', 'reset-password', 'newsletter-unsubscribe', 'wishlist', 'compare', 'not-found']
 useHead(() => ({
   htmlAttrs: { lang: locale.value },
