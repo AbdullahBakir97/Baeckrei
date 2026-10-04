@@ -67,9 +67,17 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def checkout_options(self, request):
         """Fulfilment and payment choices and bookable times for the checkout page."""
+        from apps.shop import config as shop_config
+        shop = shop_config.get()
+
         def slot_list(method):
             return [{'start': slot['start'].isoformat(), 'available': slot['available']}
-                    for slot in slots.available_slots(method)]
+                    for slot in slots.available_slots(method, config=shop)]
+
+        methods = [
+            {'code': Order.FulfillmentChoices.PICKUP, 'label': 'Pickup in store', 'fee': '0.00', 'enabled': shop.pickup_enabled},
+            {'code': Order.FulfillmentChoices.DELIVERY, 'label': 'Delivery', 'fee': str(shop.delivery_fee), 'enabled': shop.delivery_enabled},
+        ]
 
         return Response({
             'slots': {
@@ -77,10 +85,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 Order.FulfillmentChoices.DELIVERY: slot_list(Order.FulfillmentChoices.DELIVERY),
             },
             'vat_rate': str(settings.VAT_RATE),
-            'fulfillment_methods': [
-                {'code': Order.FulfillmentChoices.PICKUP, 'label': 'Pickup in store', 'fee': '0.00'},
-                {'code': Order.FulfillmentChoices.DELIVERY, 'label': 'Delivery', 'fee': str(settings.DELIVERY_FEE)},
-            ],
+            'fulfillment_methods': [{key: m[key] for key in ('code', 'label', 'fee')} for m in methods if m['enabled']],
             'payment_methods': [
                 {'code': Payment.PaymentMethod.CASH, 'label': 'Cash on pickup or delivery', 'available': True},
                 {'code': Payment.PaymentMethod.CREDIT_CARD, 'label': 'Card on pickup or delivery', 'available': True},

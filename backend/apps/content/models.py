@@ -14,6 +14,10 @@ class ContactMessage(models.Model):
     message = models.TextField(max_length=5000)
     created_at = models.DateTimeField(auto_now_add=True)
     handled = models.BooleanField(default=False)
+    # The answer sent from the admin, kept with the message.
+    reply = models.TextField(blank=True)
+    replied_at = models.DateTimeField(null=True, blank=True)
+    replied_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     class Meta:
         ordering = ['-created_at']
@@ -51,6 +55,10 @@ class Post(models.Model):
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     excerpt = models.CharField(max_length=300, blank=True, help_text='Short summary shown in the blog list')
     body = models.TextField(help_text='Plain text; separate paragraphs with a blank line')
+    # Optional English versions; empty ones fall back to German.
+    title_en = models.CharField(max_length=200, blank=True)
+    excerpt_en = models.CharField(max_length=300, blank=True)
+    body_en = models.TextField(blank=True)
     cover_image = models.ImageField(upload_to='blog/', blank=True, null=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True, help_text='Empty means draft')
@@ -73,3 +81,20 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class NewsletterCampaign(models.Model):
+    """A newsletter written and sent from the admin."""
+    subject = models.CharField(max_length=200)
+    body = models.TextField(help_text='Plain text; separate paragraphs with a blank line')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    recipient_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.subject

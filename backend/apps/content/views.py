@@ -35,13 +35,15 @@ class ContactMessageView(APIView):
             # Honeypot filled in: pretend it worked, store nothing.
             return Response({'message': _('Thanks! We will get back to you soon.')}, status=status.HTTP_201_CREATED)
         message = serializer.save()
-        if settings.SHOP_NOTIFICATION_EMAIL:
+        from apps.shop import config as shop_config
+        notify = shop_config.get().notification_email
+        if notify:
             try:
                 send_mail(
                     subject=f'Contact form: {message.subject or message.name}',
                     message=f'From: {message.name} <{message.email}>\n\n{message.message}',
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[settings.SHOP_NOTIFICATION_EMAIL],
+                    recipient_list=[notify],
                 )
             except Exception:
                 # The message is saved and visible in the admin either way.

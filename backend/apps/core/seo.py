@@ -55,7 +55,16 @@ def site_url():
 
 
 def _shop():
-    return {'name': settings.SHOP_NAME, 'street': settings.SHOP_STREET, 'city': settings.SHOP_CITY}
+    from apps.shop import config
+    shop = config.get()
+    return {
+        'name': shop.name,
+        'street': ' '.join(filter(None, [shop.street, shop.house_number])),
+        'postal_code': shop.postal_code,
+        'city': shop.city,
+        'phone': shop.phone,
+        'hours': shop.opening_hours,
+    }
 
 
 def _language(request):
@@ -130,11 +139,20 @@ def bakery_json_ld():
         'name': shop['name'],
         'url': site_url(),
         'image': f'{site_url()}/og-image.jpg',
-        'address': {'@type': 'PostalAddress', 'streetAddress': shop['street'],
+        'address': {'@type': 'PostalAddress', 'streetAddress': shop['street'], 'postalCode': shop['postal_code'],
                     'addressLocality': shop['city'], 'addressCountry': 'DE'},
+        **({'telephone': shop['phone']} if shop['phone'] else {}),
+        'openingHoursSpecification': [
+            {'@type': 'OpeningHoursSpecification', 'dayOfWeek': DAY_NAMES[day],
+             'opens': opens.strftime('%H:%M'), 'closes': closes.strftime('%H:%M')}
+            for day, ranges in sorted(shop['hours'].items()) for opens, closes in ranges
+        ],
         'servesCuisine': 'Bakery',
         'priceRange': '€',
     }
+
+
+DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
 def page_meta(request, path):
@@ -152,6 +170,7 @@ def page_meta(request, path):
         'type': 'website',
         'noindex': any(path == p or path.startswith(p + '/') for p in PRIVATE_PREFIXES),
         'json_ld': [bakery_json_ld()],
+        'site_name': shop['name'],
     }
     parts = path.strip('/').split('/')
 
@@ -214,7 +233,7 @@ def render_head(meta):
         tag('property', 'og:image', meta['image']),
         tag('property', 'og:url', meta['url']),
         tag('property', 'og:type', meta['type']),
-        tag('property', 'og:site_name', settings.SHOP_NAME),
+        tag('property', 'og:site_name', meta.get('site_name') or settings.SHOP_NAME),
         tag('property', 'og:locale', 'de_DE' if meta['language'] == 'de' else 'en_GB'),
         tag('name', 'twitter:card', 'summary_large_image'),
     ]

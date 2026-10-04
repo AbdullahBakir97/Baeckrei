@@ -25,7 +25,7 @@ class PostListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ('id', 'title', 'slug', 'excerpt', 'cover_image', 'author_name', 'published_at')
+        fields = ('id', 'title', 'title_en', 'slug', 'excerpt', 'excerpt_en', 'cover_image', 'author_name', 'published_at')
 
     def get_author_name(self, obj):
         if not obj.author:
@@ -35,4 +35,4 @@ class PostListSerializer(serializers.ModelSerializer):
 
 class PostDetailSerializer(PostListSerializer):
     class Meta(PostListSerializer.Meta):
-        fields = PostListSerializer.Meta.fields + ('body', 'updated_at')
+        fields = PostListSerializer.Meta.fields + ('body', 'body_en', 'updated_at')

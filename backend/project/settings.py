@@ -66,6 +66,9 @@ BACKEND_APPS = [
     'apps.cart',
     'apps.orders',
     'apps.content',
+    'apps.shop',
+    'apps.menuboard',
+    'apps.studio',
 ]
 
 INSTALLED_APPS = [

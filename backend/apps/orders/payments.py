@@ -19,6 +19,11 @@ from django.utils.translation import gettext as _, override
 
 from .models import Order, Payment
 
+
+def shop_name():
+    from apps.shop import config
+    return config.get().name
+
 logger = logging.getLogger(__name__)
 
 
@@ -92,7 +97,7 @@ def start_checkout(order):
             metadata=metadata,
             payment_intent_data={
                 'metadata': metadata,
-                'description': f'{settings.SHOP_NAME} {order.order_number}',
+                'description': f'{shop_name()} {order.order_number}',
             },
             success_url=f'{base}/orders/{order.pk}?placed=1&paid=1',
             cancel_url=f'{base}/orders/{order.pk}?payment=canceled',

@@ -1,6 +1,7 @@
 """Pickup and delivery times offered at checkout.
 
-Slots come from the shop's opening hours (settings.SHOP_OPENING_HOURS), e.g.
+Slots come from the shop's opening hours, set in the admin or, until then,
+in settings.SHOP_OPENING_HOURS, e.g.
 
     mon-fri 07:00-18:00; sat 08:00-14:00
 
@@ -8,11 +9,11 @@ Days that are not listed are closed. A day may have several ranges
 ("mon 07:00-12:00 14:00-18:00"). Each slot is SHOP_SLOT_MINUTES long and
 starts at least the lead time from now, so the bakery has time to pack (or
 bake) the order. With SHOP_SLOT_CAPACITY set, a full slot is shown as taken.
+Closing days (holidays) have no slots. All values come from apps.shop.config.
 """
 import re
 from datetime import datetime, time, timedelta
 
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Count
 from django.utils import timezone
@@ -55,26 +56,46 @@ def parse_opening_hours(text):
     return hours
 
 
+def _config():
+    from apps.shop import config
+    return config.get()
+
+
 def opening_hours():
-    return parse_opening_hours(settings.SHOP_OPENING_HOURS)
+    return _config().opening_hours
 
 
-def lead_minutes(method):
+def lead_minutes(method, config=None):
     from .models import Order
+    config = config or _config()
     if method == Order.FulfillmentChoices.DELIVERY:
-        return settings.SHOP_DELIVERY_LEAD_MINUTES
-    return settings.SHOP_PICKUP_LEAD_MINUTES
+        return config.delivery_lead_minutes
+    return config.pickup_lead_minutes
 
 
-def _slot_starts(method, now, days):
-    step = timedelta(minutes=settings.SHOP_SLOT_MINUTES)
-    earliest = now + timedelta(minutes=lead_minutes(method))
+def method_enabled(method, config=None):
+    from .models import Order
+    config = config or _config()
+    if method == Order.FulfillmentChoices.DELIVERY:
+        return config.delivery_enabled
+    return config.pickup_enabled
+
+
+def closed_on(day, config):
+    """The closing day entry covering `day`, if any."""
+    return next((closure for closure in config.closures if closure.covers(day)), None)
+
+
+def _slot_starts(method, now, days, config):
+    step = timedelta(minutes=config.slot_minutes)
+    earliest = now + timedelta(minutes=lead_minutes(method, config))
     tz = timezone.get_current_timezone()
-    hours = opening_hours()
     today = timezone.localtime(now, tz).date()
     for offset in range(days):
         day = today + timedelta(days=offset)
-        for opens, closes in hours.get(day.weekday(), []):
+        if closed_on(day, config):
+            continue
+        for opens, closes in config.opening_hours.get(day.weekday(), []):
             start = timezone.make_aware(datetime.combine(day, opens), tz)
             end = timezone.make_aware(datetime.combine(day, closes), tz)
             while start + step <= end:
@@ -83,13 +104,16 @@ def _slot_starts(method, now, days):
                 start += step
 
 
-def available_slots(method, now=None, days=None):
+def available_slots(method, now=None, days=None, config=None):
     """Upcoming slots as [{'start': datetime, 'available': bool}], soonest first."""
     from .models import Order
+    config = config or _config()
+    if not method_enabled(method, config):
+        return []
     now = now or timezone.now()
-    starts = list(_slot_starts(method, now, days or settings.SHOP_SLOT_DAYS))
+    starts = list(_slot_starts(method, now, days or config.slot_days, config))
     taken = set()
-    capacity = settings.SHOP_SLOT_CAPACITY
+    capacity = config.slot_capacity
     if capacity and starts:
         booked = (
             Order.objects.filter(requested_time__in=starts)
@@ -107,15 +131,18 @@ def is_bookable(method, requested_time, now=None):
     )
 
 
-def opening_status(now=None, days=7):
+def opening_status(now=None, days=7, config=None):
     """Today's hours and whether the shop is open, for screens and the footer.
 
     Returns {'days': [{'weekday': 0-6, 'ranges': [['07:00', '18:00'], ...]}],
-    'open_now': bool, 'closes_at': 'HH:MM' | None, 'next_open': ISO datetime | None}.
+    'open_now': bool, 'closes_at': 'HH:MM' | None, 'next_open': ISO datetime | None,
+    'closed_today': label | None, 'closures': [upcoming closing days]}.
     """
+    config = config or _config()
     tz = timezone.get_current_timezone()
     now = timezone.localtime(now or timezone.now(), tz)
-    hours = opening_hours()
+    hours = config.opening_hours
+    today_closure = closed_on(now.date(), config)
     status = {
         'time_zone': str(tz),
         'days': [
@@ -125,14 +152,22 @@ def opening_status(now=None, days=7):
         'open_now': False,
         'closes_at': None,
         'next_open': None,
+        'closed_today': (today_closure.label or True) if today_closure else None,
+        'closures': [
+            {'start': c.start.isoformat(), 'end': c.last_day.isoformat(), 'label': c.label, 'label_en': c.label_en}
+            for c in config.closures
+        ],
     }
-    for opens, closes in hours.get(now.weekday(), []):
-        if opens <= now.time() < closes:
-            status['open_now'] = True
-            status['closes_at'] = closes.strftime('%H:%M')
-            return status
-    for offset in range(days + 1):
+    if not today_closure:
+        for opens, closes in hours.get(now.weekday(), []):
+            if opens <= now.time() < closes:
+                status['open_now'] = True
+                status['closes_at'] = closes.strftime('%H:%M')
+                return status
+    for offset in range(days + 31):
         day = now.date() + timedelta(days=offset)
+        if closed_on(day, config):
+            continue
         for opens, _closes in sorted(hours.get(day.weekday(), [])):
             start = timezone.make_aware(datetime.combine(day, opens), tz)
             if start > now:
