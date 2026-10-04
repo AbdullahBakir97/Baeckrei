@@ -12,7 +12,7 @@ edit followed by a rebuild.
 | `postkarte-a6.pdf` | Breakfast offer postcard, front and back | A6 + 3 mm bleed (111 × 154 mm) |
 | `plakat-a3.pdf` | Window poster | A3 + 3 mm bleed (303 × 426 mm) |
 | `kundeninfo-a4.pdf` | 16-page customer guide with a screenshot of every page of the website | A4 (210 × 297 mm) |
-| `handbuch-a4.pdf` | 20-page owner handbook: orders, products, menu board, settings, with screenshots of the admin | A4 (210 × 297 mm) |
+| `handbuch-a4.pdf` | 26-page owner handbook for the Backlover Studio: orders, products, ingredients, journal, messages, newsletter, shop settings, menu screens and setting up the TVs | A4 (210 × 297 mm) |
 | `social-post.png` | Instagram / Facebook post | 1080 × 1350 px |
 | `social-story.png` | Instagram / WhatsApp story | 1080 × 1920 px |
 
@@ -56,18 +56,22 @@ npm run marketing:screens -- --base http://localhost:5173 --email kunde@example.
 npm run marketing -- --only guide
 ```
 
-For the owner handbook, sign in with a superuser instead (this also captures
-Django's admin, at `--api`, default `http://localhost:8000`):
+For the owner handbook, sign in with an admin account instead. This takes
+the Studio pages, the menu screens (one per layout: screens named
+`schaufenster`, `cafe-ecke` and `preisliste` show the other layouts) and the
+TV pairing page:
 
 ```bash
 npm run marketing:screens -- --base http://localhost:5173 --admin-email inhaber@example.com --admin-password '...'
 ```
 
-The two email pictures (`admin-email-*.jpg`) are screenshots of the order
-emails from `backend/apps/orders/templates/orders/email/`.
+Screenshots are taken in German and Arabic (`--langs de,ar`, English with
+`en`); each edition shows the website and the Studio in its own language.
+Dates and times in forms appear in German format in both.
 
-The Arabic guide and handbook show the English website and admin, since the
-shop itself is in German and English.
+The two email pictures (`admin-email-*.jpg`) are screenshots of the order
+emails from `backend/apps/orders/templates/orders/email/`; the Arabic edition
+shows the Arabic confirmation and the German alert the shop receives.
 
 ## Notes for the print shop
 

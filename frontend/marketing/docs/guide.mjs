@@ -19,7 +19,8 @@ export async function guideDocument(lang) {
   const ar = lang === 'ar'
   const fee = price(shop.deliveryFee, lang)
   const params = { fee, lead: shop.pickupLeadMinutes, deliveryLead: shop.deliveryLeadMinutes, site: `<bdi dir="ltr">${esc(host())}</bdi>` }
-  const num = (n) => (ar ? String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : String(n).padStart(2, '0'))
+  // Western digits in both editions, as on the website.
+  const num = (n) => String(n).padStart(2, '0')
   const edition = new Intl.DateTimeFormat(ar ? 'ar' : 'de-DE', { month: 'long', year: 'numeric', numberingSystem: 'latn' }).format(new Date())
   const codeDark = await qr(shopUrl('/products'))
   const codeLight = await qr(shopUrl('/products'), { dark: '#f4ece1' })

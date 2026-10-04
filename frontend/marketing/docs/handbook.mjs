@@ -1,5 +1,6 @@
 // The owner handbook: an A4 brochure for the bakery on running the shop day
-// to day, with screenshots of the admin. Texts are in data/handbook.mjs.
+// to day in the Backlover Studio, with screenshots in the edition's language.
+// Texts are in data/handbook.mjs.
 import handbook from '../data/handbook.mjs'
 import { GUIDE_CSS } from './guide.mjs'
 import { documentHtml, esc, host, logo, phone, photo, screen, shop, tv } from '../shared.mjs'
@@ -7,38 +8,44 @@ import { documentHtml, esc, host, logo, phone, photo, screen, shop, tv } from '.
 // Section, page it starts on.
 const TOC = [
   ['overview', 3], ['dashboard', 4], ['orders', 5], ['alerts', 7], ['routine', 8], ['products', 9],
-  ['productForm', 10], ['productDetail', 11], ['categories', 12], ['users', 13], ['content', 14],
-  ['menuBoard', 15], ['emails', 16], ['settings', 17], ['security', 18], ['help', 19]
+  ['productForm', 10], ['productDetail', 11], ['ingredients', 12], ['categories', 13], ['users', 14],
+  ['journal', 15], ['messages', 16], ['newsletter', 17], ['shopSettings', 18], ['screens', 19],
+  ['screenContent', 20], ['tv', 21], ['emails', 22], ['server', 23], ['security', 24], ['help', 25]
 ]
 
-// Where the numbered markers sit on the dashboard screenshot (% of the image).
+// Where the numbered markers sit on the German dashboard screenshot (% of
+// the image); the Arabic Studio is mirrored.
 const DASHBOARD_MARKERS = [[19, 18], [19, 41], [19, 61], [61, 61], [95.5, 4]]
+
+// The Studio's sidebar is 264 CSS pixels wide, on the left (right in Arabic).
+const SIDEBAR = 264
 
 export async function handbookDocument(lang) {
   const H = handbook[lang]
   const ar = lang === 'ar'
-  const num = (n) => (ar ? String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]) : String(n).padStart(2, '0'))
+  const num = (n) => String(n).padStart(2, '0')
   const sectionNo = (key) => TOC.findIndex(([k]) => k === key) + 1
-  // **Button** → a highlighted name from the admin.
+  // **Button** → a highlighted name from the Studio.
   const rich = (value, params = {}) => esc(value)
     .replace(/\{(\w+)\}/g, (_, key) => params[key] ?? `{${key}}`)
     .replace(/\*\*(.+?)\*\*/g, '<b class="ui"><bdi>$1</bdi></b>')
   const edition = new Intl.DateTimeFormat(ar ? 'ar' : 'de-DE', { month: 'long', year: 'numeric', numberingSystem: 'latn' }).format(new Date())
   const slots = { slot: shop.slotMinutes, days: shop.slotDays, pickup: shop.pickupLeadMinutes, delivery: shop.deliveryLeadMinutes }
 
+  const bar = (path) => `<div class="frame-bar"><i></i><i></i><i></i><span dir="ltr">${esc(host())}${esc(path)}</span></div>`
   const browser = (name, path = '', extra = '') => `
-    <figure class="frame-browser ${extra}">
-      <div class="frame-bar"><i></i><i></i><i></i><span dir="ltr">${esc(host())}${esc(path)}</span></div>
-      <img src="${screen(lang, name)}" alt="">
-    </figure>`
+    <figure class="frame-browser ${extra}">${bar(path)}<img src="${screen(lang, name)}" alt=""></figure>`
   // Part of a 1440 × 900 screenshot, in CSS pixels.
   const crop = (name, path, { x, y, w, h }) => `
-    <figure class="frame-browser">
-      <div class="frame-bar"><i></i><i></i><i></i><span dir="ltr">${esc(host())}${esc(path)}</span></div>
+    <figure class="frame-browser">${bar(path)}
       <div class="crop" style="aspect-ratio:${w}/${h}">
         <img src="${screen(lang, name)}" alt="" style="width:${(1440 / w) * 100}%;transform:translate(${-(x / 1440) * 100}%,${-(y / 900) * 100}%)">
       </div>
     </figure>`
+  // A region measured on the German Studio; the Arabic one is mirrored.
+  const area = (name, path, { x, y, w, h }) => crop(name, path, { x: ar ? 1440 - x - w : x, y, w, h })
+  // The Studio page without its sidebar.
+  const studio = (name, path, { y = 0, h = 900 - y } = {}) => area(name, path, { x: SIDEBAR, y, w: 1440 - SIDEBAR, h })
   const list = (items, cls = 'checks') => `<ul class="${cls}">${items.map(item => `<li>${rich(item)}</li>`).join('')}</ul>`
   const defs = (items, cls = '') => `<div class="defs ${cls}">${items.map(([term, text], i) => `
     <div class="def"><span class="def-n">${num(i + 1)}</span><div><p class="def-term"><bdi>${esc(term)}</bdi></p><p>${rich(text)}</p></div></div>`).join('')}</div>`
@@ -109,7 +116,7 @@ export async function handbookDocument(lang) {
     <p class="lead">${rich(D.intro)}</p>
     <div class="marked">
       ${browser('admin-dashboard', '/admin')}
-      ${DASHBOARD_MARKERS.map(([x, y], i) => `<span class="marker" style="left:${x}%;top:calc(5mm + (100% - 5mm) * ${y / 100})">${num(i + 1)}</span>`).join('')}
+      ${DASHBOARD_MARKERS.map(([x, y], i) => `<span class="marker" style="left:${ar ? 100 - x : x}%;top:calc(5mm + (100% - 5mm) * ${y / 100})">${num(i + 1)}</span>`).join('')}
     </div>
     ${defs(D.points, 'defs-2')}`, { title: 'dashboard' }))
 
@@ -157,7 +164,8 @@ export async function handbookDocument(lang) {
     <div class="split split-shot">
       ${defs(T.rules.map(([term, text]) => [term, text.replace(/\{(\w+)\}/g, (_, k) => slots[k])]), 'defs-tight')}
       <div>${browser('checkout-time', '/checkout')}</div>
-    </div>`, { title: 'routine' }))
+    </div>
+    <p class="note">${rich(T.rulesNote)}</p>`, { title: 'routine' }))
 
   // 9 — Products
   const P = H.products
@@ -184,20 +192,34 @@ export async function handbookDocument(lang) {
       <div><p class="card-label">${esc(F.photoTitle)}</p>${list(F.photo, 'checks checks-2')}</div>
     </div>`, { title: 'productForm' }))
 
-  // 11 — Product detail, stock, allergens
+  // 11 — Product detail: stock, ingredients and nutrition
   const PD = H.productDetail
   pages.push(shell(11, `
     <p class="lead">${rich(PD.intro)}</p>
-    ${crop('admin-product-detail', '/admin/products/…', { x: 0, y: 0, w: 1440, h: 640 })}
-    <div class="cards cards-2 equal">
-      <div class="card"><p class="card-title">${esc(PD.stockTitle)}</p><p>${rich(PD.stock)}</p></div>
-      <div class="card"><p class="card-title">${esc(PD.allergenTitle)}</p><p>${rich(PD.allergenIntro)}</p>${list(PD.allergenSteps, 'steps')}</div>
+    ${studio('admin-product-detail', '/admin/products/…', { y: 0, h: 470 })}
+    <div class="split split-even">
+      ${area('admin-recipe', '/admin/products/…', { x: 290, y: 355, w: 750, h: 545 })}
+      <div class="stack">
+        <div class="card"><p class="card-title">${esc(PD.stockTitle)}</p><p>${rich(PD.stock)}</p></div>
+        <div class="card"><p class="card-title">${esc(PD.recipeTitle)}</p>${list(PD.recipe, 'steps')}</div>
+      </div>
     </div>
     <p class="note">${rich(PD.allergenNote)}</p>`, { title: 'productDetail' }))
 
-  // 12 — Categories
-  const C = H.categories
+  // 12 — Ingredients and allergens
+  const I = H.ingredients
   pages.push(shell(12, `
+    <p class="lead">${rich(I.intro)}</p>
+    ${studio('admin-ingredients', '/admin/ingredients', { y: 0, h: 660 })}
+    ${defs(I.points, 'defs-2')}
+    <div class="dark-box">
+      <p class="card-label">${esc(I.tipTitle)}</p>
+      ${list(I.tip, 'steps steps-row')}
+    </div>`, { title: 'ingredients' }))
+
+  // 13 — Categories
+  const C = H.categories
+  pages.push(shell(13, `
     <p class="lead">${rich(C.intro)}</p>
     ${browser('admin-categories', '/admin/categories')}
     <div class="split split-even">
@@ -205,9 +227,9 @@ export async function handbookDocument(lang) {
       ${defs(C.points, 'defs-tight')}
     </div>`, { title: 'categories' }))
 
-  // 13 — Users
+  // 14 — Users
   const U = H.users
-  pages.push(shell(13, `
+  pages.push(shell(14, `
     <p class="lead">${rich(U.intro)}</p>
     ${browser('admin-users', '/admin/users')}
     ${defs(U.points, 'defs-3')}
@@ -216,42 +238,95 @@ export async function handbookDocument(lang) {
       ${list(U.team)}
     </div>`, { title: 'users' }))
 
-  // 14 — Journal, messages, newsletter (Django admin)
-  const N = H.content
-  const djangoPath = '/django-admin/content/'
-  pages.push(shell(14, `
-    <p class="lead">${rich(N.intro)}</p>
-    <div class="django">
-      ${[['admin-django-posts', 'post/'], ['admin-django-post-form', 'post/add/'], ['admin-django-messages', 'contactmessage/'], ['admin-django-newsletter', 'newslettersubscriber/']]
-        .map(([name, path]) => crop(name, djangoPath + path, { x: 0, y: 0, w: 1440, h: 620 })).join('')}
-    </div>
-    <div class="cols-3">
-      <div><p class="card-title">${esc(N.postsTitle)}</p>${list(N.posts, 'steps')}</div>
-      <div><p class="card-title">${esc(N.messagesTitle)}</p><p>${rich(N.messages)}</p></div>
-      <div><p class="card-title">${esc(N.newsletterTitle)}</p><p>${rich(N.newsletter)}</p></div>
-    </div>`, { title: 'content' }))
-
-  // 15 — Menu board
-  const M = H.menuBoard
+  // 15 — Journal
+  const J = H.journal
   pages.push(shell(15, `
-    <p class="lead">${rich(M.intro)}</p>
-    <div class="tv-wrap">${tv(screen(lang, 'menu-board'))}</div>
-    <div class="split split-even">
-      <div>
-        ${list(M.features)}
-        <p class="card-label opt-label">${esc(M.optionsTitle)}</p>
-        <table class="opts">${M.options.map(([code, text]) => `<tr><td dir="ltr"><code>${esc(code)}</code></td><td>${esc(text)}</td></tr>`).join('')}</table>
-      </div>
-      <div>
-        <p class="card-label">${esc(M.setupTitle)}</p>
-        ${defs(M.setup, 'defs-tight')}
-        <p class="note">${rich(M.tip)}</p>
-      </div>
-    </div>`, { title: 'menuBoard' }))
+    <p class="lead">${rich(J.intro)}</p>
+    <div class="shots-2">
+      ${studio('admin-journal', '/admin/journal', { y: 0, h: 300 })}
+      ${studio('admin-journal-editor', '/admin/journal/…', { y: 0, h: 620 })}
+    </div>
+    <div class="split split-wide">
+      <div><p class="card-title">${esc(J.stepsTitle)}</p>${list(J.steps, 'steps')}</div>
+      <div class="side-box"><p class="card-label">${esc(J.statesTitle)}</p>${defs(J.states, 'defs-tight')}</div>
+    </div>`, { title: 'journal' }))
 
-  // 16 — Emails
-  const E = H.emails
+  // 16 — Messages
+  const M = H.messages
   pages.push(shell(16, `
+    <p class="lead">${rich(M.intro)}</p>
+    ${studio('admin-messages', '/admin/messages', { y: 0, h: 600 })}
+    <div class="split split-wide">
+      <div><p class="card-title">${esc(M.stepsTitle)}</p>${list(M.steps, 'steps')}</div>
+      <div class="side-box">${defs(M.more, 'defs-tight')}</div>
+    </div>`, { title: 'messages' }))
+
+  // 17 — Newsletter
+  const N = H.newsletter
+  pages.push(shell(17, `
+    <p class="lead">${rich(N.intro)}</p>
+    ${studio('admin-newsletter', '/admin/newsletter', { y: 0, h: 540 })}
+    ${studio('admin-subscribers', '/admin/newsletter', { y: 100, h: 230 })}
+    <div class="split split-wide">
+      <div><p class="card-title">${esc(N.stepsTitle)}</p>${list(N.steps, 'steps')}</div>
+      <div class="side-box"><p class="card-label">${esc(N.subsTitle)}</p><p>${rich(N.subs)}</p></div>
+    </div>
+    <p class="note">${rich(N.law)}</p>`, { title: 'newsletter' }))
+
+  // 18 — Shop settings
+  const G = H.shopSettings
+  pages.push(shell(18, `
+    <p class="lead">${rich(G.intro)}</p>
+    <div class="shots-2">
+      ${studio('admin-settings', '/admin/settings', { y: 0, h: 900 })}
+      ${studio('admin-settings-closing', '/admin/settings', { y: 0, h: 900 })}
+    </div>
+    ${defs(G.items, 'defs-2')}
+    <p class="note">${rich(G.note)}</p>`, { title: 'shopSettings' }))
+
+  // 19 — Menu screens: the list and the design
+  const S = H.screens
+  pages.push(shell(19, `
+    <p class="lead">${rich(S.intro)}</p>
+    ${studio('admin-screens', '/admin/screens', { y: 0, h: 470 })}
+    <p>${rich(S.card)}</p>
+    <div class="split split-even">
+      ${studio('admin-screen-design', '/admin/screens/…', { y: 40, h: 480 })}
+      <div><p class="card-label">${esc(S.designTitle)}</p>${defs(S.design, 'defs-tight')}</div>
+    </div>
+    <p class="note">${rich(S.live)}</p>`, { title: 'screens' }))
+
+  // 20 — Menu screens: content, promotions and the four layouts
+  const SC = H.screenContent
+  const boards = ['menu-board', 'board-spotlight', 'board-grid', 'board-list']
+  pages.push(shell(20, `
+    <div class="split split-even">
+      <div>${studio('admin-screen-content', '/admin/screens/…', { y: 40, h: 520 })}<p class="card-title cap">${esc(SC.contentTitle)}</p><p>${rich(SC.content)}</p></div>
+      <div>${studio('admin-screen-slide', '/admin/screens/…', { y: 0, h: 620 })}<p class="card-title cap">${esc(SC.slidesTitle)}</p>${list(SC.slides, 'steps')}</div>
+    </div>
+    <p class="card-label layouts-label">${esc(SC.layoutsTitle)}</p>
+    <div class="layouts">${boards.map((name, i) => `<figure>${tv(screen(lang, name))}<figcaption>${esc(SC.layouts[i])}</figcaption></figure>`).join('')}</div>`, { title: 'screenContent' }))
+
+  // 21 — Putting a screen on a TV
+  const V = H.tv
+  pages.push(shell(21, `
+    <p class="lead">${rich(V.intro)}</p>
+    <div class="tv-split">
+      <div class="tv-wrap">${tv(screen(lang, 'tv-pairing'))}</div>
+      <ol class="tv-steps">${V.steps.map(([title, text], i) => `<li><span class="day-dot">${num(i + 1)}</span><div><p class="card-title">${esc(title)}</p><p>${rich(text, { url: `<b class="ui"><bdi dir="ltr">${esc(host())}/tv</bdi></b>` })}</p></div></li>`).join('')}</ol>
+    </div>
+    <div class="split split-even">
+      <div><p class="card-label">${esc(V.devicesTitle)}</p>${defs(V.devices, 'defs-tight')}</div>
+      <div>
+        ${studio('admin-screen-device', '/admin/screens/…', { y: 40, h: 520 })}
+        <p class="card-title cap">${esc(V.deviceTitle)}</p><p>${rich(V.device)}</p>
+      </div>
+    </div>
+    <div class="dark-box"><p class="card-label">${esc(V.tipsTitle)}</p>${list(V.tips, 'checks checks-2')}</div>`, { title: 'tv' }))
+
+  // 22 — Emails
+  const E = H.emails
+  pages.push(shell(22, `
     <p class="lead">${rich(E.intro)}</p>
     <div class="mails">
       <figure><img src="${screen(lang, 'admin-email-customer')}" alt=""><figcaption>${esc(E.customer)}</figcaption></figure>
@@ -259,38 +334,38 @@ export async function handbookDocument(lang) {
     </div>
     ${defs(E.list, 'defs-3')}`, { title: 'emails' }))
 
-  // 17 — Settings and Stripe
-  const G = H.settings
-  pages.push(shell(17, `
-    <p class="lead">${rich(G.intro)}</p>
+  // 23 — Server settings and Stripe
+  const X = H.server
+  pages.push(shell(23, `
+    <p class="lead">${rich(X.intro)}</p>
     <table class="settings">
-      <thead><tr>${G.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
-      <tbody>${G.rows.map(([key, text, example]) => `<tr><td dir="ltr"><code>${esc(key)}</code></td><td>${esc(text)}</td><td dir="ltr"><code>${esc(example)}</code></td></tr>`).join('')}</tbody>
+      <thead><tr>${X.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>${X.rows.map(([key, text, example]) => `<tr><td dir="ltr"><code>${esc(key)}</code></td><td>${esc(text)}</td><td dir="ltr"><code>${esc(example)}</code></td></tr>`).join('')}</tbody>
     </table>
     <div class="dark-box">
-      <p class="card-label">${esc(G.stripeTitle)}</p>
-      ${list(G.stripe, 'steps')}
-      <p>${rich(G.stripeNote)}</p>
-    </div>`, { title: 'settings' }))
+      <p class="card-label">${esc(X.stripeTitle)}</p>
+      ${list(X.stripe, 'steps')}
+      <p>${rich(X.stripeNote)}</p>
+    </div>`, { title: 'server' }))
 
-  // 18 — Security
-  pages.push(shell(18, `
+  // 24 — Security
+  pages.push(shell(24, `
     <div class="cards cards-2 security">
       ${H.security.items.map(([title, text], i) => `<div class="card card-icon"><span class="card-n">${num(i + 1)}</span><p class="card-title">${esc(title)}</p><p>${rich(text)}</p></div>`).join('')}
     </div>
     <div class="photo-band" style="background-image:url('${photo('WhatsApp Image 2025-01-17 at 17.24.35_bd8602a2.jpg')}')"></div>`, { title: 'security' }))
 
-  // 19 — Help and checklists
-  const X = H.help
-  pages.push(shell(19, `
-    <p class="card-label">${esc(X.problemsTitle)}</p>
-    <table class="problems">${X.problems.map(([problem, fix]) => `<tr><th>${esc(problem)}</th><td>${rich(fix)}</td></tr>`).join('')}</table>
+  // 25 — Help and checklists
+  const Y = H.help
+  pages.push(shell(25, `
+    <p class="card-label">${esc(Y.problemsTitle)}</p>
+    <table class="problems">${Y.problems.map(([problem, fix]) => `<tr><th>${esc(problem)}</th><td>${rich(fix)}</td></tr>`).join('')}</table>
     <div class="split split-even">
-      <div class="checklist"><p class="card-label">${esc(X.checklistTitle)}</p>${list(X.checklist, 'boxes')}</div>
-      <div class="checklist"><p class="card-label">${esc(X.weeklyTitle)}</p>${list(X.weekly, 'boxes')}</div>
+      <div class="checklist"><p class="card-label">${esc(Y.checklistTitle)}</p>${list(Y.checklist, 'boxes')}</div>
+      <div class="checklist"><p class="card-label">${esc(Y.weeklyTitle)}</p>${list(Y.weekly, 'boxes')}</div>
     </div>`, { title: 'help' }))
 
-  // 20 — Back cover
+  // 26 — Back cover
   const B = H.back
   pages.push(`
   <div class="sheet dark">
@@ -303,7 +378,7 @@ export async function handbookDocument(lang) {
         <p class="eyebrow">${esc(B.contactTitle)}</p>
         ${B.contactLines.map(line => `<div class="write write-dark"><span>${esc(line)}</span><i></i></div>`).join('')}
       </div>
-      <p class="back-small" dir="ltr">${esc(host())}/admin · ${esc(host())}/menu-board</p>
+      <p class="back-small" dir="ltr">${esc(host())}/admin · ${esc(host())}/tv</p>
     </div>
   </div>`)
 
@@ -328,8 +403,8 @@ const CSS = `
   [lang="ar"] .hb-title { font-size: 38pt; }
 
   /* Contents in two columns */
-  .toc-2 ol { grid-template-columns: 1fr 1fr; column-gap: 10mm; grid-auto-flow: column; grid-template-rows: repeat(8, auto); }
-  .toc-2 li { font-size: 9.2pt; }
+  .toc-2 ol { grid-template-columns: 1fr 1fr; column-gap: 10mm; grid-auto-flow: column; grid-template-rows: repeat(11, auto); }
+  .toc-2 li { font-size: 9pt; }
 
   /* Overview */
   .parts .card { padding-top: 4mm; }
@@ -418,10 +493,30 @@ const CSS = `
   .tip-photo { width: 30mm; flex: none; filter: drop-shadow(0 2mm 3mm rgba(40, 22, 8, 0.3)); }
   .equal { align-items: stretch; }
 
-  /* Django admin */
-  .django { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
-  .cols-3 { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 7mm; }
-  .cols-3 .card-title { margin-bottom: 1.5mm; }
+  /* Studio pages */
+  .shots-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; align-items: start; }
+  .split-wide { grid-template-columns: 1fr 72mm; }
+  .side-box { padding: 4.5mm 5mm; border-radius: 4mm; background: rgba(230, 161, 90, 0.12); }
+  .side-box .card-label { margin-bottom: 2.5mm; }
+  .side-box p { font-size: 8.6pt; line-height: 1.55; }
+  .stack { display: grid; gap: 4mm; align-content: start; }
+  .card-title.cap { margin: 3mm 0 1mm; }
+  .steps-row { grid-template-columns: repeat(3, 1fr); gap: 3mm 6mm; }
+  .steps-row li { color: var(--cream); }
+
+  /* Layout gallery */
+  .layouts-label { margin-top: 1mm; }
+  .layouts { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm 14mm; padding: 0 10mm; }
+  .layouts .frame-tv { padding: 1.2mm; border-radius: 1.6mm; }
+  .layouts .frame-tv-foot { width: 16mm; height: 3mm; bottom: -3mm; margin-left: -8mm; }
+  .layouts figcaption { margin-top: 5mm; text-align: center; font-size: 8.4pt; font-weight: 700; color: var(--ink); }
+
+  /* TV pairing */
+  .tv-split { display: grid; grid-template-columns: 1.25fr 1fr; gap: 7mm; align-items: center; }
+  .tv-split .tv-wrap { padding: 0; }
+  .tv-steps { list-style: none; display: grid; gap: 4mm; }
+  .tv-steps li { display: flex; gap: 3mm; align-items: flex-start; }
+  .tv-steps .day-dot { flex: none; margin: 0; }
 
   /* Menu board */
   .tv-wrap { padding: 0 14mm 7mm; }
@@ -467,5 +562,5 @@ const CSS = `
   .write-dark span { width: 22mm; }
   .back-small { margin-top: 10mm; font-size: 8pt; }
   [lang="ar"] .def-term, [lang="ar"] .card-title { font-size: 10pt; }
-  [lang="ar"] p, [lang="ar"] li { line-height: 1.7; }
+  [lang="ar"] p, [lang="ar"] li { line-height: 1.65; }
 `

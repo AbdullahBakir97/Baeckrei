@@ -6,7 +6,7 @@ export default [
     title: { de: 'Gebäck', ar: 'المعجنات' },
     note: { de: 'Jeden Morgen frisch laminiert', ar: 'تُحضَّر طازجة كل صباح' },
     items: [
-      { name: { de: 'Buttercroissant', ar: 'كرواسون بالزبدة' }, desc: { de: 'Französische Butter, 27 Schichten', ar: 'زبدة فرنسية و٢٧ طبقة مقرمشة' }, price: 1.8, image: 'croissant-butter.png', tags: ['vegetarian'] },
+      { name: { de: 'Buttercroissant', ar: 'كرواسون بالزبدة' }, desc: { de: 'Französische Butter, 27 Schichten', ar: 'زبدة فرنسية و27 طبقة مقرمشة' }, price: 1.8, image: 'croissant-butter.png', tags: ['vegetarian'] },
       { name: { de: 'Schokocroissant', ar: 'كرواسون بالشوكولاتة' }, desc: { de: 'Mit dunkler Schokolade', ar: 'محشو بالشوكولاتة الداكنة' }, price: 2.3, image: 'croissant-chocolate.png', tags: ['vegetarian'] },
       { name: { de: 'Laugenbrezel', ar: 'بريتزل ألماني' }, desc: { de: 'Mit grobem Salz, außen knusprig', ar: 'بالملح الخشن، مقرمش من الخارج' }, price: 1.2, image: 'pretzel.png', tags: ['vegan'] }
     ]
@@ -29,7 +29,7 @@ export default [
       { name: { de: 'Donut', ar: 'دونات' }, desc: { de: 'Hefeteig mit Schokoglasur', ar: 'بعجينة الخميرة وطبقة شوكولاتة' }, price: 1.9, image: 'donut.png', tags: ['vegetarian'] },
       { name: { de: 'Karamell-Donut', ar: 'دونات بالكراميل' }, desc: { de: 'Mit Karamellglasur', ar: 'بطبقة الكراميل' }, price: 2.2, image: 'donut-caramel.png', tags: ['vegetarian'] },
       { name: { de: 'Éclair', ar: 'إكلير' }, desc: { de: 'Brandteig, Vanillecreme, Schokolade', ar: 'عجينة الشو مع كريمة الفانيلا والشوكولاتة' }, price: 3.2, image: 'eclair.png', tags: ['vegetarian'] },
-      { name: { de: 'Macarons (3 Stück)', ar: 'ماكرون (٣ قطع)' }, desc: { de: 'Himbeere, Pistazie, Vanille', ar: 'توت العليق والفستق والفانيلا' }, price: 4.5, image: 'macarons.png', tags: ['vegetarian'] },
+      { name: { de: 'Macarons (3 Stück)', ar: 'ماكرون (3 قطع)' }, desc: { de: 'Himbeere, Pistazie, Vanille', ar: 'توت العليق والفستق والفانيلا' }, price: 4.5, image: 'macarons.png', tags: ['vegetarian'] },
       { name: { de: 'Schoko-Cookie', ar: 'كوكيز بالشوكولاتة' }, desc: { de: 'Weich gebacken, große Stücke', ar: 'طري مع قطع شوكولاتة كبيرة' }, price: 1.9, image: 'cookie.png', tags: ['vegetarian'] },
       { name: { de: 'Beeren-Cupcake', ar: 'كب كيك بالتوت' }, desc: { de: 'Vanille, Buttercreme, Beeren', ar: 'فانيلا وكريمة الزبدة والتوت' }, price: 3.5, image: 'cupcake.png', tags: ['vegetarian'] }
     ]

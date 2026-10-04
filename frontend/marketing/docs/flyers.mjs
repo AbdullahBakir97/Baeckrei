@@ -42,7 +42,7 @@ export async function flyerDocument(lang) {
       <div class="b-body">
         <ol class="steps">
           ${t('flyer.steps').map(([title, body], i) => `
-            <li><span class="step-n">${lang === 'ar' ? '١٢٣'[i] : i + 1}</span><div><strong>${esc(title)}</strong><p>${esc(body)}</p></div></li>`).join('')}
+            <li><span class="step-n">${i + 1}</span><div><strong>${esc(title)}</strong><p>${esc(body)}</p></div></li>`).join('')}
         </ol>
         <div class="b-phone">${phone(screen(lang, 'mobile-shop'))}</div>
       </div>

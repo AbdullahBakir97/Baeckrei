@@ -1,16 +1,16 @@
-// Screenshots of every customer page of the shop, in German and English, for
-// the customer guide (marketing/build.mjs). Run against a shop with some
-// products and a customer account that has placed an order:
+// Screenshots of every customer page of the shop, in German, English and
+// Arabic, for the customer guide (marketing/build.mjs). Run against a shop with
+// some products and a customer account that has placed an order:
 //
 //   node marketing/capture-screens.mjs --base http://localhost:5173 \
 //     --email kunde@example.com --password '...'
 //
-// Writes marketing/assets/screens/<de|en>/<page>.jpg (desktop) and
-// marketing/assets/screens/<de|en>/mobile-<page>.jpg.
+// Writes marketing/assets/screens/<de|en|ar>/<page>.jpg (desktop) and
+// marketing/assets/screens/<de|en|ar>/mobile-<page>.jpg.
 //
-// With --admin-email and --admin-password (a superuser) it takes the admin
-// pages for the owner handbook instead (admin-*.jpg), including Django's own
-// admin at --api (default http://localhost:8000).
+// With --admin-email and --admin-password (an admin account) it takes the
+// admin and Studio pages for the owner handbook instead (admin-*.jpg), plus the
+// menu screens and the TV pairing page.
 import { chromium } from '@playwright/test'
 import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -23,11 +23,10 @@ const EMAIL = args.email
 const PASSWORD = args.password
 const ONLY = args.only ? args.only.split(',') : null
 const OUT = join(dirname(fileURLToPath(import.meta.url)), 'assets', 'screens')
-const LANGS = (args.langs || 'de,en').split(',')
+const LANGS = (args.langs || 'de,en,ar').split(',')
 const ADMIN_EMAIL = args['admin-email']
 const ADMIN_PASSWORD = args['admin-password']
-const API = (args.api || 'http://localhost:8000').replace(/\/$/, '')
-const DJANGO_ADMIN = args['django-admin'] || '/django-admin/'
+const LOCALE = { de: 'de-DE', en: 'en-GB', ar: 'ar' }
 
 const wait = (page, ms) => page.waitForTimeout(ms)
 
@@ -67,7 +66,7 @@ async function firstProductPath(page) {
 
 async function desktop(browser, lang) {
   const ctx = await browser.newContext({
-    viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.25, locale: lang === 'de' ? 'de-DE' : 'en-GB',
+    viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.25, locale: LOCALE[lang],
     timezoneId: 'Europe/Berlin', reducedMotion: 'reduce'
   })
   await ctx.addInitScript((l) => { localStorage.setItem('locale', l); localStorage.setItem('intro-seen', '1') }, lang)
@@ -89,7 +88,7 @@ async function desktop(browser, lang) {
   })()
   await open(page, second, 2500)
   await page.locator('.pd-actions button').nth(1).click().catch(() => {})
-  await page.getByRole('button', { name: /Warenkorb|Add to cart/ }).first().click().catch(() => {})
+  await page.getByRole('button', { name: /Warenkorb|Add to cart|أضف إلى السلة/ }).first().click().catch(() => {})
   await wait(page, 1500)
   await open(page, '/blog', 2000); await shot(page, lang, 'journal')
   const post = await page.locator('a[href^="/blog/"]').first().getAttribute('href').catch(() => null)
@@ -107,6 +106,9 @@ async function desktop(browser, lang) {
   await open(page, '/register', 1500); await shot(page, lang, 'register')
   await open(page, '/forgot-password', 1500); await shot(page, lang, 'forgot-password')
   await open(page, '/login', 1500); await shot(page, lang, 'login')
+  // The language menu in the navigation
+  await open(page, '/products', 2000)
+  await page.locator('.lang-trigger').click(); await wait(page, 600); await shot(page, lang, 'language-menu')
 
   // Customer pages
   await signIn(page)
@@ -121,18 +123,30 @@ async function desktop(browser, lang) {
   await open(page, '/settings', 2000); await shot(page, lang, 'settings')
   await ctx.close()
 
-  // The in-shop screen
-  const tv = await browser.newContext({ viewport: { width: 1920, height: 1080 }, timezoneId: 'Europe/Berlin' })
+  await screens(browser, lang)
+}
+
+// The menu screens in the shop: the default screen (the customer guide) and
+// one screen per layout, plus the page a TV opens to pair (the handbook).
+async function screens(browser, lang) {
+  const tv = await browser.newContext({ viewport: { width: 1920, height: 1080 }, timezoneId: 'Europe/Berlin', reducedMotion: 'reduce' })
+  await tv.addInitScript(() => { try { localStorage.clear() } catch { /* ignore */ } })
   const board = await tv.newPage()
-  await board.goto(`${BASE}/menu-board?lang=${lang}`); await wait(board, 4000)
-  await shot(board, lang, 'menu-board')
+  const boards = [['menu-board', ''], ['board-spotlight', '/schaufenster'], ['board-grid', '/cafe-ecke'], ['board-list', '/preisliste']]
+  for (const [name, slug] of boards) {
+    if (ONLY && !ONLY.includes(name)) continue
+    await board.goto(`${BASE}/menu-board${slug}?lang=${lang}`); await wait(board, 4500)
+    await shot(board, lang, name)
+  }
+  await board.goto(`${BASE}/tv?lang=${lang}`); await wait(board, 2500)
+  await shot(board, lang, 'tv-pairing')
   await tv.close()
 }
 
 async function mobile(browser, lang) {
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
-    locale: lang === 'de' ? 'de-DE' : 'en-GB', timezoneId: 'Europe/Berlin', reducedMotion: 'reduce'
+    locale: LOCALE[lang], timezoneId: 'Europe/Berlin', reducedMotion: 'reduce'
   })
   await ctx.addInitScript((l) => { localStorage.setItem('locale', l); localStorage.setItem('intro-seen', '1') }, lang)
   const page = await ctx.newPage()
@@ -146,7 +160,7 @@ async function mobile(browser, lang) {
 
 async function admin(browser, lang) {
   const ctx = await browser.newContext({
-    viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.25, locale: lang === 'de' ? 'de-DE' : 'en-GB',
+    viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.25, locale: LOCALE[lang],
     timezoneId: 'Europe/Berlin', reducedMotion: 'reduce'
   })
   await ctx.addInitScript((l) => { localStorage.setItem('locale', l); localStorage.setItem('intro-seen', '1') }, lang)
@@ -157,17 +171,17 @@ async function admin(browser, lang) {
   await open(page, '/admin', 2500); await shot(page, lang, 'admin-dashboard')
   await open(page, '/admin/products', 2500); await shot(page, lang, 'admin-products')
   // The edit form of the first product
-  await page.getByTitle(/^(Bearbeiten|Edit)$/).nth(1).click()
+  await page.getByTitle(/^(Bearbeiten|Edit|تعديل)$/).nth(1).click()
   await wait(page, 1200); await shot(page, lang, 'admin-product-form')
   await open(page, '/admin/products', 2000)
-  await page.getByTitle(/^(Details anzeigen|View details)$/).nth(1).click()
+  await page.getByTitle(/^(Details anzeigen|View details|عرض التفاصيل)$/).nth(1).click()
   await settle(page, 2000); await shot(page, lang, 'admin-product-detail')
   await open(page, '/admin/categories', 2000); await shot(page, lang, 'admin-categories')
-  await page.getByRole('button', { name: /Kategorie hinzufügen|Add category/ }).click()
+  await page.getByRole('button', { name: /Kategorie hinzufügen|Add category|إضافة فئة/ }).click()
   await wait(page, 1000); await shot(page, lang, 'admin-category-form')
   await closeDialog()
   await open(page, '/admin/orders', 2000); await shot(page, lang, 'admin-orders')
-  await page.getByRole('button', { name: 'Details' }).first().click()
+  await page.getByRole('button', { name: /^(Details|التفاصيل)$/ }).first().click()
   await wait(page, 1500); await shot(page, lang, 'admin-order')
   await closeDialog()
   await open(page, '/admin/users', 2000); await shot(page, lang, 'admin-users')
@@ -186,23 +200,49 @@ async function admin(browser, lang) {
   await wait(page, 1500); await shot(page, lang, 'admin-new-order')
   await page.unroute('**/api/orders/orders/recent_orders/**')
 
-  // Django's admin for the journal, messages and newsletter
-  await page.goto(`${API}${DJANGO_ADMIN}login/`)
-  await page.fill('input[name=username]', ADMIN_EMAIL)
-  await page.fill('input[name=password]', ADMIN_PASSWORD)
-  await page.click('input[type=submit]')
-  await settle(page, 800)
-  for (const [name, path] of [['posts', 'content/post/'], ['post-form', 'content/post/add/'],
-    ['messages', 'content/contactmessage/'], ['newsletter', 'content/newslettersubscriber/']]) {
-    await page.goto(`${API}${DJANGO_ADMIN}${path}`); await settle(page, 600)
-    await shot(page, lang, `admin-django-${name}`)
-  }
+  // Studio: journal, messages, newsletter, ingredients, settings
+  const showTop = () => page.evaluate(() => window.scrollTo(0, 0))
+  const scrollTo = (selector) => page.locator(selector).first().evaluate(el => el.scrollIntoView({ block: 'start' }))
+    .then(() => page.evaluate(() => window.scrollBy(0, -90))).then(() => wait(page, 700))
+  await open(page, '/admin/journal', 2000); await shot(page, lang, 'admin-journal')
+  await page.locator('.journal-row').first().click(); await settle(page, 1500); await shot(page, lang, 'admin-journal-editor')
+  await open(page, '/admin/messages', 2000)
+  await page.locator('.st-tab').nth(2).click(); await wait(page, 800)
+  await page.locator('.inbox-row').nth(1).click(); await wait(page, 1000); await shot(page, lang, 'admin-messages')
+  await page.locator('.inbox-row.is-unread').first().click().catch(() => {}); await wait(page, 800)
+  await page.locator('.st-tab').nth(0).click(); await wait(page, 600)
+  await page.locator('.inbox-row').first().click(); await wait(page, 900); await shot(page, lang, 'admin-message-reply')
+  await open(page, '/admin/newsletter', 2000)
+  await page.locator('.nl-row').nth(1).click(); await wait(page, 1000); await shot(page, lang, 'admin-newsletter')
+  await page.locator('[role=tab]').nth(1).click(); await wait(page, 1000); await shot(page, lang, 'admin-subscribers')
+  await open(page, '/admin/ingredients', 2000); await shot(page, lang, 'admin-ingredients')
+  await open(page, '/admin/products', 2000)
+  await page.getByTitle(/^(Details anzeigen|View details|عرض التفاصيل)$/).nth(1).click()
+  await settle(page, 2000)
+  await scrollTo('section:has(#n-energy_kcal), section:has([id^="n-"])'); await shot(page, lang, 'admin-recipe')
+  await open(page, '/admin/settings', 2500); await shot(page, lang, 'admin-settings')
+  await scrollTo('#set-closing'); await shot(page, lang, 'admin-settings-closing')
+  await scrollTo('#set-legal'); await shot(page, lang, 'admin-settings-legal')
+  await showTop()
+
+  // Studio: menu screens
+  await open(page, '/admin/screens', 3500); await shot(page, lang, 'admin-screens')
+  await page.locator('.screen-card').first().locator('a.st-btn').first().click()
+  await settle(page, 3500); await shot(page, lang, 'admin-screen-design')
+  const tab = (i) => page.locator('[role=tablist] [role=tab]').nth(i).click().then(() => wait(page, 1500))
+  await tab(1); await shot(page, lang, 'admin-screen-content')
+  await tab(2); await shot(page, lang, 'admin-screen-slides')
+  await page.locator('.slide-list li').first().locator('.st-link').click(); await wait(page, 2500)
+  await scrollTo('form.st-card'); await shot(page, lang, 'admin-screen-slide')
+  await showTop()
+  await page.keyboard.press('Escape').catch(() => {})
+  await tab(3); await shot(page, lang, 'admin-screen-device')
   await ctx.close()
 
   // The admin on a phone
   const phoneCtx = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
-    locale: lang === 'de' ? 'de-DE' : 'en-GB', timezoneId: 'Europe/Berlin', reducedMotion: 'reduce'
+    locale: LOCALE[lang], timezoneId: 'Europe/Berlin', reducedMotion: 'reduce'
   })
   await phoneCtx.addInitScript((l) => { localStorage.setItem('locale', l); localStorage.setItem('intro-seen', '1') }, lang)
   const phonePage = await phoneCtx.newPage()
@@ -212,13 +252,21 @@ async function admin(browser, lang) {
   await phoneCtx.close()
 }
 
-const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] })
 for (const lang of LANGS) {
+  // One browser per language: date and time fields follow the system
+  // language, not the page's. The Arabic edition keeps German dates and
+  // 24-hour times, as on a computer set up in Germany.
+  const system = lang === 'en' ? 'en_GB.UTF-8' : 'de_DE.UTF-8'
+  const browser = await chromium.launch({
+    args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+    env: { ...process.env, LANG: system, LC_ALL: system, LANGUAGE: system.slice(0, 2) }
+  })
   if (ADMIN_EMAIL) {
     await admin(browser, lang)
+    await screens(browser, lang)
   } else {
     await desktop(browser, lang)
     await mobile(browser, lang)
   }
+  await browser.close()
 }
-await browser.close()

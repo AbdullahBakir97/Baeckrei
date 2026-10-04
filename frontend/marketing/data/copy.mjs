@@ -30,7 +30,7 @@ export default {
         ['Zeit wählen', 'Abholzeit im 30-Minuten-Takt wählen oder liefern lassen.'],
         ['Abholen', 'Frisch eingepackt abholen und bar, mit Karte oder online bezahlen.']
       ],
-      perks: ['Bestätigung per E-Mail', 'Deutsch & Englisch', 'Merkliste & Bestellverlauf'],
+      perks: ['Bestätigung per E-Mail', 'Deutsch, Englisch & Arabisch', 'Merkliste & Bestellverlauf'],
       deliveryLine: 'Lieferung in Berlin: {fee}'
     },
 
@@ -93,7 +93,7 @@ export default {
         delivery: 'Lieferung',
         deliveryText: 'Abholung im Laden kostenlos, Lieferung in Berlin für {fee}.',
         languages: 'Sprachen',
-        languagesText: 'Die Website ist auf Deutsch und Englisch verfügbar.'
+        languagesText: 'Die Website gibt es auf Deutsch, Englisch und Arabisch – umschaltbar oben in der Navigation.'
       },
       orderSteps: [
         ['Shop öffnen', 'Unter {site} finden Sie alle Produkte mit Fotos, Preisen und Hinweisen wie „Vegan“. Filtern Sie nach Kategorie oder suchen Sie gezielt.', 'shop'],
@@ -171,7 +171,7 @@ export default {
         ['Kann ich meine Bestellung ändern?', 'Stornieren Sie die Bestellung auf der Bestellseite und bestellen Sie neu – oder rufen Sie uns an.'],
         ['Wo finde ich Allergene?', 'Auf jeder Produktseite unter „Zutaten“ und „Allergene“, und jederzeit an der Theke.'],
         ['Passwort vergessen?', 'Auf der Anmeldeseite „Passwort vergessen?“ wählen – Sie erhalten einen Link per E-Mail.'],
-        ['Welche Sprache hat die Website?', 'Deutsch und Englisch, umschaltbar oben in der Navigation.'],
+        ['Welche Sprachen hat die Website?', 'Deutsch, Englisch und Arabisch. Die Sprache wählen Sie oben in der Navigation über das Globus-Symbol.'],
         ['Kann ich mit Karte zahlen?', 'Ja, bei Abholung und Lieferung bar oder mit Karte – und online, sobald die Online-Zahlung freigeschaltet ist.'],
         ['Gibt es vegane Produkte?', 'Ja. Im Shop filtern Sie nach vegan, vegetarisch oder glutenfrei; im Laden sind sie gekennzeichnet.'],
         ['Wohin liefern Sie?', 'Innerhalb Berlins für {fee}. Die freien Lieferzeiten sehen Sie an der Kasse.'],
@@ -208,10 +208,10 @@ export default {
       stepsTitle: 'بكل سهولة',
       steps: [
         ['اختر', 'تصفّح الخبز والمعجنات والكعك في متجرنا الإلكتروني، مع الصور والأسعار والعرض ثلاثي الأبعاد.'],
-        ['حدّد الوقت', 'اختر موعد الاستلام كل ٣٠ دقيقة، أو اطلب التوصيل.'],
+        ['حدّد الوقت', 'اختر موعد الاستلام كل 30 دقيقة، أو اطلب التوصيل.'],
         ['استلم', 'استلم طلبك طازجًا وادفع نقدًا أو بالبطاقة أو عبر الإنترنت.']
       ],
-      perks: ['تأكيد عبر البريد الإلكتروني', 'الألمانية والإنجليزية', 'قائمة المفضلة وسجل الطلبات'],
+      perks: ['تأكيد عبر البريد الإلكتروني', 'العربية والألمانية والإنجليزية', 'قائمة المفضلة وسجل الطلبات'],
       deliveryLine: 'التوصيل داخل برلين: {fee}'
     },
 
@@ -274,7 +274,7 @@ export default {
         delivery: 'التوصيل',
         deliveryText: 'الاستلام من المتجر مجاني، والتوصيل داخل برلين مقابل {fee}.',
         languages: 'اللغات',
-        languagesText: 'الموقع متوفر باللغتين الألمانية والإنجليزية. تعرض الصور في هذا الدليل النسخة الإنجليزية.'
+        languagesText: 'الموقع متوفر بالعربية والألمانية والإنجليزية، ويمكن تغيير اللغة من شريط التنقل في الأعلى.'
       },
       orderSteps: [
         ['افتح المتجر', 'على {site} تجد جميع المنتجات مع الصور والأسعار وعلامات مثل «نباتي». صفِّ حسب الفئة أو ابحث مباشرة.', 'shop'],
@@ -297,7 +297,7 @@ export default {
         ['المكونات والحساسية', 'تذكر كل صفحة منتج المكونات ومسببات الحساسية والقيم الغذائية.']
       ],
       pickup: [
-        ['الاستلام', 'اختر عند الدفع يومًا وساعة بفواصل ٣٠ دقيقة. أقرب موعد للاستلام بعد نحو {lead} دقيقة من الطلب.'],
+        ['الاستلام', 'اختر عند الدفع يومًا وساعة بفواصل 30 دقيقة. أقرب موعد للاستلام بعد نحو {lead} دقيقة من الطلب.'],
         ['التوصيل', 'نوصّل داخل برلين مقابل {fee}. أقرب موعد للتوصيل بعد نحو {deliveryLead} دقيقة من الطلب.'],
         ['الدفع', 'نقدًا أو بالبطاقة عند الاستلام أو التوصيل. وعند تفعيل الدفع الإلكتروني يمكنك الدفع مباشرة بالبطاقة أو Apple Pay أو Google Pay.'],
         ['الإلغاء', 'يمكنك إلغاء طلبك من صفحة الطلب ما دام لم يُستلم بعد، وتُسترد المبالغ المدفوعة إلكترونيًا تلقائيًا.']
@@ -352,7 +352,7 @@ export default {
         ['هل يمكنني تعديل طلبي؟', 'ألغِ الطلب من صفحة الطلب واطلب من جديد، أو اتصل بنا.'],
         ['أين أجد معلومات الحساسية؟', 'في كل صفحة منتج تحت «المكونات» و«مسببات الحساسية»، وفي أي وقت عند المنضدة.'],
         ['نسيت كلمة المرور؟', 'اختر «نسيت كلمة المرور؟» في صفحة تسجيل الدخول، وسيصلك رابط عبر البريد الإلكتروني.'],
-        ['ما لغة الموقع؟', 'الألمانية والإنجليزية، ويمكن التبديل بينهما من شريط التنقل في الأعلى.'],
+        ['ما لغات الموقع؟', 'العربية والألمانية والإنجليزية. تختار اللغة من رمز الكرة الأرضية في شريط التنقل في الأعلى.'],
         ['هل يمكنني الدفع بالبطاقة؟', 'نعم، نقدًا أو بالبطاقة عند الاستلام والتوصيل، وإلكترونيًا عند تفعيل الدفع عبر الإنترنت.'],
         ['هل توجد منتجات نباتية؟', 'نعم. في المتجر الإلكتروني يمكنك التصفية حسب النباتي أو الخالي من الغلوتين، وهي مُعلَّمة في المتجر أيضًا.'],
         ['إلى أين توصّلون؟', 'داخل برلين مقابل {fee}. تجد مواعيد التوصيل المتاحة في صفحة الدفع.'],
