@@ -17,7 +17,20 @@ export default {
     featured: 'Frisch aus dem Ofen',
     vatNote: 'Alle Preise inkl. MwSt.',
     empty: 'Die Auswahl wird gerade aufgefüllt.',
-    offline: 'Keine Verbindung – zeige die letzte Auswahl'
+    offline: 'Keine Verbindung – zeige die letzte Auswahl',
+    special: 'Angebot',
+    tv: {
+      title: 'Menü-Bildschirm einrichten',
+      intro: 'Geben Sie den 4-stelligen Code ein, der in der Verwaltung unter „Menü-Bildschirme“ bei diesem Bildschirm steht.',
+      code: 'Bildschirm-Code',
+      open: 'Bildschirm starten',
+      wrong: 'Kein Bildschirm mit diesem Code gefunden.',
+      offline: 'Keine Verbindung. Bitte Internet prüfen.',
+      starting: 'Starte „{name}“ …',
+      remembered: 'Dieses Gerät zeigt „{name}“. Startet in {n} Sekunden …',
+      change: 'Anderen Bildschirm wählen',
+      tip: 'Tipp: Vollbild mit der Taste F11 oder im Menü des Browsers.'
+    }
   },
   en: {
     title: 'Our selection',
@@ -37,6 +50,52 @@ export default {
     featured: 'Fresh from the oven',
     vatNote: 'All prices incl. VAT',
     empty: 'The counter is being restocked.',
-    offline: 'No connection – showing the last selection'
+    offline: 'No connection – showing the last selection',
+    special: 'Special',
+    tv: {
+      title: 'Set up a menu screen',
+      intro: 'Enter the 4-digit code shown for this screen in the admin under “Menu screens”.',
+      code: 'Screen code',
+      open: 'Start screen',
+      wrong: 'No screen has this code.',
+      offline: 'No connection. Please check the internet.',
+      starting: 'Starting “{name}” …',
+      remembered: 'This device shows “{name}”. Starting in {n} seconds …',
+      change: 'Choose another screen',
+      tip: 'Tip: full screen with F11 or from the browser menu.'
+    }
+  },
+  ar: {
+    title: 'تشكيلتنا',
+    openUntil: 'مفتوح حتى {time}',
+    closed: 'مغلق',
+    opensAt: 'نفتح {when}',
+    tomorrow: 'غدًا الساعة {time}',
+    todayAt: 'اليوم الساعة {time}',
+    onDay: '{day} الساعة {time}',
+    orderAhead: 'اطلب مسبقًا عبر الإنترنت',
+    orderAheadText: 'امسح الرمز، اختر، واستلم – دون انتظار.',
+    soldOut: 'نفدت الكمية',
+    vegan: 'نباتي صرف',
+    vegetarian: 'نباتي',
+    glutenFree: 'خالٍ من الغلوتين',
+    seasonal: 'موسمي',
+    featured: 'طازج من الفرن',
+    vatNote: 'جميع الأسعار شاملة ضريبة القيمة المضافة',
+    empty: 'نعيد ملء الواجهة الآن.',
+    offline: 'لا يوجد اتصال – نعرض آخر تشكيلة',
+    special: 'عرض خاص',
+    tv: {
+      title: 'إعداد شاشة القائمة',
+      intro: 'أدخل الرمز المكوّن من 4 أرقام الظاهر لهذه الشاشة في لوحة الإدارة ضمن «شاشات القائمة».',
+      code: 'رمز الشاشة',
+      open: 'تشغيل الشاشة',
+      wrong: 'لا توجد شاشة بهذا الرمز.',
+      offline: 'لا يوجد اتصال. يُرجى التحقق من الإنترنت.',
+      starting: 'جارٍ تشغيل «{name}» …',
+      remembered: 'هذا الجهاز يعرض «{name}». يبدأ التشغيل خلال {n} ثوانٍ …',
+      change: 'اختيار شاشة أخرى',
+      tip: 'نصيحة: للعرض بملء الشاشة اضغط F11 أو استخدم قائمة المتصفح.'
+    }
   }
 }

@@ -14,7 +14,7 @@
       </div>
 
       <div v-else class="glass-panel overflow-x-auto">
-        <table class="w-full min-w-[40rem] text-left text-gray-300 compare-table">
+        <table class="w-full min-w-[40rem] text-start text-gray-300 compare-table">
           <thead>
             <tr>
               <th scope="col" class="w-40"></th>

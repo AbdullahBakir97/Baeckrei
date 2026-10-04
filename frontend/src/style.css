@@ -589,3 +589,23 @@
     background-color: rgba(255, 255, 255, 0.1);
   }
 }
+
+/* Right to left (Arabic). Outside the layers: the icon classes are added at
+   runtime, so Tailwind would drop rules that only name them. */
+[dir='rtl'] .fa-arrow-right,
+[dir='rtl'] .fa-arrow-left {
+  scale: -1 1;
+}
+
+/* Arabic letters are joined; letter spacing would pull words apart. */
+:lang(ar) {
+  letter-spacing: normal !important;
+}
+
+/* Texts that may not be translated (product descriptions, journal posts):
+   on an Arabic page an English sentence keeps its own word order, aligned
+   with the rest of the page. */
+[dir='rtl'] .text-auto {
+  unicode-bidi: plaintext;
+  text-align: right;
+}

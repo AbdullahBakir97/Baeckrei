@@ -90,6 +90,11 @@ class OrderService:
                         {'product_id': str(product.pk), 'available_stock': available},
                     )
 
+            from apps.shop import config as shop_config
+            from . import slots
+            shop = shop_config.get()
+            if not slots.method_enabled(data['fulfillment_method'], shop):
+                raise CheckoutError(_('This option is not available at the moment.'), 'method_unavailable')
             is_delivery = data['fulfillment_method'] == Order.FulfillmentChoices.DELIVERY
             address = None
             if is_delivery:
@@ -107,7 +112,7 @@ class OrderService:
                 customer=customer,
                 address=address,
                 fulfillment_method=data['fulfillment_method'],
-                delivery_fee=settings.DELIVERY_FEE if is_delivery else Decimal('0.00'),
+                delivery_fee=shop.delivery_fee if is_delivery else Decimal('0.00'),
                 contact_phone=data.get('contact_phone', ''),
                 requested_time=requested_time,
                 estimated_delivery_date=(requested_time or timezone.now()).date(),

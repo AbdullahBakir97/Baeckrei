@@ -1,15 +1,15 @@
 <template>
   <div class="overflow-x-auto">
     <div class="flex items-center justify-between mb-4 px-6 pt-6">
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-4 rtl:space-x-reverse">
         <div class="relative">
           <input
             type="text"
             v-model="searchQuery"
             :placeholder="$t('admin.table.search')"
-            class="block w-full pl-10 pr-3 py-2 border border-cream/15 rounded-md leading-5 bg-oven-800 placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            class="block w-full ps-10 pe-3 py-2 border border-cream/15 rounded-md leading-5 bg-oven-800 placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
           />
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div class="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
             <font-awesome-icon icon="search" class="text-cream-faint" />
           </div>
         </div>
@@ -24,15 +24,15 @@
           <div
             v-for="column in columns"
             :key="column.key"
-            class="px-6 py-3 text-left text-xs font-medium text-cream-muted uppercase tracking-wider cursor-pointer hover:text-cream/80"
+            class="px-6 py-3 text-start text-xs font-medium text-cream-muted uppercase tracking-wider cursor-pointer hover:text-cream/80"
             @click="sort(column.key)"
           >
             {{ column.label }}
-            <span v-if="sortKey === column.key" class="ml-1">
+            <span v-if="sortKey === column.key" class="ms-1">
               {{ sortOrder === 'asc' ? '↑' : '↓' }}
             </span>
           </div>
-          <div v-if="hasActions" class="px-6 py-3 text-right text-xs font-medium text-cream-muted uppercase tracking-wider">
+          <div v-if="hasActions" class="px-6 py-3 text-end text-xs font-medium text-cream-muted uppercase tracking-wider">
             {{ $t('admin.table.actions') }}
           </div>
         </div>
@@ -54,7 +54,7 @@
               {{ item[column.key] }}
             </slot>
           </div>
-          <div v-if="hasActions" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+          <div v-if="hasActions" class="px-6 py-4 whitespace-nowrap text-end text-sm font-medium space-x-2 rtl:space-x-reverse">
             <slot name="actions" :item="item"></slot>
           </div>
         </div>
@@ -65,14 +65,14 @@
       <div class="flex items-center">
         <select
           v-model="pageSize"
-          class="mr-2 border-cream/15 rounded-md text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+          class="me-2 border-cream/15 rounded-md text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
         >
           <option v-for="size in pageSizes" :key="size" :value="size">
             {{ $t('admin.table.perPage', { n: size }) }}
           </option>
         </select>
       </div>
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-2 rtl:space-x-reverse">
         <button
           :disabled="currentPage === 1"
           @click="currentPage--"

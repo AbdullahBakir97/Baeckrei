@@ -1,10 +1,13 @@
 import { createI18n } from 'vue-i18n'
 import de from './de'
 import en from './en'
+import ar from './ar'
 
 export const LOCALES = [
   { code: 'de', label: 'Deutsch', short: 'DE', intl: 'de-DE' },
-  { code: 'en', label: 'English', short: 'EN', intl: 'en-GB' }
+  { code: 'en', label: 'English', short: 'EN', intl: 'en-GB' },
+  // Arabic with Western digits, like prices on the shop's printed menu.
+  { code: 'ar', label: 'العربية', short: 'ع', intl: 'ar-u-nu-latn', dir: 'rtl' }
 ]
 const STORAGE_KEY = 'locale'
 
@@ -31,8 +34,9 @@ export const i18n = createI18n({
   legacy: false,
   globalInjection: true,
   locale: initialLocale(),
-  fallbackLocale: 'de',
-  messages: { de, en },
+  // A missing Arabic text shows in English, a missing English one in German.
+  fallbackLocale: { ar: ['en', 'de'], en: ['de'], default: ['de'] },
+  messages: { de, en, ar },
   missingWarn: false,
   fallbackWarn: false
 })
@@ -41,11 +45,21 @@ export const currentLocale = () => i18n.global.locale.value
 export const intlLocale = () => LOCALES.find(l => l.code === currentLocale())?.intl || 'de-DE'
 export const t = (...args) => i18n.global.t(...args)
 
+export const isRtl = () => LOCALES.find(l => l.code === currentLocale())?.dir === 'rtl'
+
+// The page's language and reading direction follow the chosen language.
+function applyToDocument(code) {
+  document.documentElement.lang = code
+  document.documentElement.dir = LOCALES.find(l => l.code === code)?.dir || 'ltr'
+}
+
 export function setLocale(code) {
   if (!LOCALES.some(l => l.code === code)) return
   i18n.global.locale.value = code
-  document.documentElement.lang = code
+  applyToDocument(code)
   try { localStorage.setItem(STORAGE_KEY, code) } catch { /* ignore */ }
+  // Scroll effects measured for the old text direction measure again.
+  requestAnimationFrame(() => window.dispatchEvent(new Event('resize')))
 }
 
-document.documentElement.lang = currentLocale()
+applyToDocument(currentLocale())

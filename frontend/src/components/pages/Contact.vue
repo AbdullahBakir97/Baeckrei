@@ -69,6 +69,15 @@
               </template>
             </dl>
           </div>
+          <div v-if="business.closures.length">
+            <h3 class="font-semibold text-white">{{ $t('contact.closures') }}</h3>
+            <ul class="mt-2 grid gap-1">
+              <li v-for="c in business.closures" :key="c.start">
+                <span class="tabular-nums">{{ closureDates(c) }}</span>
+                <span v-if="closureLabel(c)" class="text-cream-faint"> · {{ closureLabel(c) }}</span>
+              </li>
+            </ul>
+          </div>
           <a :href="mapUrl" target="_blank" rel="noopener" class="btn-ghost w-full">
             <font-awesome-icon icon="location-dot" /> {{ $t('contact.openMaps') }}
           </a>
@@ -79,22 +88,28 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import axios from '@/plugins/axios'
 import PageHeader from '@/components/common/PageHeader.vue'
 import { business, streetLine, cityLine } from '@/config/business'
 import { useI18n } from 'vue-i18n'
+import { intlLocale } from '@/i18n'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const form = reactive({ name: '', email: '', subject: '', message: '', website: '' })
 const errors = reactive({})
 const sending = ref(false)
 const sent = ref('')
 
-const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+// Closing days the bakery entered in the admin (holidays and the like).
+const day = (iso) => new Intl.DateTimeFormat(intlLocale(), { day: 'numeric', month: 'short' }).format(new Date(`${iso}T12:00:00`))
+const closureDates = (c) => (c.end && c.end !== c.start ? `${day(c.start)} – ${day(c.end)}` : day(c.start))
+const closureLabel = (c) => (locale.value !== 'de' && c.label_en) || c.label
+
+const mapUrl = computed(() => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
   [business.name, streetLine(), cityLine()].filter(Boolean).join(', ')
-)}`
+)}`)
 
 function validate() {
   Object.keys(errors).forEach(key => delete errors[key])

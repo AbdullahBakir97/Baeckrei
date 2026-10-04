@@ -1,0 +1,7 @@
+{% extends "orders/email/base.html" %}
+{% block content %}
+<h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:28px;line-height:1.25;color:#f4ece1;">{{ subject }}</h1>
+{% for paragraph in paragraphs %}<p style="margin:0 0 14px;">{{ paragraph|linebreaksbr }}</p>{% endfor %}
+<p style="margin:20px 0 0;"><a href="{{ shop_url }}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#e6a15a;color:#14110e;font-weight:bold;text-decoration:none;">{{ shop_name }} – Online-Shop</a></p>
+<p style="margin:28px 0 0;font-size:12px;color:#7d7061;"><a href="{{ unsubscribe_url }}" style="color:#a8998a;">Newsletter abbestellen · Unsubscribe</a></p>
+{% endblock %}

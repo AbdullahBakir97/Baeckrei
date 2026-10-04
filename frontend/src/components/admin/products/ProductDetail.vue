@@ -12,7 +12,7 @@
 
     <div v-else-if="loadError" class="rounded-lg bg-red-400/10 p-6 text-red-300" role="alert">
       {{ loadError }}
-      <router-link to="/admin/products" class="ml-2 underline">{{ $t('admin.productDetail.back') }}</router-link>
+      <router-link to="/admin/products" class="ms-2 underline">{{ $t('admin.productDetail.back') }}</router-link>
     </div>
 
     <template v-else>
@@ -27,7 +27,7 @@
             @click="router.push('/admin/products')"
             class="px-4 py-2 text-sm font-medium text-cream-faint hover:text-white bg-[#2a231c] hover:bg-[#342b22] rounded-lg transition-colors"
           >
-            <font-awesome-icon icon="arrow-left" class="mr-2" />
+            <font-awesome-icon icon="arrow-left" class="me-2" />
             {{ $t('admin.productDetail.back') }}
           </button>
           <button
@@ -94,54 +94,29 @@
                   v-if="product.is_vegan"
                   class="px-3 py-1 text-sm font-medium text-green-500 bg-green-500/10 rounded-full"
                 >
-                  <font-awesome-icon icon="leaf" class="mr-1" />
+                  <font-awesome-icon icon="leaf" class="me-1" />
                   {{ $t('common.vegan') }}
                 </span>
                 <span
                   v-if="product.is_vegetarian"
                   class="px-3 py-1 text-sm font-medium text-green-500 bg-green-500/10 rounded-full"
                 >
-                  <font-awesome-icon icon="seedling" class="mr-1" />
+                  <font-awesome-icon icon="seedling" class="me-1" />
                   {{ $t('common.vegetarian') }}
                 </span>
                 <span
                   v-if="product.is_gluten_free"
                   class="px-3 py-1 text-sm font-medium text-yellow-500 bg-yellow-500/10 rounded-full"
                 >
-                  <font-awesome-icon icon="wheat-alt" class="mr-1" />
+                  <font-awesome-icon icon="wheat-alt" class="me-1" />
                   {{ $t('common.glutenFree') }}
                 </span>
               </div>
             </div>
           </div>
 
-          <!-- Ingredients -->
-          <div class="bg-[#1e1914] rounded-xl border border-cream/[0.07] overflow-hidden">
-            <div class="p-6 border-b border-cream/[0.07]">
-              <h2 class="text-lg font-bold text-white">{{ $t('admin.productDetail.ingredients') }}</h2>
-            </div>
-            <div class="p-6">
-              <div class="grid grid-cols-2 gap-4">
-                <div v-for="ingredient in product.ingredients" :key="ingredient.id" 
-                     class="p-4 bg-[#2a231c] rounded-lg">
-                  <h3 class="font-medium text-white">{{ ingredient.name }}</h3>
-                  <p v-if="ingredient.description" class="mt-1 text-sm text-cream-faint">
-                    {{ ingredient.description }}
-                  </p>
-                  <!-- Allergens -->
-                  <div v-if="ingredient.allergens?.length" class="mt-2 flex flex-wrap gap-2">
-                    <span
-                      v-for="allergen in ingredient.allergens"
-                      :key="allergen.id"
-                      class="px-2 py-1 text-xs font-medium text-red-500 bg-red-500/10 rounded-full"
-                    >
-                      {{ allergen.name }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Ingredients, allergens and nutrition -->
+          <ProductRecipe :product-id="String(product.id)" @saved="fetchProduct" />
         </div>
 
         <!-- Right Column - Additional Info -->
@@ -253,6 +228,7 @@ import axios from '@/plugins/axios'
 import { formatEuro } from '@/utils/money'
 import { categoryName } from '@/i18n/catalog'
 import ProductFormModal from './ProductFormModal.vue'
+import ProductRecipe from '../studio/ProductRecipe.vue'
 import { useProductStore } from '@/stores/productStore'
 import { useToast } from '@/composables/useToast'
 

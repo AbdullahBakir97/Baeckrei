@@ -48,7 +48,7 @@
                   {{ order.customer_email || $t('admin.dashboard.guest') }} · {{ order.fulfillment_method === 'pickup' ? $t('common.pickup') : $t('common.delivery') }}
                 </span>
               </span>
-              <span class="text-right">
+              <span class="text-end">
                 <span class="block font-semibold text-cream tabular-nums">{{ formatEuro(order.total) }}</span>
                 <span class="status" :class="`is-${order.status.toLowerCase()}`">{{ $t(`common.status.${order.status.toLowerCase()}`) }}</span>
               </span>

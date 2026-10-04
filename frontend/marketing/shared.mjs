@@ -16,8 +16,8 @@ export { shop }
 /** A product photo from frontend/src/assets/bakery. */
 export const photo = (name) => url(join(FRONTEND, 'src/assets/bakery', name))
 
-/** A screenshot from marketing/assets/screens (the Arabic guide uses the English site). */
-export const screen = (lang, name) => url(join(HERE, 'assets/screens', lang === 'ar' ? 'en' : lang, `${name}.jpg`))
+/** A screenshot from marketing/assets/screens/<lang> (each edition shows the site in its own language). */
+export const screen = (lang, name) => url(join(HERE, 'assets/screens', lang, `${name}.jpg`))
 
 /** Copy text by dotted path, with {placeholders} filled in. */
 export function text(lang, path, params = {}) {

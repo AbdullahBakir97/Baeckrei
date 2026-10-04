@@ -80,7 +80,7 @@
             {{ order.address.postal_code }} {{ order.address.city }}
           </p>
           <p v-if="order.requested_time" class="text-cream-muted">
-            <font-awesome-icon icon="clock" class="mr-1" /> {{ $t('order.requestedFor', { time: formatDateTime(order.requested_time) }) }}
+            <font-awesome-icon icon="clock" class="me-1" /> {{ $t('order.requestedFor', { time: formatDateTime(order.requested_time) }) }}
           </p>
           <p v-if="order.shipping_tracking_number" class="text-cream-muted">{{ $t('order.tracking', { number: order.shipping_tracking_number }) }}</p>
         </section>
@@ -196,7 +196,7 @@ async function pay() {
     await orderStore.fetchOrderById(route.params.id).catch(() => {})
   }
 }
-const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
+const storeAddress = computed(() => [streetLine(), cityLine()].filter(Boolean).join(', '))
 
 const steps = [
   { status: 'Pending', label: 'order.steps.received' },

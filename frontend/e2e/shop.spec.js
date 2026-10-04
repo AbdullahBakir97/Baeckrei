@@ -10,12 +10,33 @@ test('home page is served with its meta tags and renders', async ({ page, reques
   await expect(page.getByRole('link', { name: 'Shop' }).first()).toBeVisible()
 })
 
-test('language can be switched to German', async ({ page }) => {
+test('the language menu switches between English, German and Arabic', async ({ page }) => {
   await page.goto('/products')
-  await page.getByRole('button', { name: 'Auf Deutsch umschalten' }).click()
+  await page.getByRole('button', { name: 'Language: English' }).click()
+  await page.getByRole('menuitemradio', { name: 'Deutsch' }).click()
   await expect(page.locator('html')).toHaveAttribute('lang', 'de')
   await expect(page.getByRole('link', { name: 'Über uns' }).first()).toBeVisible()
   await expect(page.getByText('Roggenbrot').first()).toBeVisible()
+
+  await page.getByRole('button', { name: 'Sprache: Deutsch' }).click()
+  await page.getByRole('menuitemradio', { name: 'العربية' }).click()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar')
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
+  await expect(page.getByRole('link', { name: 'من نحن' }).first()).toBeVisible()
+  // Arabic pages show the English product names; prices keep Western digits.
+  await expect(page.getByText('Rye bread').first()).toBeVisible()
+
+  // The choice is remembered on the next visit.
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
+})
+
+test('an Arabic link opens the site right to left', async ({ page, request }) => {
+  const html = await (await request.get('/about?lang=ar')).text()
+  expect(html).toContain('<html lang="ar" dir="rtl">')
+  await page.goto('/about?lang=ar')
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
+  await expect(page.getByRole('navigation', { name: 'التنقل الرئيسي' })).toBeVisible()
 })
 
 test('product pages have their own title for search engines', async ({ page, request }) => {

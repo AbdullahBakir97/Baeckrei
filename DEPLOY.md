@@ -24,8 +24,10 @@ cp .env.production.example .env.production
 - Put `SITE_DOMAIN=backlover.de` in a file called `.env` next to
   `docker-compose.yml`.
 - Fill in `.env.production`: at least a long random `POSTGRES_PASSWORD`,
-  `DJANGO_SECRET_KEY`, the opening hours (`SHOP_OPENING_HOURS`) and the email
-  server, so customers get their order confirmations.
+  `DJANGO_SECRET_KEY` and the email server, so customers get their order
+  confirmations. Opening hours, delivery fee and the shop's details are set
+  later in the admin (*Settings*); the `SHOP_*` values are only the defaults
+  until then.
 
 Neither file is committed.
 
@@ -36,8 +38,12 @@ docker compose up -d --build
 docker compose exec web python manage.py createsuperuser
 ```
 
-Caddy fetches the HTTPS certificate on first start. The shop's admin is at
-`/admin`; Django's own admin at `DJANGO_ADMIN_PATH`.
+`createsuperuser` creates the bakery's admin account. Caddy fetches the HTTPS
+certificate on first start. The shop's admin is at `/admin` – everything the
+bakery manages day to day is there, including the journal, messages,
+newsletter, ingredients, settings and the menu screens (see
+docs/menu-board.md). Django's own admin at `DJANGO_ADMIN_PATH` is only for
+the developer.
 
 To update later: `git pull && docker compose up -d --build` (migrations run
 on start).
@@ -92,8 +98,8 @@ docker run --rm -v baeckrei_media:/media -v "$PWD":/out alpine tar czf /out/medi
 
 ## Before opening the doors
 
-- [ ] Legal details in `frontend/src/config/business.js` (Impressum) and the
-      legal pages reviewed
-- [ ] Opening hours in `SHOP_OPENING_HOURS`
+- [ ] Admin → Settings: address, contact, legal details (Impressum), opening
+      hours, closing days, pickup and delivery; the legal pages reviewed
 - [ ] A test order with each payment method, and the emails arrive
 - [ ] `DJANGO_SECURE_HSTS_SECONDS` set once HTTPS works
+- [ ] The menu screens set up on the shop's TVs (docs/menu-board.md)

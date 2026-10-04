@@ -14,5 +14,13 @@ export default {
     emptyTitle: 'No orders yet.',
     emptyText: 'Your first order will show up here as soon as you place it.',
     details: 'Details'
+  },
+  ar: {
+    title: 'الطلبات',
+    subtitle: 'تتبّع طلباتك واطّلع عليها وألغِها',
+    loadError: 'تعذّر تحميل طلباتك.',
+    emptyTitle: 'لا توجد طلبات بعد.',
+    emptyText: 'سيظهر طلبك الأول هنا فور تقديمه.',
+    details: 'التفاصيل'
   }
 }

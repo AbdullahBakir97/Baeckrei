@@ -145,7 +145,7 @@ const setQuantity = (quantity) => run(() => cartStore.updateQuantity(props.produ
 .pcard-badges {
   position: absolute;
   top: 0.75rem;
-  left: 0.75rem;
+  inset-inline-start: 0.75rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
@@ -172,7 +172,7 @@ const setQuantity = (quantity) => run(() => cartStore.updateQuantity(props.produ
 
 .pcard-stock {
   position: absolute;
-  right: 0.75rem;
+  inset-inline-end: 0.75rem;
   bottom: 0.75rem;
 }
 

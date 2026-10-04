@@ -63,9 +63,9 @@
           <tr>
             <th scope="col">{{ $t('admin.fields.name') }}</th>
             <th scope="col">{{ $t('admin.categories.shopLink') }}</th>
-            <th scope="col" class="text-right">{{ $t('admin.categories.products') }}</th>
+            <th scope="col" class="text-end">{{ $t('admin.categories.products') }}</th>
             <th scope="col">{{ $t('admin.categories.visible') }}</th>
-            <th scope="col" class="text-right">{{ $t('admin.categories.position') }}</th>
+            <th scope="col" class="text-end">{{ $t('admin.categories.position') }}</th>
             <th scope="col"><span class="sr-only">{{ $t('admin.table.actions') }}</span></th>
           </tr>
         </thead>
@@ -81,14 +81,14 @@
                 /categories/{{ category.slug }}
               </router-link>
             </td>
-            <td class="text-right tabular-nums">{{ category.product_count }}</td>
+            <td class="text-end tabular-nums">{{ category.product_count }}</td>
             <td>
               <span class="px-2 py-1 text-xs font-medium rounded-full" :class="category.is_active ? 'bg-emerald-400/10 text-emerald-300' : 'bg-cream/[0.05] text-cream-muted'">
                 {{ category.is_active ? $t('admin.categories.visible') : $t('admin.categories.hidden') }}
               </span>
             </td>
-            <td class="text-right tabular-nums">{{ category.order }}</td>
-            <td class="text-right space-x-3">
+            <td class="text-end tabular-nums">{{ category.order }}</td>
+            <td class="text-end space-x-3 rtl:space-x-reverse">
               <template v-if="confirmDeleteId === category.id">
                 <button type="button" class="text-red-300 hover:text-red-300 bg-transparent font-medium" @click="remove(category)">{{ $t('common.delete') }}</button>
                 <button type="button" class="text-cream-muted hover:text-cream bg-transparent" @click="confirmDeleteId = null">{{ $t('admin.categories.keep') }}</button>

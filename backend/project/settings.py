@@ -66,6 +66,9 @@ BACKEND_APPS = [
     'apps.cart',
     'apps.orders',
     'apps.content',
+    'apps.shop',
+    'apps.menuboard',
+    'apps.studio',
 ]
 
 INSTALLED_APPS = [
@@ -86,7 +89,7 @@ MIDDLEWARE = [
     # Serves collected static files and, in production, the built storefront.
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # Answers in the language the shop sends (Accept-Language: de or en).
+    # Answers in the language the shop sends (Accept-Language: de, en or ar).
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -175,6 +178,7 @@ LANGUAGE_CODE = 'en'
 LANGUAGES = [
     ('de', 'Deutsch'),
     ('en', 'English'),
+    ('ar', 'العربية'),
 ]
 
 LOCALE_PATHS = [BASE_DIR / 'locale']

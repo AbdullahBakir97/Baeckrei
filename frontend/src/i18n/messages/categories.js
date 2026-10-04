@@ -38,5 +38,25 @@ export default {
       cakes: 'Whole cakes and slices',
       cookies: 'Cookies, biscuits and small bakes'
     }
+  },
+  ar: {
+    breads: 'الخبز',
+    pastries: 'المعجنات',
+    cakes: 'الكعك',
+    cookies: 'البسكويت',
+    seasonal: 'موسمي',
+    beverages: 'المشروبات',
+    brotchen: 'الخبز الصغير',
+    desserts: 'الحلويات',
+    pasta: 'المعكرونة',
+    pizza: 'البيتزا',
+    salads: 'السلطات',
+    sandwichs: 'السندويشات',
+    descriptions: {
+      breads: 'خبز طازج يُخبز كل صباح',
+      pastries: 'كرواسون ودنش ومعجنات أخرى',
+      cakes: 'كعك كامل وبالقطعة',
+      cookies: 'كوكيز وبسكويت ومخبوزات صغيرة'
+    }
   }
 }

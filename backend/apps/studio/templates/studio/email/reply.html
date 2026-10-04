@@ -1,0 +1,8 @@
+{% extends "orders/email/base.html" %}
+{% block content %}
+{% for paragraph in paragraphs %}<p style="margin:0 0 12px;">{{ paragraph|linebreaksbr }}</p>{% endfor %}
+<div style="margin:24px 0 0;padding:14px 16px;border-left:3px solid #e6a15a;background:#171310;border-radius:8px;font-size:13px;line-height:1.6;color:#a8998a;">
+  <p style="margin:0 0 6px;color:#d9cfc2;">{{ message.name }} · {{ message.created_at|date:"d.m.Y H:i" }}</p>
+  {{ message.message|linebreaksbr }}
+</div>
+{% endblock %}

@@ -135,10 +135,19 @@ const routes = [
   },
   {
     // Full-screen menu for the shop's screens (see docs/menu-board.md).
-    path: '/menu-board',
+    // /menu-board shows the default screen; /menu-board/<name> a screen
+    // designed in the admin (Menu screens).
+    path: '/menu-board/:slug?',
     name: 'menu-board',
     component: () => import('@/views/MenuBoard.vue'),
     meta: { title: 'Menu board', requiresAuth: false, bare: true }
+  },
+  {
+    // On a TV: enter the screen's 4-digit code once; the TV remembers it.
+    path: '/tv',
+    name: 'tv',
+    component: () => import('@/views/TvPairing.vue'),
+    meta: { title: 'TV', requiresAuth: false, bare: true }
   },
   {
     path: '/about',

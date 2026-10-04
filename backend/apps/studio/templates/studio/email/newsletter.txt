@@ -1,0 +1,9 @@
+{{ subject }}
+
+{% for paragraph in paragraphs %}{{ paragraph }}
+
+{% endfor %}{{ shop_url }}
+
+Newsletter abbestellen · Unsubscribe: {{ unsubscribe_url }}
+
+{{ shop_name }} · {{ shop_address }}

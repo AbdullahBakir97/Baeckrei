@@ -48,5 +48,30 @@ export default {
     privacy: 'Privacy',
     terms: 'Terms',
     cookies: 'Cookies'
+  },
+  ar: {
+    newsletter: 'النشرة البريدية',
+    newsletterTitle: 'أخبار طازجة من الفرن، مرة كل شهر.',
+    emailLabel: 'عنوان البريد الإلكتروني',
+    emailPlaceholder: "you{'@'}example.com",
+    sending: 'جارٍ الإرسال…',
+    subscribe: 'اشترك',
+    newsletterNote: 'مخبوزات موسمية جديدة وأخبار عن مواعيدنا. يمكنك إلغاء الاشتراك في أي وقت. اطّلع على',
+    privacyPolicy: 'سياسة الخصوصية',
+    subscribed: 'تم اشتراكك. شكرًا لك!',
+    invalidEmail: 'يُرجى إدخال عنوان بريد إلكتروني صالح.',
+    tryLater: 'لم تنجح العملية. يُرجى المحاولة مرة أخرى لاحقًا.',
+    shop: 'المتجر',
+    explore: 'استكشف',
+    visit: 'زورونا',
+    account: 'الحساب',
+    cart: 'سلة التسوق',
+    compare: 'المقارنة',
+    madeIn: 'مخبوز في {city}',
+    legal: 'معلومات قانونية',
+    impressum: 'بيانات الناشر',
+    privacy: 'الخصوصية',
+    terms: 'الشروط والأحكام',
+    cookies: 'ملفات تعريف الارتباط'
   }
 }

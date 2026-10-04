@@ -42,6 +42,7 @@ def test_sitemap_lists_public_pages_only(client, settings, catalog):
     assert 'https://backlover.example/blog/neue-brezeln' in body
     assert 'https://backlover.example/categories/breads' in body
     assert 'hreflang="en"' in body
+    assert 'hreflang="ar"' in body
 
 
 def test_product_page_meta_in_both_languages(catalog, settings):
@@ -56,6 +57,10 @@ def test_product_page_meta_in_both_languages(catalog, settings):
     english = seo.page_meta(factory.get('/?lang=en'), f'products/{visible.pk}')
     assert english['title'].startswith('Rye bread')
     assert english['description'] == 'Hearty rye bread'
+    # There is no Arabic catalogue, so Arabic pages use the English texts.
+    arabic = seo.page_meta(factory.get('/?lang=ar'), f'products/{visible.pk}')
+    assert arabic['language'] == 'ar'
+    assert arabic['title'].startswith('Rye bread')
 
 
 def test_private_pages_are_not_indexed(db):
@@ -74,5 +79,16 @@ def test_storefront_page_gets_its_meta_tags(tmp_path, settings, catalog):
     assert '<title>Roggenbrot · Backlover</title>' in html
     assert 'property="og:type" content="product"' in html
     assert '"@type": "Product"' in html
-    assert '<html lang="de">' in html
+    assert '<html lang="de" dir="ltr">' in html
     assert '<div id="app"></div>' in html
+
+
+def test_arabic_storefront_page_reads_right_to_left(tmp_path, settings, db):
+    index = tmp_path / 'index.html'
+    index.write_text('<!doctype html><html lang="en"><head><title>Backlover</title></head><body></body></html>')
+    settings.FRONTEND_INDEX_FILE = str(index)
+    seo._index_template.cache_clear()
+    html = seo.spa_index(RequestFactory().get('/?lang=ar'), 'about').content.decode()
+    assert '<html lang="ar" dir="rtl">' in html
+    assert 'property="og:locale" content="ar_AR"' in html
+    assert '<title>من نحن · Backlover</title>' in html

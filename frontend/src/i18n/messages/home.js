@@ -74,5 +74,43 @@ export default {
     visitTitle: 'Find us on {street}.',
     directions: 'Get directions',
     openMap: 'Open {street} in Google Maps'
+  },
+  ar: {
+    sceneLabel: 'مشهد مخبز {name}',
+    eyebrow: 'مخبز · {street}، {city}',
+    heroTitle: 'يُخبز عند الفجر، و{loved} طوال اليوم.',
+    heroLoved: 'يُعشَق',
+    lede: 'بريتسل وكرواسون وكعك وبسكويت من فرننا في {street}. استلمها في طريقك أو اطلب توصيلها إلى أي مكان في {city}.',
+    visitUs: 'زورونا',
+    factPickup: 'الاستلام من المتجر في {street}',
+    factDelivery: 'التوصيل داخل {city}',
+    factPayment: 'نقدًا أو بالبطاقة',
+    marqueeLabel: 'ما نخبزه',
+    marquee: 'بريتسل,كرواسون,خبز العجين المخمّر,لفائف القرفة,ماكارون,إكلير,بسكويت,كعك موسمي',
+    featuredTitle: 'من فرننا',
+    seeEverything: 'عرض الكل',
+    wholeCounter1: 'كل ما في',
+    wholeCounter2: 'واجهة العرض',
+    craftEyebrow: 'كيف نخبز',
+    craftTitle1: 'عجينٌ على مهل،',
+    craftTitle2: 'وصباحاتٌ باكرة.',
+    steps: {
+      mix: { title: 'العجن', text: 'دقيق وماء وملح ووقت. كل عجينة تبدأ ببطء وبرودة، تمامًا كما كان الخبز الجيد دائمًا.' },
+      rest: { title: 'الراحة', text: 'تستريح العجائن طوال الليل لتتطوّر نكهتها. لا شيء يُستعجَل للحاق بالصباح.' },
+      shape: { title: 'التشكيل', text: 'نلفّ البريتسل ونطوي الكرواسون يدويًا، صينيةً تلو الأخرى.' },
+      bake: { title: 'الخَبز', text: 'من الفرن في الصباح الباكر مباشرةً إلى واجهة العرض في {street}.' }
+    },
+    counterEyebrow: 'واجهة العرض',
+    counterTitle: 'شيء لكل ساعة من ساعات اليوم',
+    tiles: {
+      breads: 'بريتسل وأرغفة',
+      pastries: 'طبقات غنية بالزبدة',
+      cakes: 'بالقطعة',
+      cookies: 'لا يزال دافئًا',
+      seasonal: 'لفترة قصيرة'
+    },
+    visitTitle: 'تجدنا في {street}.',
+    directions: 'احصل على الاتجاهات',
+    openMap: 'افتح {street} في Google Maps'
   }
 }

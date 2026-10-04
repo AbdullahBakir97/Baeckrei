@@ -3,10 +3,11 @@ import { i18n } from './index'
 const { t, te, locale } = i18n.global
 
 // Products and categories are written in German; an English version is
-// optional (`name_en`, `description_en`) and used when English is chosen.
+// optional (`name_en`, `description_en`) and used for English and Arabic
+// (there is no Arabic version of the catalogue; English reads better there).
 export function localized(item, field) {
   if (!item) return ''
-  if (locale.value === 'en' && item[`${field}_en`]) return item[`${field}_en`]
+  if (locale.value !== 'de' && item[`${field}_en`]) return item[`${field}_en`]
   return item[field] || ''
 }
 
@@ -19,12 +20,12 @@ function seeded(item, field, key) {
 
 export function categoryName(category) {
   if (!category) return ''
-  if (locale.value === 'en' && category.name_en) return category.name_en
+  if (locale.value !== 'de' && category.name_en) return category.name_en
   return seeded(category, 'name', `categories.${category.slug}`) || category.name || ''
 }
 
 export function categoryDescription(category) {
   if (!category) return ''
-  if (locale.value === 'en' && category.description_en) return category.description_en
+  if (locale.value !== 'de' && category.description_en) return category.description_en
   return seeded(category, 'description', `categories.descriptions.${category.slug}`) || category.description || ''
 }

@@ -57,7 +57,7 @@ onMounted(async () => {
 .unsave {
   position: absolute;
   top: 1.35rem;
-  right: 1.35rem;
+  inset-inline-end: 1.35rem;
   z-index: 2;
   display: grid;
   place-items: center;

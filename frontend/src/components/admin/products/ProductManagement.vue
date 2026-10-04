@@ -5,7 +5,7 @@
         @click="openCreateModal"
         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
       >
-        <PlusIcon class="h-5 w-5 mr-2" />
+        <PlusIcon class="h-5 w-5 me-2" />
         {{ $t('admin.products.add') }}
       </button>
     </div>
@@ -76,7 +76,7 @@
         </template>
 
         <template #actions="{ item }">
-          <div class="flex justify-end space-x-2">
+          <div class="flex justify-end space-x-2 rtl:space-x-reverse">
             <button
               @click="viewProduct(item)"
               class="text-cream-faint hover:text-cream-muted bg-transparent p-1"

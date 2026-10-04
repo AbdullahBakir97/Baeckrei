@@ -24,7 +24,7 @@
             leave-from="opacity-100 scale-100"
             leave-to="opacity-0 scale-95"
           >
-            <DialogPanel class="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-oven-800 p-6 text-left align-middle shadow-xl transition-all">
+            <DialogPanel class="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-oven-800 p-6 text-start align-middle shadow-xl transition-all">
               <DialogTitle as="h3" class="text-lg font-medium leading-6 text-cream mb-4">
                 {{ $t('admin.productDetail.title') }}
               </DialogTitle>
@@ -147,7 +147,7 @@
                 </div>
               </div>
 
-              <div class="mt-6 flex justify-end space-x-3">
+              <div class="mt-6 flex justify-end space-x-3 rtl:space-x-reverse">
                 <button
                   @click="$emit('close')"
                   class="admin-panel inline-flex justify-center border border-cream/15 px-4 py-2 text-sm font-medium text-cream/80 hover:bg-cream/[0.03] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"

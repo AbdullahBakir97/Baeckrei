@@ -1,53 +1,83 @@
-# Menu board for the shop's screens
+# Menu screens for the TVs in the shop
 
-`/menu-board` shows the shop's products and prices full screen, made for TVs
-and monitors in the shop. It reads the live catalog, so a new product, a price
-change or "sold out" in the admin appears on the screen within a minute.
+The shop shows its menu on any TV or monitor: products, prices, "sold out",
+vegan and other labels, today's opening status and promotions. Everything is
+managed in the admin under **Menu screens**; changes reach the TVs within a
+minute.
 
-- Landscape (TV on the wall) and portrait (screen standing upright) are both
-  supported; everything scales with the screen, from 1080p to 4K.
-- Categories flow down the columns like a printed menu. When there is more
-  than fits, the board turns the page every few seconds.
-- The left side shows one product large, today's opening status, the time and
-  a QR code that opens the online shop.
-- Products with stock 0 show as "Ausverkauft".
-- The screen stays on while the page is open (where the browser allows it),
-  and the page reloads itself twice a day to pick up new versions of the site.
+## Designing a screen (admin → Menu screens)
 
-The admin sidebar has a **Menü-Bildschirm** link that opens it.
+Each screen has its own design and address (`/menu-board/<name>`), so the
+counter, the window and the café corner can each show something different.
 
-## Options
+- **Layout:** *Columns with highlight* (large product left, menu right),
+  *Photo tiles*, *Classic menu* (typographic, no photos) or *One product,
+  large* (a slideshow of the featured products).
+- **Look:** five colour themes or your own colours, an accent colour, an
+  elegant or a modern typeface, and an optional background photo (darkened
+  so the text stays readable).
+- **Content:** which categories and in what order, products to feature or
+  to hide on this screen, prices, descriptions, photos, labels, the QR code
+  for ordering ahead, the clock and the opening status, a headline and a
+  running ticker along the bottom (German, English and Arabic).
+- **Promotions:** full-screen slides between the menu pages, e.g. a breakfast
+  offer. Each one can have a product, a photo or just a big message, a price,
+  and run only on certain dates, days of the week or times of day.
+- **Language:** German, English or Arabic, or two in turn (German and
+  English, or German and Arabic). Arabic screens read right to left; their
+  headline, ticker and promotions have their own Arabic texts, products show
+  their English names.
+- **Orientation:** automatic, or turned for a TV mounted upright whose player
+  still sends a landscape picture.
 
-Add them to the address, e.g. `https://backlover.de/menu-board?lang=en&seconds=15`.
+The editor shows a live preview; **Save & go live** sends it to the TVs.
+The screen marked *Default* is also shown at `/menu-board`.
 
-| Option | Example | Effect |
+## Putting a screen on a TV
+
+Every screen has a **4-digit code** (shown in the admin).
+
+1. On the TV (or the stick or computer connected to it), open the browser
+   and go to `https://<your domain>/tv`.
+2. Type the code with the remote.
+3. Done. The device remembers its screen: whenever it opens `/tv` again it
+   starts that screen by itself after a few seconds.
+
+Set the device's start page to `https://<your domain>/tv`, so the menu comes
+back after every power cut.
+
+### Which device? (best first)
+
+| Device | Why | Setup |
 | --- | --- | --- |
-| `lang` | `lang=en` | Language (German by default) |
-| `alternate` | `alternate=1` | Switch between German and English after each round |
-| `categories` | `categories=pastries,cakes` | Only these categories (one screen per counter) |
-| `seconds` | `seconds=15` | Time per page (at least 5) |
+| **Fire TV Stick 4K or an Android TV box** | Cheap, plugs into any TV, reliable | Install **Fully Kiosk Browser** (via the *Downloader* app on Fire TV). Start URL `https://<your domain>/tv`; turn on *Launch on boot*, *Keep screen on* and *Reload on network reconnect*. |
+| **Raspberry Pi 4 or 5** | Built for running all day; cheapest per screen with a wired network | Install Raspberry Pi OS with desktop, enable auto login (`sudo raspi-config` → System Options → Boot / Auto Login), then run `deploy/kiosk/setup-raspberry-pi.sh https://<your domain>/tv --nightly-reboot` and reboot. |
+| **Mini PC / any Windows PC** | Uses hardware you already have | Edit the address in `deploy/kiosk/menu-screen-windows.bat` and copy it into the Startup folder (`Win+R` → `shell:startup`). Turn off sleep in the Windows power settings. |
+| **The TV's own browser** | No extra device | Works for a start; many TV browsers forget the page after switching off and are slower. |
 
-Category slugs are shown in the admin under Categories.
+### TV settings
 
-## Setting up a screen
+- Switch off the TV's energy saving, *auto power off* and screensaver.
+- Picture mode *Standard* or *Natural* (not *Vivid*), so the photos look right.
+- Use the TV's on/off timer to switch it on before opening and off after
+  closing – the menu starts with it.
 
-Any device with a current browser works.
+### Reliability
 
-- **Smart TV / Fire TV / Android TV box:** open the browser, go to
-  `https://<your domain>/menu-board`, switch to full screen. On Fire TV the
-  "Silk" browser works; "Fully Kiosk Browser" (Android) starts the page on its
-  own after a power cut.
-- **Mini PC or Raspberry Pi with Chromium:** start Chromium in kiosk mode,
-  e.g. in the autostart:
+- **No internet?** The screen keeps showing the last menu it loaded and shows
+  a small "no connection" note; it updates again by itself.
+- **Is it running?** The admin shows each screen as *online* (it checks in
+  every minute) with its resolution, or when it was last seen.
+- **Reload remotely:** *Reload screen* in the admin restarts the page on the
+  TV within a minute, e.g. after an update.
+- The page also reloads itself twice a day and keeps the display awake where
+  the browser allows it.
+- In a shop without internet, the whole shop can run on a small computer in
+  the local network (`docker compose up`); the TVs then open
+  `http://<that computer's address>/tv`.
 
-  ```bash
-  chromium --kiosk --noerrdialogs --disable-session-crashed-bubble \
-    --autoplay-policy=no-user-gesture-required https://<your domain>/menu-board
-  ```
+## Older links
 
-- **Windows PC:** create a shortcut with
-  `"C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk https://<your domain>/menu-board`
-  and put it in the Startup folder.
-
-Turn off the TV's own screen saver / sleep timer, and set the TV's picture
-mode to "Standard" or "Natural" (not "Vivid") so the photos look right.
+Addresses with options still work and override the screen's design:
+`/menu-board?lang=en` (or `de`, `ar`), `?alternate=1`, `?categories=pastries,cakes`
+(category address names), `?seconds=15`.

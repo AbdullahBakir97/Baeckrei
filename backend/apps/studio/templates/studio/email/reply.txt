@@ -1,0 +1,6 @@
+{% for paragraph in paragraphs %}{{ paragraph }}
+
+{% endfor %}> {{ message.name }} · {{ message.created_at|date:"d.m.Y H:i" }}
+> {{ message.message }}
+
+{{ shop_name }} · {{ shop_address }}

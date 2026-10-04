@@ -28,7 +28,8 @@ from apps.products.models import Category, Product
 STATIC_PAGES = ['/', '/products', '/seasonal', '/blog', '/about', '/contact',
                 '/impressum', '/privacy', '/terms', '/cookie-policy']
 PRIVATE_PREFIXES = ['/admin', '/cart', '/checkout', '/profile', '/orders', '/settings',
-                    '/login', '/register', '/forgot-password', '/reset-password', '/wishlist', '/compare']
+                    '/login', '/register', '/forgot-password', '/reset-password', '/wishlist', '/compare',
+                    '/menu-board', '/tv']
 
 PAGE_TEXT = {
     'de': {
@@ -47,7 +48,16 @@ PAGE_TEXT = {
         '/contact': 'Contact', '/impressum': 'Impressum', '/privacy': 'Privacy Policy',
         '/terms': 'Terms and Conditions', '/cookie-policy': 'Cookie Policy',
     },
+    'ar': {
+        'tagline': 'مخبز في {street}، {city}',
+        'description': 'خبز طازج وبريتسل وكرواسون وكعك، نخبزها كل صباح في {street}، {city}. '
+                       'اطلب عبر الإنترنت للاستلام أو التوصيل.',
+        '/products': 'المتجر', '/seasonal': 'منتجات موسمية', '/blog': 'المدونة', '/about': 'من نحن',
+        '/contact': 'تواصل معنا', '/impressum': 'بيانات الناشر', '/privacy': 'سياسة الخصوصية',
+        '/terms': 'الشروط والأحكام', '/cookie-policy': 'سياسة ملفات تعريف الارتباط',
+    },
 }
+OG_LOCALE = {'de': 'de_DE', 'en': 'en_GB', 'ar': 'ar_AR'}
 
 
 def site_url():
@@ -55,7 +65,16 @@ def site_url():
 
 
 def _shop():
-    return {'name': settings.SHOP_NAME, 'street': settings.SHOP_STREET, 'city': settings.SHOP_CITY}
+    from apps.shop import config
+    shop = config.get()
+    return {
+        'name': shop.name,
+        'street': ' '.join(filter(None, [shop.street, shop.house_number])),
+        'postal_code': shop.postal_code,
+        'city': shop.city,
+        'phone': shop.phone,
+        'hours': shop.opening_hours,
+    }
 
 
 def _language(request):
@@ -67,7 +86,8 @@ def _language(request):
 
 
 def _localized(obj, field, language):
-    if language == 'en' and getattr(obj, f'{field}_en', ''):
+    # There is no Arabic catalogue; Arabic pages use the English texts.
+    if language != 'de' and getattr(obj, f'{field}_en', ''):
         return getattr(obj, f'{field}_en')
     return getattr(obj, field, '') or ''
 
@@ -97,7 +117,7 @@ def robots_txt(request):
 
 @require_GET
 def sitemap_xml(request):
-    """Every public page, with German and English alternates (?lang=)."""
+    """Every public page, with German, English and Arabic alternates (?lang=)."""
     entries = [(path, None) for path in STATIC_PAGES]
     entries += [(f'/categories/{c.slug}', c.modified_at) for c in Category.objects.filter(is_active=True)]
     entries += [(f'/products/{p.pk}', p.modified_at) for p in public_products()]
@@ -113,7 +133,7 @@ def sitemap_xml(request):
         parts.append(f'<loc>{url}</loc>')
         if modified:
             parts.append(f'<lastmod>{modified.date().isoformat()}</lastmod>')
-        for language in ('de', 'en'):
+        for language in PAGE_TEXT:
             parts.append(f'<xhtml:link rel="alternate" hreflang="{language}" href="{url}?lang={language}"/>')
         parts.append(f'<xhtml:link rel="alternate" hreflang="x-default" href="{url}"/>')
         parts.append('</url>')
@@ -130,11 +150,20 @@ def bakery_json_ld():
         'name': shop['name'],
         'url': site_url(),
         'image': f'{site_url()}/og-image.jpg',
-        'address': {'@type': 'PostalAddress', 'streetAddress': shop['street'],
+        'address': {'@type': 'PostalAddress', 'streetAddress': shop['street'], 'postalCode': shop['postal_code'],
                     'addressLocality': shop['city'], 'addressCountry': 'DE'},
+        **({'telephone': shop['phone']} if shop['phone'] else {}),
+        'openingHoursSpecification': [
+            {'@type': 'OpeningHoursSpecification', 'dayOfWeek': DAY_NAMES[day],
+             'opens': opens.strftime('%H:%M'), 'closes': closes.strftime('%H:%M')}
+            for day, ranges in sorted(shop['hours'].items()) for opens, closes in ranges
+        ],
         'servesCuisine': 'Bakery',
         'priceRange': '€',
     }
+
+
+DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
 def page_meta(request, path):
@@ -152,6 +181,7 @@ def page_meta(request, path):
         'type': 'website',
         'noindex': any(path == p or path.startswith(p + '/') for p in PRIVATE_PREFIXES),
         'json_ld': [bakery_json_ld()],
+        'site_name': shop['name'],
     }
     parts = path.strip('/').split('/')
 
@@ -214,8 +244,8 @@ def render_head(meta):
         tag('property', 'og:image', meta['image']),
         tag('property', 'og:url', meta['url']),
         tag('property', 'og:type', meta['type']),
-        tag('property', 'og:site_name', settings.SHOP_NAME),
-        tag('property', 'og:locale', 'de_DE' if meta['language'] == 'de' else 'en_GB'),
+        tag('property', 'og:site_name', meta.get('site_name') or settings.SHOP_NAME),
+        tag('property', 'og:locale', OG_LOCALE[meta['language']]),
         tag('name', 'twitter:card', 'summary_large_image'),
     ]
     if meta['noindex']:
@@ -245,7 +275,8 @@ def spa_index(request, path=''):
         html = html[:start] + head + html[end:]
     else:
         html = html.replace('</head>', f'    {head}\n  </head>', 1)
-    html = html.replace('<html lang="en">', f'<html lang="{meta["language"]}">', 1)
+    direction = 'rtl' if meta['language'] == 'ar' else 'ltr'
+    html = html.replace('<html lang="en">', f'<html lang="{meta["language"]}" dir="{direction}">', 1)
     response = HttpResponse(html)
     response['Vary'] = 'Accept-Language'
     return response

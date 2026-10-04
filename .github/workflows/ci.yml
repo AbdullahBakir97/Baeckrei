@@ -52,6 +52,9 @@ jobs:
           apps/products/tests/test_admin_catalog.py
           apps/content/tests.py
           apps/core/test_seo.py
+          apps/shop/
+          apps/menuboard/
+          apps/studio/
 
   frontend:
     runs-on: ubuntu-latest

@@ -75,5 +75,43 @@ export default {
       about: 'Who we are and how we bake: by hand, with good ingredients, on {street}.',
       contact: 'Questions, special orders or feedback? Here is how to reach us on {street}, {city}.'
     }
+  },
+  ar: {
+    tagline: 'مخبز في {street}، {city}',
+    defaultDescription: 'خبز طازج وبريتسل وكرواسون وكعك، يُخبز كل صباح في {street}، {city}. اطلب عبر الإنترنت للاستلام من المتجر أو التوصيل.',
+    titles: {
+      products: 'المتجر',
+      category: 'الفئة',
+      seasonal: 'موسمي',
+      blog: 'المدونة',
+      'blog-post': 'المدونة',
+      wishlist: 'المفضلة',
+      compare: 'المقارنة',
+      'forgot-password': 'نسيت كلمة المرور',
+      'reset-password': 'كلمة مرور جديدة',
+      'newsletter-unsubscribe': 'النشرة البريدية',
+      privacy: 'سياسة الخصوصية',
+      terms: 'الشروط والأحكام',
+      'cookie-policy': 'سياسة ملفات تعريف الارتباط',
+      impressum: 'بيانات الناشر',
+      cart: 'سلة التسوق',
+      checkout: 'إتمام الطلب',
+      'order-detail': 'الطلب',
+      about: 'من نحن',
+      contact: 'تواصل معنا',
+      profile: 'الملف الشخصي',
+      orders: 'الطلبات',
+      settings: 'الإعدادات',
+      login: 'تسجيل الدخول',
+      register: 'إنشاء حساب',
+      'not-found': 'الصفحة غير موجودة'
+    },
+    descriptions: {
+      products: 'خبز وبريتسل ومعجنات وكعك وبسكويت من فرننا في {street}. اطلب عبر الإنترنت للاستلام من المتجر أو التوصيل.',
+      seasonal: 'مخبوزات موسمية لا تتوفر إلا لبضعة أسابيع في السنة.',
+      blog: 'أخبار ومخبوزات موسمية وحكايات من مخبزنا.',
+      about: 'من نحن وكيف نخبز: يدويًا، وبمكوّنات جيدة، في {street}.',
+      contact: 'أسئلة أو طلبات خاصة أو ملاحظات؟ إليك طرق التواصل معنا في {street}، {city}.'
+    }
   }
 }

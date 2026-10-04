@@ -108,15 +108,15 @@ import { categoryName } from '@/i18n/catalog'
 const { t } = useI18n()
 const email = ref('')
 const productStore = useProductStore()
-const storeAddress = [streetLine(), cityLine()].filter(Boolean).join(', ')
+const storeAddress = computed(() => [streetLine(), cityLine()].filter(Boolean).join(', '))
 const year = new Date().getFullYear()
 
-// Only show social icons that have a real URL in src/config/business.js.
-const socialLinks = [
+// Only show social icons that have a real URL (set in the admin's settings).
+const socialLinks = computed(() => [
   { icon: 'instagram', label: 'Instagram', url: business.social.instagram },
   { icon: 'facebook', label: 'Facebook', url: business.social.facebook },
   { icon: 'twitter', label: 'Twitter', url: business.social.twitter }
-].filter(link => link.url)
+].filter(link => link.url))
 
 const exploreLinks = [
   { label: 'nav.homeLink', to: '/' },

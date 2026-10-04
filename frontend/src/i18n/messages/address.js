@@ -20,5 +20,16 @@ export default {
       postalCode: 'Enter your postal code.',
       city: 'Enter your city.'
     }
+  },
+  ar: {
+    street: 'الشارع ورقم المبنى',
+    line2: 'تفاصيل إضافية للعنوان',
+    postalCode: 'الرمز البريدي',
+    city: 'المدينة',
+    errors: {
+      street: 'أدخل اسم الشارع ورقم المبنى.',
+      postalCode: 'أدخل الرمز البريدي.',
+      city: 'أدخل اسم مدينتك.'
+    }
   }
 }

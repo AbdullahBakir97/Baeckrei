@@ -19,12 +19,12 @@
           {{ formatDate(post.published_at) }}<template v-if="post.author_name"> · {{ post.author_name }}</template>
           · {{ $t('blog.minutes', readingMinutes) }}
         </p>
-        <h1 v-split.load class="display-title text-5xl sm:text-7xl mt-4">{{ post.title }}</h1>
-        <p v-if="post.excerpt" v-reveal="{ delay: 0.2 }" class="lede">{{ post.excerpt }}</p>
+        <h1 v-split.load class="display-title text-5xl sm:text-7xl mt-4">{{ localized(post, 'title') }}</h1>
+        <p v-if="post.excerpt" v-reveal="{ delay: 0.2 }" class="lede text-auto">{{ localized(post, 'excerpt') }}</p>
         <img v-if="post.cover_image" v-mask :src="post.cover_image" :alt="post.title"
              class="cover" @error="applyImageFallback" />
         <div class="body">
-          <p v-for="(paragraph, index) in paragraphs" :key="index" v-reveal class="whitespace-pre-line">{{ paragraph }}</p>
+          <p v-for="(paragraph, index) in paragraphs" :key="index" v-reveal class="whitespace-pre-line text-auto">{{ paragraph }}</p>
         </div>
       </article>
     </div>
@@ -38,6 +38,7 @@ import axios from '@/plugins/axios'
 import { applyImageFallback } from '@/utils/imageFallback'
 import { formatDate } from '@/utils/money'
 import { SITE_URL, absoluteUrl, usePageMeta } from '@/seo'
+import { localized } from '@/i18n/catalog'
 import { gsap, ScrollTrigger, prefersReducedMotion } from '@/motion'
 
 const route = useRoute()
@@ -50,8 +51,9 @@ let progress = null
 
 // Posts are plain text; blank lines separate paragraphs. Rendering text
 // (not HTML) keeps post content from injecting markup.
-const paragraphs = computed(() => (post.value?.body || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean))
-const readingMinutes = computed(() => Math.max(1, Math.round((post.value?.body || '').split(/\s+/).length / 200)))
+const body = computed(() => localized(post.value, 'body'))
+const paragraphs = computed(() => body.value.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean))
+const readingMinutes = computed(() => Math.max(1, Math.round(body.value.split(/\s+/).length / 200)))
 
 async function load(slug) {
   loading.value = true
@@ -70,13 +72,13 @@ async function load(slug) {
 }
 
 usePageMeta(() => post.value ? {
-  title: post.value.title,
-  description: post.value.excerpt || post.value.body,
+  title: localized(post.value, 'title'),
+  description: localized(post.value, 'excerpt') || body.value,
   image: post.value.cover_image || undefined,
   type: 'article',
   jsonLd: {
     '@type': 'BlogPosting',
-    headline: post.value.title,
+    headline: localized(post.value, 'title'),
     description: post.value.excerpt || undefined,
     image: post.value.cover_image ? [post.value.cover_image] : undefined,
     datePublished: post.value.published_at,

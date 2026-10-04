@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from '@/plugins/axios'
 import { business, streetLine, cityLine } from '@/config/business'
@@ -201,8 +201,8 @@ const activeStep = ref(0)
 const bakeProgress = ref(0)
 const reducedMotion = prefersReducedMotion()
 
-const address = [streetLine(), cityLine()].filter(Boolean).join(', ')
-const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([business.name, address].join(', '))}`
+const address = computed(() => [streetLine(), cityLine()].filter(Boolean).join(', '))
+const mapUrl = computed(() => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([business.name, address.value].join(', '))}`)
 
 const { t } = useI18n()
 const marqueeWords = t('home.marquee').split(',')
@@ -290,8 +290,10 @@ function setupFeatured() {
   if (!mm || !track.value) return
   mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
     const distance = () => Math.max(0, track.value.scrollWidth - window.innerWidth)
+    // Right to left (Arabic) the row starts on the right and moves the other way.
+    const rtl = () => document.documentElement.dir === 'rtl'
     gsap.to(track.value, {
-      x: () => -distance(),
+      x: () => (rtl() ? distance() : -distance()),
       ease: 'none',
       scrollTrigger: {
         trigger: featuredEl.value,
@@ -362,6 +364,17 @@ onBeforeUnmount(() => {
   pointer-events: none;
   background:
     linear-gradient(90deg, rgba(14, 12, 10, 0.85) 0%, rgba(14, 12, 10, 0.35) 45%, transparent 70%),
+    linear-gradient(0deg, #0e0c0a 0%, transparent 30%);
+}
+
+/* Right to left the text sits on the right, so the bakes move to the left. */
+[dir='rtl'] .hero-stage {
+  scale: -1 1;
+}
+
+[dir='rtl'] .hero-shade {
+  background:
+    linear-gradient(270deg, rgba(14, 12, 10, 0.85) 0%, rgba(14, 12, 10, 0.35) 45%, transparent 70%),
     linear-gradient(0deg, #0e0c0a 0%, transparent 30%);
 }
 
@@ -507,6 +520,7 @@ onBeforeUnmount(() => {
 /* Featured */
 .featured {
   padding-top: 8rem;
+  overflow-x: clip;
 }
 
 @media (min-width: 1024px) {
@@ -646,7 +660,7 @@ onBeforeUnmount(() => {
 
 .craft-num {
   position: absolute;
-  right: -0.5rem;
+  inset-inline-end: -0.5rem;
   bottom: 0.5rem;
   font-family: 'Instrument Serif', Georgia, serif;
   font-size: 5rem;
@@ -796,7 +810,7 @@ onBeforeUnmount(() => {
 
 .bento-img {
   position: absolute;
-  right: 6%;
+  inset-inline-end: 6%;
   bottom: 8%;
   width: 52%;
   max-height: 80%;
@@ -812,7 +826,7 @@ onBeforeUnmount(() => {
 .is-banner .bento-img {
   width: auto;
   height: 85%;
-  right: 8%;
+  inset-inline-end: 8%;
 }
 
 .bento-tile:hover .bento-img {
@@ -822,7 +836,7 @@ onBeforeUnmount(() => {
 
 .bento-text {
   position: absolute;
-  left: 1.5rem;
+  inset-inline-start: 1.5rem;
   top: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -839,7 +853,7 @@ onBeforeUnmount(() => {
 
 .bento-arrow {
   position: absolute;
-  left: 1.5rem;
+  inset-inline-start: 1.5rem;
   bottom: 1.5rem;
   display: grid;
   place-items: center;

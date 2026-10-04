@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
 .ar-close {
   position: absolute;
   top: 1rem;
-  right: 1rem;
+  inset-inline-end: 1rem;
   display: grid;
   place-items: center;
   width: 2.25rem;

@@ -9,6 +9,7 @@ export default {
     send: 'Nachricht senden',
     privacyNote: 'Wir nutzen deine Angaben nur, um dir zu antworten. Mehr in unserer',
     openingHours: 'Öffnungszeiten',
+    closures: 'Geschlossen',
     openMaps: 'In Google Maps öffnen',
     thanks: 'Danke! Wir melden uns bald bei dir.',
     tooMany: 'Du hast schon mehrere Nachrichten geschickt. Bitte versuche es später erneut.',
@@ -29,6 +30,7 @@ export default {
     send: 'Send message',
     privacyNote: 'We use your details only to answer you. See our',
     openingHours: 'Opening hours',
+    closures: 'Closed on',
     openMaps: 'Open in Google Maps',
     thanks: 'Thanks! We will get back to you soon.',
     tooMany: 'You have sent several messages already. Please try again later.',
@@ -37,6 +39,27 @@ export default {
       name: 'Please enter your name.',
       email: 'Please enter a valid email address.',
       message: 'Please write a message.'
+    }
+  },
+  ar: {
+    eyebrow: 'يسعدنا تواصلك',
+    title: 'تواصل معنا',
+    subtitle: 'أسئلة أو طلبات خاصة أو ملاحظات: يسعدنا دائمًا أن نسمع منك.',
+    subject: 'الموضوع',
+    message: 'الرسالة',
+    website: 'الموقع الإلكتروني',
+    send: 'إرسال الرسالة',
+    privacyNote: 'نستخدم بياناتك فقط للرد عليك. للمزيد، اطّلع على',
+    openingHours: 'ساعات العمل',
+    closures: 'مغلق في',
+    openMaps: 'افتح في Google Maps',
+    thanks: 'شكرًا لك! سنعود إليك قريبًا.',
+    tooMany: 'لقد أرسلت عدة رسائل بالفعل. يُرجى المحاولة لاحقًا.',
+    failed: 'تعذّر إرسال رسالتك. يُرجى المحاولة مجددًا.',
+    errors: {
+      name: 'يُرجى إدخال اسمك.',
+      email: 'يُرجى إدخال بريد إلكتروني صالح.',
+      message: 'يُرجى كتابة رسالتك.'
     }
   }
 }

@@ -4,7 +4,7 @@
       <font-awesome-icon v-if="icon" :icon="icon" />{{ eyebrow }}
     </p>
     <h1 v-split.load class="display-title text-6xl sm:text-8xl">{{ title }}</h1>
-    <p v-if="subtitle" v-reveal="{ delay: 0.2 }" class="mt-5 max-w-2xl text-lg text-cream-muted">{{ subtitle }}</p>
+    <p v-if="subtitle" v-reveal="{ delay: 0.2 }" class="mt-5 max-w-2xl text-lg text-cream-muted text-auto">{{ subtitle }}</p>
   </header>
 </template>
 
