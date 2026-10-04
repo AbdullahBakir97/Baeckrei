@@ -27,8 +27,8 @@
               <strong class="truncate">{{ m.name }}</strong>
               <small class="flex-none">{{ ago(m.created_at) }}</small>
             </span>
-            <span class="block truncate text-sm text-cream/80">{{ m.subject || $t('admin.messages.noSubject') }}</span>
-            <span class="block truncate text-xs text-cream-faint">{{ m.message }}</span>
+            <span class="block truncate text-sm text-cream/80 text-auto">{{ m.subject || $t('admin.messages.noSubject') }}</span>
+            <span class="block truncate text-xs text-cream-faint text-auto">{{ m.message }}</span>
           </span>
         </button>
       </div>
@@ -53,20 +53,20 @@
           </div>
 
           <header class="read-head">
-            <h2>{{ current.subject || $t('admin.messages.noSubject') }}</h2>
+            <h2 class="text-auto">{{ current.subject || $t('admin.messages.noSubject') }}</h2>
             <p>
               <strong>{{ current.name }}</strong> · <a :href="`mailto:${current.email}`" class="st-link">{{ current.email }}</a>
               · {{ formatDate(current.created_at, intlLocale()) }}
             </p>
           </header>
-          <p class="read-body">{{ current.message }}</p>
+          <p class="read-body text-auto">{{ current.message }}</p>
 
           <div v-if="current.replied_at" class="read-reply">
             <p class="read-reply-head">
               <font-awesome-icon icon="reply" />
               {{ $t('admin.messages.repliedBy', { name: current.replied_by_name, date: formatDate(current.replied_at, intlLocale()) }) }}
             </p>
-            <p class="read-body">{{ current.reply }}</p>
+            <p class="read-body text-auto">{{ current.reply }}</p>
           </div>
 
           <form class="reply-box" @submit.prevent="sendReply">

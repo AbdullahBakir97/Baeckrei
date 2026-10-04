@@ -43,7 +43,7 @@
           <input v-model.trim="newAllergen" class="st-input" required maxlength="100" :placeholder="$t('admin.ingredients.newAllergen')" :aria-label="$t('admin.ingredients.newAllergen')" />
           <button type="submit" class="st-btn" :aria-label="$t('admin.ingredients.addAllergen')"><font-awesome-icon icon="plus" /></button>
         </form>
-        <button v-if="missingEu.length" type="button" class="st-btn st-btn-ghost st-btn-sm justify-self-start" :disabled="busy" @click="addEu">
+        <button v-if="missingEu.length" type="button" class="st-btn st-btn-ghost st-btn-sm justify-self-start max-w-full !whitespace-normal text-start" :disabled="busy" @click="addEu">
           {{ $t('admin.ingredients.addEu', { n: missingEu.length }) }}
         </button>
         <ul class="allergen-list">

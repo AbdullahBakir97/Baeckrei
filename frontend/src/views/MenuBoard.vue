@@ -571,6 +571,8 @@ onBeforeUnmount(() => {
   inset: 0;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  /* A long ticker or headline must not stretch the board past the screen. */
+  grid-template-columns: minmax(0, 1fr);
   padding: 2.4em 3em 1.6em;
   color: var(--text);
   background:
@@ -583,6 +585,9 @@ onBeforeUnmount(() => {
   font-family: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
 }
 .board.is-portrait { padding: 3em 3em 2em; }
+/* The site's heading and text colours are for its dark pages; on the board
+   everything follows the theme (light themes have dark text). */
+.board :where(h1, h2, h3, p) { color: inherit; }
 .board-photo { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .board-photo span { position: absolute; inset: 0; background: var(--bg); }
 .board > :not(.board-photo) { position: relative; }

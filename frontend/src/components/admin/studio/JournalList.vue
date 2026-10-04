@@ -27,8 +27,8 @@
             <img v-if="post.cover_image_url" :src="post.cover_image_url" alt="" class="journal-cover" />
             <span v-else class="journal-cover is-empty"><font-awesome-icon icon="newspaper" /></span>
             <span class="min-w-0 flex-1">
-              <span class="journal-title">{{ post.title }}</span>
-              <span class="journal-meta">
+              <span class="journal-title text-auto">{{ post.title }}</span>
+              <span class="journal-meta text-auto">
                 {{ post.excerpt || firstLine(post.body) }}
               </span>
             </span>

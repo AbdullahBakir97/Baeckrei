@@ -319,7 +319,13 @@ textarea.st-input { line-height: 1.6; resize: vertical; }
 .st-alert { padding: 0.75rem 1rem; border-radius: 1rem; font-size: 0.875rem; color: #f6b8a8; background: rgba(240, 143, 121, 0.1); }
 .st-success { padding: 0.75rem 1rem; border-radius: 1rem; font-size: 0.875rem; color: #c7e6c2; background: rgba(159, 212, 154, 0.1); }
 .st-grid { display: grid; gap: 1rem; }
-@media (min-width: 640px) { .st-grid-2 { grid-template-columns: 1fr 1fr; } .st-grid-3 { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 640px) { .st-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .st-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* Forms never grow wider than their card (a fieldset is as wide as its
+   content by default, and date fields are wide). */
+fieldset.st-grid, .st-grid > * { min-width: 0; }
+.st-input { min-width: 0; }
+/* Text typed in another language keeps its own order in Arabic. */
+[dir='rtl'] :is(input.st-input, textarea.st-input) { unicode-bidi: plaintext; }
 .st-span { grid-column: 1 / -1; }
 .st-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.6rem; border-radius: 9999px;
   font-size: 0.72rem; font-weight: 600; color: #b9ab98; background: rgba(244, 236, 225, 0.06); white-space: nowrap; }
