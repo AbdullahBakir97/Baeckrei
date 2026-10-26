@@ -1,4 +1,4 @@
-# Going live
+# Deploying
 
 The shop runs as one Docker image: Django serves the API, every storefront
 page (with its title and share preview filled in for search engines) and,
